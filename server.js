@@ -12,8 +12,10 @@ const {
   HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
-const DATA_DIR = path.join(__dirname, 'data');
-const UP_DIR = path.join(__dirname, 'uploads');
+// Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
+// This keeps profiles and uploaded media across deploys.
+const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
+const UP_DIR = process.env.UPLOAD_DIR || path.join(DATA_DIR, 'uploads');
 const DB_FILE = path.join(DATA_DIR, 'users.json');
 [DATA_DIR, UP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
@@ -121,12 +123,12 @@ function applyUpdate(user, b) {
   const t = b.tags || {};
   user.tags = { label: str(t.label, 24), location: str(t.location, 24), age: str(t.age, 4) };
   const des=b.design||{}; user.design={nameEffect:['standard','gradient','neon','toon','rubber','typewriter'].includes(des.nameEffect)?des.nameEffect:'standard',nameColor:/^#[0-9a-f]{6}$/i.test(des.nameColor||'')?des.nameColor:'#f6eff2'};
-  const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
+  const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
   user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus'].map(k => [k, !!s[k]]));
   const bg = b.background || {};
-  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','float','tilt','zoom','pulse'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false };
+  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false };
   const m = b.music || {};
   user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
   user.soundMode = ['auto','music','video','mute'].includes(b.soundMode) ? b.soundMode : 'auto';
