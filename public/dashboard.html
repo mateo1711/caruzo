@@ -97,6 +97,16 @@ textarea{min-height:96px;resize:vertical}
   header{padding:10px 12px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+/* Premium dashboard polish */
+body:before{content:"";position:fixed;inset:0;pointer-events:none;background:radial-gradient(900px 500px at 85% -10%,rgba(126,87,255,.12),transparent 60%),radial-gradient(700px 500px at -10% 80%,rgba(255,46,147,.1),transparent 60%)}
+header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
+.card{background:linear-gradient(145deg,rgba(35,24,30,.82),rgba(18,12,15,.72));box-shadow:0 18px 60px rgba(0,0,0,.18),inset 0 1px rgba(255,255,255,.035)}
+.card:hover{border-color:rgba(255,255,255,.15)}
+.panel h2{font-size:28px}.side{padding:10px;border:1px solid var(--line);border-radius:18px;background:rgba(18,12,15,.52);backdrop-filter:blur(18px)}
+.side button[aria-selected=true]{box-shadow:inset 3px 0 var(--pink)}
+.previewName{font:700 34px var(--display);padding:22px;border-radius:14px;text-align:center;background:radial-gradient(circle at 50% 20%,rgba(255,46,147,.14),transparent 60%),#100b0e;border:1px solid var(--line)}
+.previewName.gradient{background-image:linear-gradient(90deg,#ff2e93,#8f7cff,#55e6ff);-webkit-background-clip:text;color:transparent}.previewName.neon{text-shadow:0 0 8px currentColor,0 0 22px #ff2e93}.previewName.toon{text-shadow:3px 3px 0 #000,-2px -2px 0 #ff2e93}.previewName.rubber{animation:rub .9s ease-in-out infinite alternate}@keyframes rub{to{transform:scaleX(1.05) scaleY(.94)}}
 </style>
 </head>
 <body>
@@ -117,6 +127,7 @@ textarea{min-height:96px;resize:vertical}
     <button role="tab" data-tab="badges"><span class="i">🏅</span>Badges</button>
     <button role="tab" data-tab="effekte"><span class="i">✨</span>Effekte</button>
     <button role="tab" data-tab="design"><span class="i">🎨</span>Design</button>
+    <button role="tab" data-tab="browser"><span class="i">🗂️</span>Browser Tab</button>
     <button role="tab" data-tab="musik"><span class="i">🎵</span>Musik</button>
     <button role="tab" data-tab="links"><span class="i">🔗</span>Links</button>
     <button data-logout class="btn ghost" style="margin-top:10px" onclick="location.href='/logout'">Abmelden</button>
@@ -148,14 +159,6 @@ textarea{min-height:96px;resize:vertical}
           <label class="f">Alter<input type="text" data-p="tags.age" placeholder="17"></label>
         </div>
       </div>
-      <div class="card">
-        <h3>Highlight-Button</h3>
-        <p class="desc">Ein auffälliger Button am unteren Rand deiner Karte.</p>
-        <div class="row">
-          <label class="f">Text<input type="text" data-p="cta.label"></label>
-          <label class="f">Link<input type="url" data-p="cta.url" placeholder="https://"></label>
-        </div>
-      </div>
     </section>
 
     <!-- DISCORD -->
@@ -165,7 +168,7 @@ textarea{min-height:96px;resize:vertical}
       <div class="card">
         <h3>Daten aktualisieren</h3>
         <p class="desc">Hast du in Discord etwas geändert, lade es hier neu.</p>
-        <div><button class="btn" id="sync" type="button">Von Discord neu laden</button></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="sync" type="button">Von Discord neu laden</button><button class="btn" id="botVerify" type="button">Bot Verify · User ID</button></div><p class="hint" id="botVerifyState">Bot Verify bestätigt die Discord User-ID serverseitig. Nitro wird weiterhin sicher über Discord OAuth erkannt.</p>
       </div>
       <div class="card">
         <h3>Was auf deinem Profil erscheint</h3>
@@ -197,7 +200,18 @@ textarea{min-height:96px;resize:vertical}
     <!-- DESIGN -->
     <section class="panel" data-panel="design" hidden>
       <h2>Design</h2>
-      <p class="desc">Hintergrund deiner Seite.</p>
+      <p class="desc">Mach das Profil unverwechselbar – mit Live-Vorschau.</p>
+      <div class="card"><h3>Display Name</h3><p class="desc">This is the main name shown on your profile.</p>
+        <label class="f">Name<input type="text" data-p="displayName"></label>
+        <label class="f">Effekt wählen<select data-p="design.nameEffect"><option value="standard">Standard</option><option value="gradient">Farbverlauf</option><option value="neon">Neon</option><option value="toon">Toon</option><option value="rubber">Gummi</option><option value="typewriter">Typewriter</option></select></label>
+        <label class="f">Farbe wählen<input type="color" data-p="design.nameColor" style="height:44px;padding:5px"></label>
+        <div class="previewName" id="namePreview">Preview</div><p class="hint">Auto+ Vorschau · Typewriter tippt, hält und löscht endlos.</p>
+      </div>
+      <div class="card"><h3>Cursor effect</h3><p class="desc">Partikel und Trails folgen dem Mauszeiger.</p>
+        <label class="f">Effekt<select data-p="cursor.effect"><option value="none">Clean</option><option value="spark">Stardust</option><option value="trail">Comet Trail</option><option value="snow">Frost</option><option value="hearts">Love Dust</option><option value="fire">Ember</option><option value="magic">Aurora</option></select></label>
+        <label class="f">Cursor image<select data-p="cursor.image"><option value="system">System</option><option value="crosshair">Target</option><option value="dot">Minimal Dot</option><option value="ring">Halo Ring</option><option value="cross">Precision Cross</option><option value="arrow">Sharp Arrow</option><option value="star">Nova Star</option></select></label>
+        <label class="f">SVG Upload / Data-URL<input type="text" data-p="cursor.svg" placeholder="data:image/svg+xml,..."></label>
+      </div>
       <div class="card">
         <h3>Hintergrund</h3>
         <div class="row">
@@ -214,6 +228,16 @@ textarea{min-height:96px;resize:vertical}
           <label class="f">Abdunkeln in % (0–90)<input type="number" min="0" max="90" data-p="background.dim"></label>
         </div>
       </div>
+    </section>
+
+
+    <section class="panel" data-panel="browser" hidden>
+      <h2>Browser Tab</h2><p class="desc">Controls your browser tab title animation. Custom messages rotate below.</p>
+      <div class="card"><h3>Tab Animation</h3>
+        <label class="f">Animation<select data-p="browser.effect"><option value="rotate">Rotate</option><option value="type">Typewriter</option><option value="marquee">Marquee</option><option value="pulse">Pulse dots</option></select></label>
+        <label class="f">Geschwindigkeit<select data-p="browser.speed"><option value="500">Sehr schnell · 0.5s</option><option value="900">Schnell · 0.9s</option><option value="1500">Normal · 1.5s</option><option value="2500">Langsam · 2.5s</option><option value="4000">Sehr langsam · 4s</option></select></label>
+      </div>
+      <div class="card"><h3>Text Abschnitte</h3><p class="desc">Mehrere Titel werden nacheinander animiert.</p><div class="rep" id="tabMessages"></div></div>
     </section>
 
     <!-- MUSIK -->
@@ -242,13 +266,16 @@ textarea{min-height:96px;resize:vertical}
       <h2>Links</h2>
       <p class="desc">Accounts und Seiten, die du zeigen willst.</p>
       <div class="card"><h3>Steam</h3><div class="rep" id="steam"></div></div>
-      <div class="card">
-        <h3>Twitch &amp; TikTok</h3>
-        <div class="row">
-          <label class="f">Twitch<input type="url" data-p="links.twitch" placeholder="https://twitch.tv/name"></label>
-          <label class="f">TikTok<input type="url" data-p="links.tiktok" placeholder="https://tiktok.com/@name"></label>
-        </div>
-      </div>
+      <div class="card"><h3>Socials</h3><div class="row">
+        <label class="f">X / Twitter<input type="url" data-p="links.x" placeholder="https://x.com/name"></label>
+        <label class="f">Epic Games<input type="url" data-p="links.epic" placeholder="https://store.epicgames.com/u/..."></label>
+        <label class="f">Twitch<input type="url" data-p="links.twitch" placeholder="https://twitch.tv/name"></label>
+        <label class="f">TikTok<input type="url" data-p="links.tiktok" placeholder="https://tiktok.com/@name"></label>
+        <label class="f">Instagram<input type="url" data-p="links.instagram" placeholder="https://instagram.com/name"></label>
+        <label class="f">YouTube<input type="url" data-p="links.youtube" placeholder="https://youtube.com/@name"></label>
+        <label class="f">GitHub<input type="url" data-p="links.github" placeholder="https://github.com/name"></label>
+        <label class="f">Bluesky<input type="url" data-p="links.bluesky" placeholder="https://bsky.app/profile/..."></label>
+      </div></div>
       <div class="card"><h3>Weitere Links</h3><p class="desc">Zum Beispiel GitHub oder Bluesky.</p><div class="rep" id="custom"></div></div>
     </section>
   </main>
@@ -281,6 +308,7 @@ function updateUrl() {
 }
 
 function bind() {
+  me.design ??= {nameEffect:'standard',nameColor:'#f6eff2'}; me.cursor ??= {effect:'none',image:'system',svg:''}; me.browser ??= {effect:'rotate',speed:1500,messages:[]}; me.links ??= {}; me.links.steam ??=[]; me.links.custom ??=[];
   document.querySelectorAll('[data-p]').forEach(e => {
     const v = get(me, e.dataset.p);
     if (e.type === 'checkbox') e.checked = !!v; else e.value = v ?? '';
@@ -288,6 +316,7 @@ function bind() {
       set(me, e.dataset.p, e.type === 'checkbox' ? e.checked : e.type === 'number' ? Number(e.value) : e.value);
       markDirty(true);
       if (e.dataset.p === 'username') updateUrl();
+      if (e.dataset.p.startsWith('displayName') || e.dataset.p.startsWith('design.')) updateNamePreview();
     };
   });
   $('#hAvatar').src = me.discord.avatar;
@@ -302,9 +331,15 @@ function bind() {
   });
 
   floatingRepeater();
+  simpleRepeater('#tabMessages', me.browser.messages, 'Neuer Tab-Text');
+  updateNamePreview();
   repeater('#steam', me.links.steam, [['name', 'Name'], ['url', 'Profil-Link']], 'Steam-Account hinzufügen');
   repeater('#custom', me.links.custom, [['label', 'Titel'], ['url', 'Link']], 'Link hinzufügen');
 }
+
+
+function updateNamePreview(){ const n=$('#namePreview'); if(!n)return; n.textContent=me.displayName||'Display Name'; n.className='previewName '+(me.design?.nameEffect||'standard'); n.style.color=me.design?.nameColor||'#f6eff2'; }
+function simpleRepeater(sel, arr, addLabel){ const box=$(sel); if(!box)return; arr ??= []; box.replaceChildren(); arr.forEach((v,i)=>{const row=document.createElement('div');row.className='item';const inp=document.createElement('input');inp.value=v;inp.placeholder='z.B. ✦ lovely · caruzo.lol';inp.oninput=()=>{arr[i]=inp.value;markDirty(true)};const del=document.createElement('button');del.className='btn';del.textContent='✕';del.onclick=()=>{arr.splice(i,1);markDirty(true);simpleRepeater(sel,arr,addLabel)};row.append(inp,del);box.append(row)});const add=document.createElement('button');add.className='btn';add.textContent='+ '+addLabel;add.onclick=()=>{arr.push('');markDirty(true);simpleRepeater(sel,arr,addLabel)};box.append(add); }
 
 function floatingRepeater() {
   const box = $('#floating'); box.replaceChildren(); me.floating ??= [];
@@ -351,6 +386,7 @@ window.addEventListener('beforeunload', e => { if (dirty) { e.preventDefault(); 
 $('#copy').onclick = async () => {
   try { await navigator.clipboard.writeText(`${location.origin}/${me.username}`); toast('Link kopiert'); } catch { toast('Kopieren nicht möglich'); }
 };
+$('#botVerify').onclick=async()=>{try{const r=await api('/api/bot-verify',{method:'POST'});$('#botVerifyState').textContent='✓ Verifiziert: '+r.username+' · '+r.id+(r.nitro?' · Nitro via OAuth':'');toast('Discord User-ID verifiziert')}catch(e){toast(e.message)}};
 $('#sync').onclick = async () => {
   try { const fresh = await api('/api/sync', { method: 'POST' }); me.discord = fresh.discord; me.nitroTier = fresh.nitroTier; bind(); toast('Discord-Daten aktualisiert'); }
   catch (e) { toast(e.message); }

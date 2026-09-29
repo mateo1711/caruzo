@@ -124,6 +124,10 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 }
 @media (max-width:520px){.grid{grid-template-columns:1fr}.player input{display:none}}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+
+.name-gradient{background:linear-gradient(90deg,#ff2e93,#8f7cff,#55e6ff,#ff2e93);background-size:300% 100%;-webkit-background-clip:text;color:transparent!important;animation:nameFlow 5s linear infinite}@keyframes nameFlow{to{background-position:300% 0}}
+.name-neon{text-shadow:0 0 8px currentColor,0 0 18px currentColor,0 0 34px #ff2e93}.name-toon{text-shadow:3px 3px 0 #080507,-2px -2px 0 #ff2e93}.name-rubber{animation:nameRub .9s ease-in-out infinite alternate}@keyframes nameRub{to{transform:scaleX(1.07) scaleY(.93)}}
+.cursor-particle{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-50%);animation:particleOut .8s ease-out forwards}@keyframes particleOut{to{opacity:0;transform:translate(-50%,-50%) translateY(-20px) scale(.3)}}
 </style>
 </head>
 <body>
@@ -132,9 +136,6 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 
 <nav>
   <div class="logo"><b>猫</b><span id="logoName"></span></div>
-  <div class="links">
-    <a href="#home" class="on">Home</a><a href="#socials">Socials</a><a href="#about" id="navAbout">About</a>
-  </div>
 </nav>
 
 <main>
@@ -188,7 +189,7 @@ fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Pr
 
 function render(u) {
   const d = u.discord, s = u.settings;
-  document.title = u.displayName;
+  document.title = u.displayName; setupBrowserTab(u);
   $('#logoName').append(u.username, el('i', {}, '.lol'));
   $('#enterText').textContent = u.enterText;
 
@@ -220,7 +221,7 @@ function render(u) {
   addChip('tag', u.tags.label); addChip('pin', u.tags.location); addChip('cake', u.tags.age);
   if (s.showTag && d.serverTag) chips.append(el('span', { class: 'chip', title: 'Server-Tag' }, d.serverTag.badge ? el('img', { src: d.serverTag.badge, alt: '' }) : '', d.serverTag.tag));
 
-  const info = el('div', { class: 'info' }, el('h1', {}, u.displayName), chips);
+  const name=el('h1',{},u.displayName); applyNameEffect(name,u); const info = el('div', { class: 'info' }, name, chips);
   if (s.showBadges && d.badges.length) {
     info.append(el('div', { class: 'badges' }, d.badges.map(b => {
       const fb = el('span', { title: b.name }, b.emoji);
@@ -237,7 +238,6 @@ function render(u) {
     u.about ? el('a', { class: 'btn', href: '#about' }, svg(PATH.user), 'About Me') : ''));
   p.append(el('div', { class: 'inner' }, avatar, info));
   if (fx === 'tilt' && !matchMedia('(prefers-reduced-motion:reduce)').matches) { p.onmousemove=e=>{const r=p.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;p.style.transform=`perspective(900px) rotateX(${-y*5}deg) rotateY(${x*7}deg)`}; p.onmouseleave=()=>p.style.transform=''; }
-  if (u.cta.url) p.append(el('a', { class: 'cta', href: u.cta.url, target: '_blank', rel: 'noopener noreferrer' }, el('i', {}, '⇄'), u.cta.label || host(u.cta.url), ' ↗'));
   typewriter(tl, u.tagline);
 
   // Spotify
@@ -256,13 +256,15 @@ function render(u) {
   u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', x.name || host(x.url), x.url)));
   if (u.links.twitch) grid.append(card(icon('twitch', '9146FF', 'rgba(145,70,255,.16)'), 'Twitch', u.links.twitch.split('/').filter(Boolean).pop(), u.links.twitch));
   if (u.links.tiktok) grid.append(card(icon('tiktok', 'ffffff', 'rgba(255,255,255,.08)'), 'TikTok', u.links.tiktok.split('/').filter(Boolean).pop(), u.links.tiktok));
+  const socialDefs=[['x','x','ffffff','X'],['epic','epicgames','ffffff','Epic Games'],['instagram','instagram','E4405F','Instagram'],['youtube','youtube','FF0000','YouTube'],['github','github','ffffff','GitHub'],['bluesky','bluesky','0285FF','Bluesky']];
+  socialDefs.forEach(([k,ic,c,n])=>{const v=u.links[k];if(v)grid.append(card(icon(ic,c,'rgba(255,255,255,.08)'),n,v.split('/').filter(Boolean).pop(),v))});
   u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
   grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
 
   $('#views').textContent = '◉ ' + Number(u.views || 0).toLocaleString('de-CH') + ' Profilaufrufe';
 
   // About
-  if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; } else $('#navAbout').remove();
+  if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; }
 
   // Musik / Video-Ton: Musik hat in 'auto' immer Vorrang.
   const video = document.querySelector('#bg video');
@@ -275,15 +277,39 @@ function render(u) {
   // Status via Lanyard
   if (s.showStatus) { pollStatus(d.id); setInterval(() => pollStatus(d.id), 30000); }
 
+  setupCursor(u.cursor || {});
+
   // Enter
   const enter = $('#enter');
   const go = () => { enter.classList.add('gone'); audio?.play().catch(() => {}); document.querySelector('#bg video')?.play().catch(() => {}); };
   enter.onclick = go; enter.onkeydown = e => (e.key === 'Enter' || e.key === ' ') && go();
 
-  // Nav Highlight
-  const links = [...document.querySelectorAll('nav .links a')];
-  const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id))), { rootMargin: '-40% 0px -55% 0px' });
-  ['home', 'socials', 'about'].forEach(id => io.observe($('#' + id)));
+
+}
+
+
+function applyNameEffect(node,u){
+  const d=u.design||{}; node.style.color=d.nameColor||'#f6eff2';
+  if(d.nameEffect==='gradient')node.classList.add('name-gradient');
+  if(d.nameEffect==='neon')node.classList.add('name-neon');
+  if(d.nameEffect==='toon')node.classList.add('name-toon');
+  if(d.nameEffect==='rubber')node.classList.add('name-rubber');
+  if(d.nameEffect==='typewriter')typewriter(node,u.displayName);
+}
+function setupBrowserTab(u){
+  const b=u.browser||{}, msgs=(b.messages||[]).filter(Boolean); if(!msgs.length)return;
+  let i=0,pos=0,dir=1; const speed=Number(b.speed)||1500;
+  if(b.effect==='rotate') return setInterval(()=>document.title=msgs[i++%msgs.length],speed);
+  if(b.effect==='pulse') return setInterval(()=>{const m=msgs[i++%msgs.length];document.title=m+' '+'.'.repeat((i%3)+1)},speed);
+  if(b.effect==='marquee'){let text=msgs.join('   ✦   ')+'   ';return setInterval(()=>{text=text.slice(1)+text[0];document.title=text.slice(0,28)},Math.max(120,speed/8));}
+  const tick=()=>{const m=msgs[i%msgs.length];document.title=m.slice(0,pos);pos+=dir;if(pos>m.length){dir=-1;setTimeout(tick,speed)}else if(pos<0){dir=1;pos=0;i++;setTimeout(tick,350)}else setTimeout(tick,90)};tick();
+}
+function setupCursor(c){
+  const cursors={crosshair:'crosshair',dot:'crosshair',ring:'crosshair',cross:'crosshair',arrow:'default',star:'crosshair'};
+  if(c.svg&&c.svg.startsWith('data:image/svg+xml'))document.body.style.cursor=`url("${c.svg}"), auto`; else if(c.image&&c.image!=='system')document.body.style.cursor=cursors[c.image]||'default';
+  if(!c.effect||c.effect==='none')return; let last=0;
+  const chars={spark:'✦',trail:'•',snow:'❄',hearts:'♥',fire:'✹',magic:'✧'};
+  addEventListener('pointermove',e=>{const now=performance.now();if(now-last<45)return;last=now;const p=document.createElement('span');p.className='cursor-particle';p.textContent=chars[c.effect]||'✦';p.style.left=e.clientX+'px';p.style.top=e.clientY+'px';p.style.fontSize=(10+Math.random()*10)+'px';document.body.append(p);setTimeout(()=>p.remove(),850)});
 }
 
 function typewriter(node, text) {
