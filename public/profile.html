@@ -47,6 +47,9 @@ nav .links a.on{color:var(--pink);background:rgba(255,46,147,.1);border-bottom-c
 
 main{width:min(1000px,calc(100vw - 24px));margin:0 auto;padding:96px 0 120px;display:grid;gap:22px}
 section{scroll-margin-top:90px}
+.float-layer{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}.float-word{position:absolute;opacity:.38;font-weight:700;animation:drift 12s ease-in-out infinite alternate}@keyframes drift{to{transform:translate(60px,-35px) rotate(8deg)}}
+.fx-float{animation:cardFloat 4s ease-in-out infinite}@keyframes cardFloat{50%{transform:translateY(-10px)}}.fx-zoom{animation:cardZoom 6s ease-in-out infinite}@keyframes cardZoom{50%{transform:scale(1.015)}}.fx-pulse{animation:cardPulse 3s ease-in-out infinite}@keyframes cardPulse{50%{box-shadow:0 0 45px rgba(255,46,147,.18)}}
+.views{justify-self:center;color:var(--mute);padding:8px 14px;border:1px solid var(--line);border-radius:999px;background:rgba(15,10,12,.7)}
 .card{border:1px solid var(--line);background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:26px}
 
 /* Profil */
@@ -124,7 +127,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 </style>
 </head>
 <body>
-<div class="bg" id="bg"></div>
+<div class="bg" id="bg"></div><div class="float-layer" id="floatLayer"></div>
 <div id="enter" role="button" tabindex="0"><span id="enterText">click to enter...</span></div>
 
 <nav>
@@ -142,6 +145,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
   <section id="socials"><div class="grid" id="grid"></div></section>
   <section id="about" hidden><div class="card about" id="aboutText"></div></section>
   <div class="status" id="status"></div>
+  <div class="views" id="views"></div>
 </main>
 
 <div class="player" id="player">
@@ -193,11 +197,14 @@ function render(u) {
   document.documentElement.style.setProperty('--dim', u.background.dim / 100);
   if (u.background.url) {
     const bg = u.background.type === 'video'
-      ? el('video', { src: u.background.url, autoplay: '', loop: '', muted: '', playsinline: '' })
+      ? el('video', { src: u.background.url, loop: '', playsinline: '' })
       : el('img', { src: u.background.url, alt: '' });
     if (bg.tagName === 'VIDEO') bg.muted = true;
     $('#bg').prepend(bg);
   }
+  const fx = u.background.effect || 'none';
+  if (fx !== 'none') $('#profile').classList.add('fx-' + fx);
+  (u.floating || []).forEach((txt,i)=>{ const w=el('span',{class:'float-word'},txt); w.style.left=(8+(i*17)%82)+'%'; w.style.top=(10+(i*23)%75)+'%'; w.style.animationDelay=-(i*1.7)+'s'; $('#floatLayer').append(w); });
 
   // Profil-Karte
   const p = $('#profile');
@@ -229,6 +236,7 @@ function render(u) {
     el('a', { class: 'btn pri', href: '#socials' }, svg(PATH.link), 'Socials'),
     u.about ? el('a', { class: 'btn', href: '#about' }, svg(PATH.user), 'About Me') : ''));
   p.append(el('div', { class: 'inner' }, avatar, info));
+  if (fx === 'tilt' && !matchMedia('(prefers-reduced-motion:reduce)').matches) { p.onmousemove=e=>{const r=p.getBoundingClientRect(),x=(e.clientX-r.left)/r.width-.5,y=(e.clientY-r.top)/r.height-.5;p.style.transform=`perspective(900px) rotateX(${-y*5}deg) rotateY(${x*7}deg)`}; p.onmouseleave=()=>p.style.transform=''; }
   if (u.cta.url) p.append(el('a', { class: 'cta', href: u.cta.url, target: '_blank', rel: 'noopener noreferrer' }, el('i', {}, '⇄'), u.cta.label || host(u.cta.url), ' ↗'));
   typewriter(tl, u.tagline);
 
@@ -251,11 +259,18 @@ function render(u) {
   u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
   grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
 
+  $('#views').textContent = '◉ ' + Number(u.views || 0).toLocaleString('de-CH') + ' Profilaufrufe';
+
   // About
   if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; } else $('#navAbout').remove();
 
-  // Musik
-  if (u.music.url) setupMusic(u.music);
+  // Musik / Video-Ton: Musik hat in 'auto' immer Vorrang.
+  const video = document.querySelector('#bg video');
+  const mode = u.soundMode || 'auto';
+  const useMusic = !!u.music.url && (mode === 'auto' || mode === 'music');
+  const useVideoSound = !!video && u.background.videoSound !== false && (mode === 'video' || (mode === 'auto' && !u.music.url));
+  if (useMusic) setupMusic(u.music);
+  if (video) video.muted = !useVideoSound;
 
   // Status via Lanyard
   if (s.showStatus) { pollStatus(d.id); setInterval(() => pollStatus(d.id), 30000); }

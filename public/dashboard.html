@@ -114,7 +114,8 @@ textarea{min-height:96px;resize:vertical}
   <nav class="side" role="tablist" aria-label="Kategorien">
     <button role="tab" data-tab="profil"><span class="i">👤</span>Profil</button>
     <button role="tab" data-tab="discord"><span class="i">💬</span>Discord</button>
-    <button role="tab" data-tab="badges"><span class="i">🏅</span>Badges &amp; Nitro</button>
+    <button role="tab" data-tab="badges"><span class="i">🏅</span>Badges</button>
+    <button role="tab" data-tab="effekte"><span class="i">✨</span>Effekte</button>
     <button role="tab" data-tab="design"><span class="i">🎨</span>Design</button>
     <button role="tab" data-tab="musik"><span class="i">🎵</span>Musik</button>
     <button role="tab" data-tab="links"><span class="i">🔗</span>Links</button>
@@ -176,27 +177,21 @@ textarea{min-height:96px;resize:vertical}
       <p class="hint">Der Live-Status läuft über Lanyard. Tritt dafür einmalig dem Lanyard-Server bei: discord.gg/lanyard</p>
     </section>
 
-    <!-- BADGES & NITRO -->
+    <!-- BADGES -->
     <section class="panel" data-panel="badges" hidden>
-      <h2>Badges &amp; Nitro</h2>
-      <p class="desc">Öffentliche Discord-Badges werden automatisch erkannt.</p>
-      <div class="card">
-        <h3>Deine Badges</h3>
-        <div class="badges" id="badgeList"></div>
-        <label class="sw"><span>Badges anzeigen<small>Auf deinem Profil</small></span><input type="checkbox" data-p="settings.showBadges"><i class="t"></i></label>
+      <h2>Badges</h2><p class="desc">Discord-Badges werden automatisch erkannt. Es gibt keine manuellen Badges.</p>
+      <div class="card"><h3>Automatisch erkannt</h3><div class="badges" id="badgeList"></div>
+        <label class="sw"><span>Badges anzeigen<small>Inklusive Discord Nitro, wenn Discord es für den Account liefert</small></span><input type="checkbox" data-p="settings.showBadges"><i class="t"></i></label>
       </div>
-      <div class="card">
-        <h3>Nitro</h3>
-        <div class="status" id="nitroStatus"><i class="dotc"></i><span id="nitroText"></span></div>
-        <label class="f">Nitro seit (Monat)
-          <input type="month" data-p="nitro.since" id="nitroSince" min="2015-05">
-          <span class="hint">Discord gibt die Laufzeit nicht heraus. Aus deiner Angabe wird die Stufe berechnet: Bronze ab 1 Monat, Silber 2, Gold 3, Platin 6, Diamant 12, Smaragd 24, Rubin 36, Opal 72. Ohne Angabe bekommst du Beginner. Die Stufe siehst du nach dem Speichern.</span>
-        </label>
+    </section>
+
+    <!-- EFFEKTE -->
+    <section class="panel" data-panel="effekte" hidden>
+      <h2>Effekte</h2><p class="desc">Animationen für Hintergrund und Profil.</p>
+      <div class="card"><h3>Profil-Effekt</h3>
+        <label class="f">Animation<select data-p="background.effect"><option value="none">Keine</option><option value="float">Schweben</option><option value="tilt">Mit Maus bewegen (3D)</option><option value="zoom">Sanft zoomen</option><option value="pulse">Pulsieren</option></select></label>
       </div>
-      <div class="card">
-        <h3>Manuell</h3>
-        <label class="sw"><span>Booster-Badge<small>Discord liefert das nicht automatisch</small></span><input type="checkbox" data-p="settings.boost"><i class="t"></i></label>
-      </div>
+      <div class="card"><h3>Bewegte Texte / Elemente oben</h3><p class="desc">Mehrere kurze Texte, Wörter oder Symbole. Sie bewegen sich dezent über das Profil.</p><div class="rep" id="floating"></div></div>
     </section>
 
     <!-- DESIGN -->
@@ -210,6 +205,7 @@ textarea{min-height:96px;resize:vertical}
           <label class="f">Link<input type="text" data-p="background.url" placeholder="https://… oder Upload"></label>
         </div>
         <div class="file"><input type="file" data-upload="background" accept="image/*,video/mp4,video/webm"><span class="hint">Bild oder Video, max. 80 MB</span></div>
+        <label class="sw"><span>Ton des Hintergrundvideos<small>Wird nur benutzt, wenn keine Musik darüberliegt</small></span><input type="checkbox" data-p="background.videoSound"><i class="t"></i></label>
       </div>
       <div class="card">
         <h3>Look</h3>
@@ -224,6 +220,7 @@ textarea{min-height:96px;resize:vertical}
     <section class="panel" data-panel="musik" hidden>
       <h2>Musik</h2>
       <p class="desc">Sound für deine Seite.</p>
+      <div class="card"><h3>Sound-Verhalten</h3><label class="f">Quelle<select data-p="soundMode"><option value="auto">Automatisch: Musik vor Video</option><option value="music">Nur Musik</option><option value="video">Nur Video-Ton</option><option value="mute">Ohne Sound</option></select><span class="hint">Bei Automatisch überschreibt hochgeladene Musik den Ton eines Videos.</span></label></div>
       <div class="card">
         <h3>Hintergrundmusik</h3>
         <p class="desc">Startet, sobald jemand deine Seite betritt.</p>
@@ -304,14 +301,15 @@ function bind() {
     s.append(b.name); bl.append(s);
   });
 
-  const hasNitro = !!me.discord.nitro;
-  $('#nitroStatus').classList.toggle('ok', hasNitro);
-  $('#nitroText').textContent = hasNitro ? `Nitro erkannt – aktuelle Stufe: ${(me.nitroTier || 'Nitro Beginner').replace('Nitro ', '')}` : 'Bei deinem Account wurde kein Nitro erkannt.';
-  $('#nitroSince').disabled = !hasNitro;
-  $('#nitroSince').max = new Date().toISOString().slice(0, 7);
-
+  floatingRepeater();
   repeater('#steam', me.links.steam, [['name', 'Name'], ['url', 'Profil-Link']], 'Steam-Account hinzufügen');
   repeater('#custom', me.links.custom, [['label', 'Titel'], ['url', 'Link']], 'Link hinzufügen');
+}
+
+function floatingRepeater() {
+  const box = $('#floating'); box.replaceChildren(); me.floating ??= [];
+  me.floating.forEach((value,i) => { const row=document.createElement('div'); row.className='item'; const inp=document.createElement('input'); inp.type='text'; inp.placeholder='z.B. ✦ caruzo ✦'; inp.value=value; inp.oninput=()=>{me.floating[i]=inp.value;markDirty(true)}; const del=document.createElement('button'); del.className='btn'; del.type='button'; del.textContent='✕'; del.onclick=()=>{me.floating.splice(i,1);markDirty(true);floatingRepeater()}; row.append(inp,del); box.append(row); });
+  const add=document.createElement('button'); add.className='btn'; add.type='button'; add.textContent='+ Element hinzufügen'; add.onclick=()=>{me.floating.push('');markDirty(true);floatingRepeater()}; box.append(add);
 }
 
 function repeater(sel, arr, fields, addLabel) {
