@@ -39,29 +39,6 @@ const BADGES = [
   { key: 'active_dev',   flag: 1 << 22, name: 'Active Developer',         icon: '6bdc42827a38498929a4920da12695d9', emoji: '💻' },
 ];
 const NITRO = { key: 'nitro', name: 'Discord Nitro', icon: '2ba85e8026a8614b640c2837bcdfe21b', emoji: '💎' };
-// Nitro-Laufzeit-Badges. Discord liefert die Laufzeit nicht über die API -> Stufe wird aus dem
-// im Dashboard angegebenen Nitro-Startmonat berechnet. Ohne Angabe: Beginner.
-// Fällt ein Icon-Hash aus, zeigt das Profil automatisch das Emoji.
-const NITRO_TIERS = [
-  { min: 72, key: 'opal',     name: 'Nitro Opal',     icon: '5b154df19c53dce2af92c9b61e6be5e2', emoji: '🔮' },
-  { min: 36, key: 'ruby',     name: 'Nitro Rubin',    icon: 'cd5e2cfd9d7f27a707b6a7ff1e07f5e9', emoji: '♦️' },
-  { min: 24, key: 'emerald',  name: 'Nitro Smaragd',  icon: '11e2d339068b55d3a506cff34d3780f3', emoji: '💚' },
-  { min: 12, key: 'diamond',  name: 'Nitro Diamant',  icon: '0d61871f72bb9a33a7ae568c1fb4f20a', emoji: '💠' },
-  { min: 6,  key: 'platinum', name: 'Nitro Platin',   icon: '0334688279c8359120922938dcb1d6f8', emoji: '🥈' },
-  { min: 3,  key: 'gold',     name: 'Nitro Gold',     icon: '2895086c18d5531d499862e41d1155a6', emoji: '🥇' },
-  { min: 2,  key: 'silver',   name: 'Nitro Silber',   icon: '4514fab914bdbfb4ad2fa23df76121a6', emoji: '⚪' },
-  { min: 1,  key: 'bronze',   name: 'Nitro Bronze',   icon: '4f33c4a9c64ce221936bd256c356f91f', emoji: '🥉' },
-  { min: 0,  key: 'beginner', name: 'Nitro Beginner', icon: NITRO.icon,                        emoji: '💎' },
-];
-const monthsSince = ym => {
-  const m = /^(\d{4})-(\d{2})$/.exec(ym || '');
-  if (!m) return 0;
-  const n = new Date();
-  return Math.max(0, (n.getFullYear() - +m[1]) * 12 + (n.getMonth() + 1 - +m[2]));
-};
-const nitroTier = ym => NITRO_TIERS.find(t => monthsSince(ym) >= t.min);
-// Kann die API nicht liefern -> im Dashboard manuell schaltbar
-const MANUAL_BADGES = { boost: { key: 'boost', name: 'Server Booster', icon: '', emoji: '🚀' } };
 
 const cdn = 'https://cdn.discordapp.com';
 function mapDiscord(u) {
@@ -114,11 +91,12 @@ function defaults(dc) {
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
     cta: { label: '', url: '' },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, boost: false },
-    background: { type: 'image', url: '', blur: 6, dim: 55 },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true },
+    background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true },
     music: { url: '', title: '', volume: 40 },
+    soundMode: 'auto',
     spotify: '',
-    nitro: { since: '' },
+    floating: [],
     links: { steam: [], twitch: '', tiktok: '', custom: [] },
     views: 0,
     createdAt: Date.now(),
@@ -143,16 +121,14 @@ function applyUpdate(user, b) {
   const c = b.cta || {};
   user.cta = { label: str(c.label, 30), url: url(c.url) };
   const s = b.settings || {};
-  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus', 'boost'].map(k => [k, !!s[k]]));
+  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus'].map(k => [k, !!s[k]]));
   const bg = b.background || {};
-  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55) };
+  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','float','tilt','zoom','pulse'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false };
   const m = b.music || {};
   user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
+  user.soundMode = ['auto','music','video','mute'].includes(b.soundMode) ? b.soundMode : 'auto';
   user.spotify = url(b.spotify);
-  const ns = b.nitro && typeof b.nitro.since === 'string' ? b.nitro.since : '';
-  const nm = /^(\d{4})-(\d{2})$/.exec(ns);
-  const nOk = nm && +nm[1] >= 2015 && +nm[2] >= 1 && +nm[2] <= 12 && ns <= new Date().toISOString().slice(0, 7);
-  user.nitro = { since: nOk ? ns : '' };
+  user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
   const l = b.links || {};
   user.links = {
     steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: url(x.url) })).filter(x => x.url),
@@ -166,10 +142,7 @@ function applyUpdate(user, b) {
 function publicView(u) {
   const { auth, ...rest } = u; // Tokens niemals ausliefern
   const d = { ...rest.discord };
-  const tier = d.nitro ? nitroTier(u.nitro && u.nitro.since) : null;
-  d.badges = (d.badges || []).map(b => (b.key === 'nitro' && tier ? { key: tier.key, name: tier.name, icon: tier.icon, emoji: tier.emoji } : b));
-  d.badges = [...d.badges, ...(u.settings.boost ? [MANUAL_BADGES.boost] : [])];
-  return { ...rest, nitro: { since: (u.nitro && u.nitro.since) || '' }, nitroTier: tier ? tier.name : null, discord: d };
+  return { ...rest, discord: d };
 }
 
 async function discordMe(token) {
