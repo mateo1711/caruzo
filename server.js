@@ -39,6 +39,27 @@ const BADGES = [
   { key: 'active_dev',   flag: 1 << 22, name: 'Active Developer',         icon: '6bdc42827a38498929a4920da12695d9', emoji: '💻' },
 ];
 const NITRO = { key: 'nitro', name: 'Discord Nitro', icon: '2ba85e8026a8614b640c2837bcdfe21b', emoji: '💎' };
+// Nitro-Laufzeit-Badges. Discord liefert die Laufzeit nicht über die API -> Stufe wird aus dem
+// im Dashboard angegebenen Nitro-Startmonat berechnet. Ohne Angabe: Beginner.
+// Fällt ein Icon-Hash aus, zeigt das Profil automatisch das Emoji.
+const NITRO_TIERS = [
+  { min: 72, key: 'opal',     name: 'Nitro Opal',     icon: '5b154df19c53dce2af92c9b61e6be5e2', emoji: '🔮' },
+  { min: 36, key: 'ruby',     name: 'Nitro Rubin',    icon: 'cd5e2cfd9d7f27a707b6a7ff1e07f5e9', emoji: '♦️' },
+  { min: 24, key: 'emerald',  name: 'Nitro Smaragd',  icon: '11e2d339068b55d3a506cff34d3780f3', emoji: '💚' },
+  { min: 12, key: 'diamond',  name: 'Nitro Diamant',  icon: '0d61871f72bb9a33a7ae568c1fb4f20a', emoji: '💠' },
+  { min: 6,  key: 'platinum', name: 'Nitro Platin',   icon: '0334688279c8359120922938dcb1d6f8', emoji: '🥈' },
+  { min: 3,  key: 'gold',     name: 'Nitro Gold',     icon: '2895086c18d5531d499862e41d1155a6', emoji: '🥇' },
+  { min: 2,  key: 'silver',   name: 'Nitro Silber',   icon: '4514fab914bdbfb4ad2fa23df76121a6', emoji: '⚪' },
+  { min: 1,  key: 'bronze',   name: 'Nitro Bronze',   icon: '4f33c4a9c64ce221936bd256c356f91f', emoji: '🥉' },
+  { min: 0,  key: 'beginner', name: 'Nitro Beginner', icon: NITRO.icon,                        emoji: '💎' },
+];
+const monthsSince = ym => {
+  const m = /^(\d{4})-(\d{2})$/.exec(ym || '');
+  if (!m) return 0;
+  const n = new Date();
+  return Math.max(0, (n.getFullYear() - +m[1]) * 12 + (n.getMonth() + 1 - +m[2]));
+};
+const nitroTier = ym => NITRO_TIERS.find(t => monthsSince(ym) >= t.min);
 // Kann die API nicht liefern -> im Dashboard manuell schaltbar
 const MANUAL_BADGES = { boost: { key: 'boost', name: 'Server Booster', icon: '', emoji: '🚀' } };
 
@@ -81,7 +102,7 @@ const url = v => {
 };
 const num = (v, min, max, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d; };
 const slug = v => str(v, 24).toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-const RESERVED = ['api', 'auth', 'u', 'uploads', 'dashboard', 'logout', 'admin', 'static'];
+const RESERVED = ['api', 'auth', 'u', 'uploads', 'dashboard', 'logout', 'login', 'admin', 'static', 'landing', 'profile', 'favicon.ico', 'robots.txt', 'health'];
 
 function defaults(dc) {
   return {
@@ -97,6 +118,7 @@ function defaults(dc) {
     background: { type: 'image', url: '', blur: 6, dim: 55 },
     music: { url: '', title: '', volume: 40 },
     spotify: '',
+    nitro: { since: '' },
     links: { steam: [], twitch: '', tiktok: '', custom: [] },
     views: 0,
     createdAt: Date.now(),
@@ -127,6 +149,10 @@ function applyUpdate(user, b) {
   const m = b.music || {};
   user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
   user.spotify = url(b.spotify);
+  const ns = b.nitro && typeof b.nitro.since === 'string' ? b.nitro.since : '';
+  const nm = /^(\d{4})-(\d{2})$/.exec(ns);
+  const nOk = nm && +nm[1] >= 2015 && +nm[2] >= 1 && +nm[2] <= 12 && ns <= new Date().toISOString().slice(0, 7);
+  user.nitro = { since: nOk ? ns : '' };
   const l = b.links || {};
   user.links = {
     steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: url(x.url) })).filter(x => x.url),
@@ -140,8 +166,10 @@ function applyUpdate(user, b) {
 function publicView(u) {
   const { auth, ...rest } = u; // Tokens niemals ausliefern
   const d = { ...rest.discord };
-  d.badges = [...(d.badges || []), ...(u.settings.boost ? [MANUAL_BADGES.boost] : [])];
-  return { ...rest, discord: d };
+  const tier = d.nitro ? nitroTier(u.nitro && u.nitro.since) : null;
+  d.badges = (d.badges || []).map(b => (b.key === 'nitro' && tier ? { key: tier.key, name: tier.name, icon: tier.icon, emoji: tier.emoji } : b));
+  d.badges = [...d.badges, ...(u.settings.boost ? [MANUAL_BADGES.boost] : [])];
+  return { ...rest, nitro: { since: (u.nitro && u.nitro.since) || '' }, nitroTier: tier ? tier.name : null, discord: d };
 }
 
 async function discordMe(token) {
@@ -261,7 +289,13 @@ app.get('/api/profile/:name', (req, res) => {
 // --- Seiten ---
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
 app.get('/', (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
-app.get('/u/:name', page('profile.html'));
+app.get('/u/:name', (req, res) => res.redirect(301, '/' + encodeURIComponent(req.params.name)));
 app.get('/dashboard', (req, res) => (req.session.uid && db[req.session.uid] ? page('dashboard.html')(req, res) : res.redirect('/auth/discord')));
+// Profil unter /name – muss ganz am Ende stehen, damit alle anderen Routen Vorrang haben
+app.get('/:name', (req, res, next) => {
+  const n = req.params.name.toLowerCase();
+  if (!/^[a-z0-9_.-]{2,24}$/.test(n) || RESERVED.includes(n)) return next();
+  res.status(findByName(n) ? 200 : 404).sendFile(path.join(__dirname, 'public', 'profile.html'));
+});
 
 app.listen(PORT, () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`));
