@@ -9,7 +9,8 @@ const crypto = require('crypto');
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
   BASE_URL = 'http://localhost:3000', SESSION_SECRET = 'change-me',
-  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
+  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '',
+  SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
 // Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
@@ -20,7 +21,37 @@ const DB_FILE = path.join(DATA_DIR, 'users.json');
 [DATA_DIR, UP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
-const save = () => fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
+const sbHeaders = (extra = {}) => ({
+  apikey: SUPABASE_SERVICE_ROLE_KEY,
+  Authorization: `Bearer ${SUPABASE_SERVICE_ROLE_KEY}`,
+  ...extra,
+});
+
+async function hydrateFromSupabase() {
+  if (!SUPABASE_ENABLED) return;
+  try {
+    const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?select=id,data`, { headers: sbHeaders() });
+    if (!r.ok) throw new Error(`Supabase load ${r.status}`);
+    const rows = await r.json();
+    for (const row of rows) if (row && row.id && row.data) db[String(row.id)] = row.data;
+    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+    console.log(`Supabase: ${rows.length} Profil(e) geladen.`);
+  } catch (e) {
+    console.error('Supabase konnte nicht geladen werden:', e.message);
+  }
+}
+
+async function saveUser(user) {
+  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  if (!SUPABASE_ENABLED || !user?.id) return;
+  const endpoint = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?on_conflict=id`;
+  await fetch(endpoint, {
+    method: 'POST',
+    headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify([{ id: String(user.id), data: user }]),
+  }).then(r => { if (!r.ok) console.error('Supabase save:', r.status); }).catch(e => console.error('Supabase save:', e.message));
+}
 
 /* ------------------------------------------------------------------ */
 /* Discord Badges (Bit-Flags aus public_flags)                         */
@@ -92,7 +123,14 @@ function defaults(dc) {
     about: '',
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
-    design: { nameEffect: 'standard', nameColor: '#f6eff2' },
+    design: {
+      nameEffect: 'standard', nameColor: '#f6eff2', accentColor: '#8b5cf6',
+      avatarFrameEffect: 'glow', avatarFrameColor: '#8b5cf6', avatarFrameWidth: 2, avatarShape: 'circle',
+      cardStyle: 'glass', cardOpacity: 72, cardBlur: 22, cardRadius: 26, borderOpacity: 12,
+      contentAlign: 'left', socialLayout: 'grid', socialEffect: 'lift', badgeStyle: 'icon',
+    },
+    viewsStyle: { visible: true, corner: 'top-right', effect: 'glow', backgroundOpacity: 22, borderOpacity: 14, eyeOpacity: 92, countOpacity: 88 },
+    pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
     settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, manualNitro: false },
@@ -122,7 +160,23 @@ function applyUpdate(user, b) {
   user.enterText = str(b.enterText, 60) || 'click to enter...';
   const t = b.tags || {};
   user.tags = { label: str(t.label, 24), location: str(t.location, 24), age: str(t.age, 4) };
-  const des=b.design||{}; user.design={nameEffect:['standard','gradient','neon','toon','rubber','typewriter'].includes(des.nameEffect)?des.nameEffect:'standard',nameColor:/^#[0-9a-f]{6}$/i.test(des.nameColor||'')?des.nameColor:'#f6eff2'};
+  const des=b.design||{};
+  const color=(v,d)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:d;
+  user.design={
+    nameEffect:['standard','gradient','neon','toon','rubber','typewriter'].includes(des.nameEffect)?des.nameEffect:'standard',
+    nameColor:color(des.nameColor,'#f6eff2'), accentColor:color(des.accentColor,'#8b5cf6'),
+    avatarFrameEffect:['none','glow','pulse','spin','rainbow','electric','scan','hologram','orbit'].includes(des.avatarFrameEffect)?des.avatarFrameEffect:'glow',
+    avatarFrameColor:color(des.avatarFrameColor,'#8b5cf6'), avatarFrameWidth:num(des.avatarFrameWidth,0,8,2),
+    avatarShape:['circle','squircle','rounded','square'].includes(des.avatarShape)?des.avatarShape:'circle',
+    cardStyle:['glass','solid','outline','frosted','minimal'].includes(des.cardStyle)?des.cardStyle:'glass',
+    cardOpacity:num(des.cardOpacity,20,100,72), cardBlur:num(des.cardBlur,0,50,22), cardRadius:num(des.cardRadius,8,40,26), borderOpacity:num(des.borderOpacity,0,60,12),
+    contentAlign:['left','center'].includes(des.contentAlign)?des.contentAlign:'left',
+    socialLayout:['grid','list','compact'].includes(des.socialLayout)?des.socialLayout:'grid',
+    socialEffect:['none','lift','glow','shine'].includes(des.socialEffect)?des.socialEffect:'lift',
+    badgeStyle:['icon','pill','glass'].includes(des.badgeStyle)?des.badgeStyle:'icon',
+  };
+  const vs=b.viewsStyle||{}; user.viewsStyle={visible:vs.visible!==false,corner:['top-left','top-right','bottom-left','bottom-right'].includes(vs.corner)?vs.corner:'top-right',effect:['none','glow','pulse','scan','blur'].includes(vs.effect)?vs.effect:'glow',backgroundOpacity:num(vs.backgroundOpacity,0,100,22),borderOpacity:num(vs.borderOpacity,0,100,14),eyeOpacity:num(vs.eyeOpacity,0,100,92),countOpacity:num(vs.countOpacity,0,100,88)};
+  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','rays','scanlines','stars','mesh'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
   const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
@@ -182,11 +236,13 @@ app.use(session({
 }));
 
 // Private Hauptseite: Passwort wird nur auf dem Server geprüft.
-const siteUnlocked = (req, res, next) => req.session.siteUnlocked ? next() : res.redirect('/private-login');
-app.get('/private-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'private-login.html')));
+const siteUnlocked = (req, res, next) => req.session.siteUnlocked ? next() : res.redirect('/login');
+app.get('/login', (req, res) => req.session.siteUnlocked ? res.redirect('/') : res.sendFile(path.join(__dirname, 'public', 'private-login.html')));
+app.get('/private-login', (req, res) => res.redirect(301, '/login'));
 app.post('/api/private-login', (req, res) => {
   const supplied = String(req.body?.password || '');
   const expected = String(SITE_PASSWORD || '');
+  if (!expected) return res.status(503).json({ error: 'SITE_PASSWORD ist nicht konfiguriert' });
   const a = Buffer.from(supplied);
   const b = Buffer.from(expected);
   const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
@@ -195,6 +251,8 @@ app.post('/api/private-login', (req, res) => {
   res.json({ ok: true });
 });
 app.post('/api/private-logout', (req, res) => { req.session.siteUnlocked = false; res.json({ ok: true }); });
+app.get('/private-login.html', (req, res) => res.redirect(301, '/login'));
+app.get('/dashboard.html', (req, res) => res.redirect(302, '/dashboard'));
 app.use((req, res, next) => req.path === '/landing.html' ? siteUnlocked(req, res, next) : next());
 app.use('/uploads', express.static(UP_DIR, { setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
@@ -202,7 +260,7 @@ app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 const auth = (req, res, next) => (req.session.uid && db[req.session.uid] ? next() : res.status(401).json({ error: 'Nicht eingeloggt' }));
 
 // --- Discord OAuth ---
-app.get('/auth/discord', (req, res) => {
+app.get('/auth/discord', siteUnlocked, (req, res) => {
   if (!CID || !SECRET) return res.status(500).send('DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET fehlen in der .env');
   req.session.state = crypto.randomBytes(16).toString('hex');
   const q = new URLSearchParams({ client_id: CID, redirect_uri: REDIRECT, response_type: 'code', scope: 'identify', state: req.session.state });
@@ -222,7 +280,7 @@ app.get('/auth/callback', async (req, res) => {
     const user = db[dc.id] || (db[dc.id] = defaults(dc));
     user.discord = dc;
     user.auth = { access: tok.access_token, refresh: tok.refresh_token };
-    save();
+    await saveUser(user);
     req.session.uid = dc.id;
     res.redirect('/dashboard');
   } catch (e) { console.error(e); res.status(500).send('Login fehlgeschlagen.'); }
@@ -233,11 +291,11 @@ app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/')));
 // --- Dashboard-API ---
 app.get('/api/me', auth, (req, res) => res.json(publicView(db[req.session.uid])));
 
-app.post('/api/me', auth, (req, res) => {
+app.post('/api/me', auth, async (req, res) => {
   const user = db[req.session.uid];
   const err = applyUpdate(user, req.body);
   if (err) return res.status(400).json({ error: err });
-  save();
+  await saveUser(user);
   res.json(publicView(user));
 });
 
@@ -262,7 +320,7 @@ app.post('/api/sync', auth, async (req, res) => {
   }
   if (!me) return res.status(401).json({ error: 'Token abgelaufen – bitte neu einloggen.' });
   user.discord = mapDiscord(me);
-  save();
+  await saveUser(user);
   res.json(publicView(user));
 });
 
@@ -270,7 +328,7 @@ const EXT = {
   background: ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.webm'],
   music: ['.mp3', '.ogg', '.wav', '.m4a'],
 };
-const upload = multer({
+const localUpload = multer({
   storage: multer.diskStorage({
     destination: UP_DIR,
     filename: (r, f, cb) => cb(null, crypto.randomBytes(12).toString('hex') + path.extname(f.originalname).toLowerCase()),
@@ -281,20 +339,41 @@ const upload = multer({
     cb(ok ? null : new Error('Dateityp nicht erlaubt'), ok);
   },
 });
+const cloudUpload = multer({
+  storage: multer.memoryStorage(),
+  limits: { fileSize: 80 * 1024 * 1024 },
+  fileFilter: (req, f, cb) => {
+    const ok = (EXT[req.params.kind] || []).includes(path.extname(f.originalname).toLowerCase());
+    cb(ok ? null : new Error('Dateityp nicht erlaubt'), ok);
+  },
+});
 app.post('/api/upload/:kind', auth, (req, res) => {
-  upload.single('file')(req, res, err => {
+  const handler = SUPABASE_ENABLED ? cloudUpload.single('file') : localUpload.single('file');
+  handler(req, res, async err => {
     if (err || !req.file) return res.status(400).json({ error: err ? err.message : 'Keine Datei' });
-    res.json({ url: '/uploads/' + req.file.filename });
+    if (!SUPABASE_ENABLED) return res.json({ url: '/uploads/' + req.file.filename });
+    try {
+      const ext = path.extname(req.file.originalname).toLowerCase();
+      const key = `${req.session.uid}/${req.params.kind}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
+      const base = SUPABASE_URL.replace(/\/$/, '');
+      const r = await fetch(`${base}/storage/v1/object/${encodeURIComponent(SUPABASE_BUCKET)}/${key.split('/').map(encodeURIComponent).join('/')}`, {
+        method: 'POST',
+        headers: sbHeaders({ 'Content-Type': req.file.mimetype || 'application/octet-stream', 'x-upsert': 'true' }),
+        body: req.file.buffer,
+      });
+      if (!r.ok) throw new Error(`Storage Upload ${r.status}: ${await r.text()}`);
+      res.json({ url: `${base}/storage/v1/object/public/${encodeURIComponent(SUPABASE_BUCKET)}/${key.split('/').map(encodeURIComponent).join('/')}` });
+    } catch (e) { console.error(e); res.status(500).json({ error: 'Cloud-Upload fehlgeschlagen. Prüfe Supabase-Bucket und Environment Variablen.' }); }
   });
 });
 
 // --- Öffentliche API ---
 const findByName = n => Object.values(db).find(u => u.username === String(n).toLowerCase());
-app.get('/api/profile/:name', (req, res) => {
+app.get('/api/profile/:name', async (req, res) => {
   const user = req.params.name === '__home__' ? findByName(HOME_USER) : findByName(req.params.name);
   if (!user) return res.status(404).json({ error: 'Profil nicht gefunden' });
   user.views = (user.views || 0) + 1;
-  save();
+  await saveUser(user);
   res.json(publicView(user));
 });
 
@@ -302,7 +381,7 @@ app.get('/api/profile/:name', (req, res) => {
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
 app.get('/', siteUnlocked, (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
 app.get('/u/:name', (req, res) => res.redirect(301, '/' + encodeURIComponent(req.params.name)));
-app.get('/dashboard', (req, res) => (req.session.uid && db[req.session.uid] ? page('dashboard.html')(req, res) : res.redirect('/auth/discord')));
+app.get('/dashboard', siteUnlocked, (req, res) => (req.session.uid && db[req.session.uid] ? page('dashboard.html')(req, res) : res.redirect('/auth/discord')));
 // Profil unter /name – muss ganz am Ende stehen, damit alle anderen Routen Vorrang haben
 app.get('/:name', (req, res, next) => {
   const n = req.params.name.toLowerCase();
@@ -310,4 +389,4 @@ app.get('/:name', (req, res, next) => {
   res.status(findByName(n) ? 200 : 404).sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
-app.listen(PORT, () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`));
+hydrateFromSupabase().finally(() => app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)));
