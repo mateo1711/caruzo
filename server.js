@@ -151,19 +151,20 @@ function defaults(dc) {
       cardStyle: 'glass', cardOpacity: 72, cardBlur: 22, cardRadius: 26, borderOpacity: 12,
       cardGlow: 18, glassSaturation: 120, avatarSize: 132, socialRadius: 18, profileWidth: 1000,
       contentAlign: 'left', socialLayout: 'grid', socialEffect: 'lift', badgeStyle: 'icon',
+      profileHover: 'tilt', hoverIntensity: 55, hoverGlow: 35,
     },
-    viewsStyle: { visible: true, corner: 'top-right', effect: 'glow', backgroundOpacity: 22, borderOpacity: 14, eyeOpacity: 92, countOpacity: 88 },
+    viewsStyle: { visible: true, placement: 'profile', corner: 'top-right', effect: 'glow', backgroundOpacity: 22, borderOpacity: 14, eyeOpacity: 92, countOpacity: 88 },
     pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, manualNitro: false, nitroTier: '' },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showProfileBrand: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30 },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
     spotify: '',
-    spotifyStyle: { blur: 26, glow: 24 },
+    spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
     floating: [],
-    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', custom: [] },
+    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', custom: [] },
     views: 0,
     createdAt: Date.now(),
   };
@@ -198,15 +199,18 @@ function applyUpdate(user, b) {
     socialRadius:num(des.socialRadius,8,28,18), profileWidth:num(des.profileWidth,680,1100,1000),
     contentAlign:['left','center'].includes(des.contentAlign)?des.contentAlign:'left',
     socialLayout:['grid','list','compact'].includes(des.socialLayout)?des.socialLayout:'grid',
-    socialEffect:['none','lift','glow','shine'].includes(des.socialEffect)?des.socialEffect:'lift',
+    socialEffect:['none','lift','glow','shine','tilt','magnetic','neon','border-flow'].includes(des.socialEffect)?des.socialEffect:'lift',
     badgeStyle:['icon','pill','glass'].includes(des.badgeStyle)?des.badgeStyle:'icon',
+    profileHover:['none','tilt','soft-follow','magnetic','spotlight','depth','prism'].includes(des.profileHover)?des.profileHover:'tilt',
+    hoverIntensity:num(des.hoverIntensity,0,100,55),
+    hoverGlow:num(des.hoverGlow,0,100,35),
   };
-  const vs=b.viewsStyle||{}; user.viewsStyle={visible:vs.visible!==false,corner:['top-left','top-right','bottom-left','bottom-right'].includes(vs.corner)?vs.corner:'top-right',effect:['none','glow','pulse','scan','blur'].includes(vs.effect)?vs.effect:'glow',backgroundOpacity:num(vs.backgroundOpacity,0,100,22),borderOpacity:num(vs.borderOpacity,0,100,14),eyeOpacity:num(vs.eyeOpacity,0,100,92),countOpacity:num(vs.countOpacity,0,100,88)};
-  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','rays','scanlines','stars','mesh','nebula','noise','orbs','rain'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
+  const vs=b.viewsStyle||{}; user.viewsStyle={visible:vs.visible!==false,placement:['profile','page-bottom'].includes(vs.placement)?vs.placement:'profile',corner:['top-left','top-right','bottom-left','bottom-right'].includes(vs.corner)?vs.corner:'top-right',effect:['none','glow','pulse','scan','blur'].includes(vs.effect)?vs.effect:'glow',backgroundOpacity:num(vs.backgroundOpacity,0,100,22),borderOpacity:num(vs.borderOpacity,0,100,14),eyeOpacity:num(vs.eyeOpacity,0,100,92),countOpacity:num(vs.countOpacity,0,100,88)};
+  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','snow','particles','constellation','rays','scanlines','stars','mesh','nebula','noise','orbs','rain'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
   const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
-  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus', 'manualNitro'].map(k => [k, !!s[k]]));
+  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus', 'showProfileBrand', 'manualNitro'].map(k => [k, !!s[k]]));
   user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : '';
   const bg = b.background || {};
   user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30) };
@@ -215,7 +219,7 @@ function applyUpdate(user, b) {
   user.soundMode = ['auto','music','video','mute'].includes(b.soundMode) ? b.soundMode : 'auto';
   user.spotify = url(b.spotify);
   const sp = b.spotifyStyle || {};
-  user.spotifyStyle = { blur: num(sp.blur, 0, 50, 26), glow: num(sp.glow, 0, 100, 24) };
+  user.spotifyStyle = { blur: num(sp.blur, 0, 50, 26), glow: num(sp.glow, 0, 100, 24), layout: ['compact','full'].includes(sp.layout) ? sp.layout : 'compact' };
   user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
   const l = b.links || {};
   user.links = {
@@ -225,6 +229,7 @@ function applyUpdate(user, b) {
     x: url(l.x),
     epic: str(l.epic, 64).trim(),
     valorant: str(l.valorant, 64).trim(),
+    discordServerName: str(l.discordServerName, 48).trim(),
     discordServer: discordInvite(l.discordServer),
     instagram: url(l.instagram), youtube: url(l.youtube), github: url(l.github), bluesky: url(l.bluesky),
     custom: (Array.isArray(l.custom) ? l.custom : []).slice(0, 12).map(x => ({ label: str(x.label, 30), url: url(x.url) })).filter(x => x.url),
