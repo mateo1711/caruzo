@@ -48,7 +48,7 @@ body.is-dirty .dirty{display:flex}
 .card h3{margin:0;font:700 15px var(--display)}
 .card .desc{margin:-8px 0 0;color:var(--mute);font-size:12px}
 label.f{display:grid;gap:6px;color:var(--mute)}
-input[type=text],input[type=url],input[type=number],input[type=month],textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--field);color:var(--text);font:inherit}
+input[type=text],input[type=url],input[type=number],input[type=month],textarea,select{width:100%;padding:11px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.035);color:var(--text);font:inherit;outline:none;transition:border-color .18s,background .18s,box-shadow .18s} input:focus,textarea:focus,select:focus{border-color:rgba(143,124,255,.55);background:rgba(255,255,255,.055);box-shadow:0 0 0 3px rgba(143,124,255,.10)} input[type=color]{appearance:none;-webkit-appearance:none;width:100%;height:46px;padding:0;border:0!important;border-radius:12px;overflow:hidden;background:transparent;cursor:pointer}input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:12px}input[type=color]::-moz-color-swatch{border:0;border-radius:12px}
 input:disabled{opacity:.5}
 textarea{min-height:96px;resize:vertical}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
@@ -108,7 +108,7 @@ header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .previewName{font:700 34px var(--display);padding:22px;border-radius:14px;text-align:center;background:radial-gradient(circle at 50% 20%,rgba(255,46,147,.14),transparent 60%),#100b0e;border:1px solid var(--line)}
 .previewName.gradient{background-image:linear-gradient(90deg,#ff2e93,#8f7cff,#55e6ff);-webkit-background-clip:text;color:transparent}.previewName.neon{text-shadow:0 0 8px currentColor,0 0 22px #ff2e93}.previewName.toon{text-shadow:3px 3px 0 #000,-2px -2px 0 #ff2e93}.previewName.rubber{animation:rub .9s ease-in-out infinite alternate}@keyframes rub{to{transform:scaleX(1.05) scaleY(.94)}}
 </style>
-</head>
+<link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
 <header>
   <img id="hAvatar" alt="">
@@ -192,7 +192,7 @@ header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
     <section class="panel" data-panel="effekte" hidden>
       <h2>Effekte</h2><p class="desc">Animationen für Hintergrund und Profil.</p>
       <div class="card"><h3>Profil-Effekt</h3>
-        <label class="f">Animation<select data-p="background.effect"><option value="none">Keine</option><option value="float">Schweben</option><option value="tilt">Mit Maus bewegen (3D)</option><option value="zoom">Sanft zoomen</option><option value="pulse">Pulsieren</option></select></label>
+        <label class="f">Animation<select data-p="background.effect"><option value="none">Clean / Keine</option><option value="aurora">Aurora Drift</option><option value="plasma">Plasma Flow</option><option value="dither">Digital Dither</option><option value="float">Zero Gravity</option><option value="tilt">Parallax 3D</option><option value="zoom">Cinematic Zoom</option><option value="pulse">Soft Pulse</option></select></label>
       </div>
       <div class="card"><h3>Bewegte Texte / Elemente oben</h3><p class="desc">Mehrere kurze Texte, Wörter oder Symbole. Sie bewegen sich dezent über das Profil.</p><div class="rep" id="floating"></div></div>
     </section>
@@ -204,11 +204,11 @@ header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
       <div class="card"><h3>Display Name</h3><p class="desc">This is the main name shown on your profile.</p>
         <label class="f">Name<input type="text" data-p="displayName"></label>
         <label class="f">Effekt wählen<select data-p="design.nameEffect"><option value="standard">Standard</option><option value="gradient">Farbverlauf</option><option value="neon">Neon</option><option value="toon">Toon</option><option value="rubber">Gummi</option><option value="typewriter">Typewriter</option></select></label>
-        <label class="f">Farbe wählen<input type="color" data-p="design.nameColor" style="height:44px;padding:5px"></label>
+        <label class="f">Farbe wählen<input type="color" data-p="design.nameColor" ></label>
         <div class="previewName" id="namePreview">Preview</div><p class="hint">Auto+ Vorschau · Typewriter tippt, hält und löscht endlos.</p>
       </div>
       <div class="card"><h3>Cursor effect</h3><p class="desc">Partikel und Trails folgen dem Mauszeiger.</p>
-        <label class="f">Effekt<select data-p="cursor.effect"><option value="none">Clean</option><option value="spark">Stardust</option><option value="trail">Comet Trail</option><option value="snow">Frost</option><option value="hearts">Love Dust</option><option value="fire">Ember</option><option value="magic">Aurora</option></select></label>
+        <label class="f">Effekt<select data-p="cursor.effect"><option value="none">Clean</option><option value="spark">Prism Sparks</option><option value="trail">Photon Trail</option><option value="snow">Crystal Drift</option><option value="hearts">Pulse Hearts</option><option value="fire">Solar Embers</option><option value="magic">Nebula Dust</option><option value="orbit">Orbit</option><option value="matrix">Pixel Rain</option></select></label>
         <label class="f">Cursor image<select data-p="cursor.image"><option value="system">System</option><option value="crosshair">Target</option><option value="dot">Minimal Dot</option><option value="ring">Halo Ring</option><option value="cross">Precision Cross</option><option value="arrow">Sharp Arrow</option><option value="star">Nova Star</option></select></label>
         <label class="f">SVG Upload / Data-URL<input type="text" data-p="cursor.svg" placeholder="data:image/svg+xml,..."></label>
       </div>
@@ -232,7 +232,7 @@ header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
 
 
     <section class="panel" data-panel="browser" hidden>
-      <h2>Browser Tab</h2><p class="desc">Controls your browser tab title animation. Custom messages rotate below.</p>
+      <h2>Browser Tab</h2><p class="desc">Animierte Browser-Titel mit mehreren Abschnitten. Geschwindigkeit und Stil lassen sich frei kombinieren.</p>
       <div class="card"><h3>Tab Animation</h3>
         <label class="f">Animation<select data-p="browser.effect"><option value="rotate">Rotate</option><option value="type">Typewriter</option><option value="marquee">Marquee</option><option value="pulse">Pulse dots</option></select></label>
         <label class="f">Geschwindigkeit<select data-p="browser.speed"><option value="500">Sehr schnell · 0.5s</option><option value="900">Schnell · 0.9s</option><option value="1500">Normal · 1.5s</option><option value="2500">Langsam · 2.5s</option><option value="4000">Sehr langsam · 4s</option></select></label>
@@ -308,7 +308,7 @@ function updateUrl() {
 }
 
 function bind() {
-  me.design ??= {nameEffect:'standard',nameColor:'#f6eff2'}; me.cursor ??= {effect:'none',image:'system',svg:''}; me.browser ??= {effect:'rotate',speed:1500,messages:[]}; me.links ??= {}; me.links.steam ??=[]; me.links.custom ??=[];
+  me.design ??= {nameEffect:'standard',nameColor:'#f6eff2'}; me.cursor ??= {effect:'none',image:'system',svg:''}; me.browser ??= {effect:'rotate',speed:1500,messages:[]}; me.music ??= {}; if(me.music.volume==null) me.music.volume=30; me.links ??= {}; me.links.steam ??=[]; me.links.custom ??=[];
   document.querySelectorAll('[data-p]').forEach(e => {
     const v = get(me, e.dataset.p);
     if (e.type === 'checkbox') e.checked = !!v; else e.value = v ?? '';

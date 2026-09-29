@@ -128,9 +128,19 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .name-gradient{background:linear-gradient(90deg,#ff2e93,#8f7cff,#55e6ff,#ff2e93);background-size:300% 100%;-webkit-background-clip:text;color:transparent!important;animation:nameFlow 5s linear infinite}@keyframes nameFlow{to{background-position:300% 0}}
 .name-neon{text-shadow:0 0 8px currentColor,0 0 18px currentColor,0 0 34px #ff2e93}.name-toon{text-shadow:3px 3px 0 #080507,-2px -2px 0 #ff2e93}.name-rubber{animation:nameRub .9s ease-in-out infinite alternate}@keyframes nameRub{to{transform:scaleX(1.07) scaleY(.93)}}
 .cursor-particle{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-50%);animation:particleOut .8s ease-out forwards}@keyframes particleOut{to{opacity:0;transform:translate(-50%,-50%) translateY(-20px) scale(.3)}}
+
+/* Caruzo Motion Engine v3 */
+.bg.fx-aurora:after,.bg.fx-plasma:after,.bg.fx-dither:after{content:"";position:absolute;inset:-20%;pointer-events:none;mix-blend-mode:screen;opacity:.42}
+.bg.fx-aurora:after{background:conic-gradient(from 90deg at 50% 50%,transparent,#26e6ff55,#7b4dff66,#ff37bd55,transparent);filter:blur(70px);animation:caruzoSpin 16s linear infinite}
+.bg.fx-plasma:after{background:radial-gradient(circle at 25% 30%,#26e6ff77,transparent 28%),radial-gradient(circle at 75% 65%,#b52cff77,transparent 30%);filter:blur(55px);animation:plasmaMove 9s ease-in-out infinite alternate}
+.bg.fx-dither:after{inset:0;opacity:.13;background-image:radial-gradient(#fff 0.7px,transparent .8px);background-size:5px 5px;animation:ditherMove 1.8s steps(3) infinite}
+@keyframes caruzoSpin{to{transform:rotate(360deg) scale(1.12)}}@keyframes plasmaMove{to{transform:translate3d(6%,-4%,0) scale(1.12)}}@keyframes ditherMove{50%{background-position:3px 2px}}
+.cursor-trail-dot{position:fixed;z-index:998;pointer-events:none;width:7px;height:7px;border-radius:50%;background:currentColor;box-shadow:0 0 14px currentColor;transform:translate(-50%,-50%);animation:trailFade .65s ease-out forwards}@keyframes trailFade{to{opacity:0;transform:translate(-50%,-50%) scale(.15)}}
+.brandmark{position:fixed;top:18px;left:20px;z-index:40;width:46px;height:46px;object-fit:contain;filter:drop-shadow(0 8px 22px #0008);opacity:.94}
+@media(max-width:650px){.brandmark{width:38px;height:38px;top:12px;left:12px}}
 </style>
-</head>
-<body>
+<link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
+<body><img class="brandmark" src="/caruzo-logo.png" alt="Caruzo">
 <div class="bg" id="bg"></div><div class="float-layer" id="floatLayer"></div>
 <div id="enter" role="button" tabindex="0"><span id="enterText">click to enter...</span></div>
 
@@ -272,7 +282,7 @@ function render(u) {
   const useMusic = !!u.music.url && (mode === 'auto' || mode === 'music');
   const useVideoSound = !!video && u.background.videoSound !== false && (mode === 'video' || (mode === 'auto' && !u.music.url));
   if (useMusic) setupMusic(u.music);
-  if (video) video.muted = !useVideoSound;
+  if (video) { video.muted = !useVideoSound; video.volume = 0.30; }
 
   // Status via Lanyard
   if (s.showStatus) { pollStatus(d.id); setInterval(() => pollStatus(d.id), 30000); }
@@ -306,12 +316,16 @@ function setupBrowserTab(u){
 }
 function setupCursor(c){
   const cursors={crosshair:'crosshair',dot:'crosshair',ring:'crosshair',cross:'crosshair',arrow:'default',star:'crosshair'};
-  if(c.svg&&c.svg.startsWith('data:image/svg+xml'))document.body.style.cursor=`url("${c.svg}"), auto`; else if(c.image&&c.image!=='system')document.body.style.cursor=cursors[c.image]||'default';
-  if(!c.effect||c.effect==='none')return; let last=0;
-  const chars={spark:'✦',trail:'•',snow:'❄',hearts:'♥',fire:'✹',magic:'✧'};
-  addEventListener('pointermove',e=>{const now=performance.now();if(now-last<45)return;last=now;const p=document.createElement('span');p.className='cursor-particle';p.textContent=chars[c.effect]||'✦';p.style.left=e.clientX+'px';p.style.top=e.clientY+'px';p.style.fontSize=(10+Math.random()*10)+'px';document.body.append(p);setTimeout(()=>p.remove(),850)});
+  if(c.svg&&c.svg.startsWith('data:image/svg+xml')) document.body.style.cursor=`url("${c.svg}"), auto`; else if(c.image&&c.image!=='system') document.body.style.cursor=cursors[c.image]||'default';
+  if(!c.effect||c.effect==='none'||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  let last=0, hue=190; const glyph={spark:'✦',snow:'❄',hearts:'♥',fire:'✦',magic:'✧',orbit:'◌',matrix:'▪'};
+  addEventListener('pointermove',e=>{
+    const now=performance.now(); if(now-last<28)return; last=now; hue=(hue+7)%360;
+    const p=document.createElement('span');
+    if(c.effect==='trail'){p.className='cursor-trail-dot';p.style.color=`hsl(${hue} 90% 65%)`;} else {p.className='cursor-particle';p.textContent=glyph[c.effect]||'✦';p.style.color=`hsl(${hue} 92% 68%)`;p.style.textShadow='0 0 12px currentColor';p.style.fontSize=(c.effect==='matrix'?8:10+Math.random()*8)+'px';}
+    p.style.left=e.clientX+'px';p.style.top=e.clientY+'px';document.body.append(p);setTimeout(()=>p.remove(),900);
+  },{passive:true});
 }
-
 function typewriter(node, text) {
   if (!text) return node.remove();
   if (matchMedia('(prefers-reduced-motion:reduce)').matches) return node.textContent = text;
@@ -327,7 +341,7 @@ function typewriter(node, text) {
 }
 
 function setupMusic(m) {
-  audio = new Audio(m.url); audio.loop = true; audio.volume = m.volume / 100;
+  audio = new Audio(m.url); audio.loop = true; const startVolume = Number.isFinite(Number(m.volume)) ? Number(m.volume) : 30; audio.volume = Math.max(0,Math.min(1,startVolume/100));
   $('#player').style.display = 'flex';
   $('#trackName').textContent = m.title || 'Musik';
   $('#vol').value = m.volume;
