@@ -1,1 +1,179 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@700&display=swap" rel="stylesheet">
+<style>
+:root{--pink:#ff2e93;--line:rgba(255,255,255,.1);--mute:#a99aa2}
+*{box-sizing:border-box}
+body{margin:0;background:#0e0a0c;color:#f6eff2;font:13px 'JetBrains Mono',monospace}
+:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+header{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;padding:12px 20px;background:rgba(14,10,12,.9);backdrop-filter:blur(12px);border-bottom:1px solid var(--line)}
+header h1{flex:1;margin:0;font:700 20px 'Space Grotesk',sans-serif}
+header img{width:30px;height:30px;border-radius:50%}
+.btn{padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:inherit;font:inherit;cursor:pointer;text-decoration:none;display:inline-block}
+.btn.pri{background:var(--pink);border-color:var(--pink);color:#fff;font-weight:700}
+main{width:min(760px,calc(100vw - 24px));margin:24px auto 80px;display:grid;gap:16px}
+fieldset{margin:0;padding:22px;border:1px solid var(--line);border-radius:18px;background:rgba(24,16,19,.7);display:grid;gap:14px}
+legend{padding:0 8px;font:700 15px 'Space Grotesk',sans-serif}
+label{display:grid;gap:6px;color:var(--mute)}
+input[type=text],input[type=url],input[type=number],textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#160e12;color:#f6eff2;font:inherit}
+textarea{min-height:90px;resize:vertical}
+.row{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px}
+.check{display:flex;align-items:center;gap:10px;color:#f6eff2}
+.check input{accent-color:var(--pink);width:16px;height:16px}
+.hint{color:var(--mute);font-size:12px;line-height:1.5;margin:0}
+.rep{display:grid;gap:8px}
+.rep .item{display:grid;grid-template-columns:1fr 2fr auto;gap:8px}
+.badges{display:flex;gap:8px;flex-wrap:wrap}
+.badges span{padding:4px 10px;border:1px solid var(--line);border-radius:999px;display:flex;gap:6px;align-items:center}
+.badges img{width:18px;height:18px}
+.file{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;transition:.25s;background:#1d1317;border:1px solid var(--line);padding:10px 16px;border-radius:12px}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+</style>
+</head>
+<body>
+<header>
+  <img id="hAvatar" alt="">
+  <h1>Dashboard</h1>
+  <a class="btn" id="view" target="_blank">Profil ansehen</a>
+  <a class="btn" href="/logout">Logout</a>
+  <button class="btn pri" id="save">Speichern</button>
+</header>
 
+<main>
+<fieldset><legend>Profil</legend>
+  <div class="row">
+    <label>Username (URL: /u/name)<input type="text" data-p="username"></label>
+    <label>Anzeigename<input type="text" data-p="displayName"></label>
+  </div>
+  <label>Tagline (Tipp-Animation)<input type="text" data-p="tagline"></label>
+  <div class="row">
+    <label>Tag<input type="text" data-p="tags.label" placeholder="catlover"></label>
+    <label>Ort<input type="text" data-p="tags.location" placeholder="germany"></label>
+    <label>Alter<input type="text" data-p="tags.age" placeholder="17"></label>
+  </div>
+  <label>„Click to enter“-Text<input type="text" data-p="enterText"></label>
+  <label>About-Text (leer = Bereich wird ausgeblendet)<textarea data-p="about"></textarea></label>
+  <div class="row">
+    <label>Highlight-Button: Text<input type="text" data-p="cta.label"></label>
+    <label>Highlight-Button: Link<input type="url" data-p="cta.url" placeholder="https://"></label>
+  </div>
+</fieldset>
+
+<fieldset><legend>Discord</legend>
+  <div class="badges" id="badgeList"></div>
+  <p class="hint">Avatar, Banner, Decoration, Badges (inkl. Nitro) und Server-Tag kommen direkt von Discord. Hast du etwas in Discord geändert, klicke auf „Neu laden“.</p>
+  <div><button class="btn" id="sync">Von Discord neu laden</button></div>
+  <label class="check"><input type="checkbox" data-p="settings.showDecoration"> Avatar-Decoration anzeigen</label>
+  <label class="check"><input type="checkbox" data-p="settings.showBanner"> Discord-Banner als Kartenkopf anzeigen</label>
+  <label class="check"><input type="checkbox" data-p="settings.showBadges"> Badges anzeigen</label>
+  <label class="check"><input type="checkbox" data-p="settings.showTag"> Server-Tag anzeigen</label>
+  <label class="check"><input type="checkbox" data-p="settings.showStatus"> Live-Status anzeigen (Online / Idle / DND)</label>
+  <label class="check"><input type="checkbox" data-p="settings.boost"> Booster-Badge anzeigen (Discord liefert das nicht automatisch)</label>
+  <p class="hint">Live-Status funktioniert über Lanyard: Tritt dafür einmalig dem Lanyard-Discord bei (discord.gg/lanyard).</p>
+</fieldset>
+
+<fieldset><legend>Hintergrund</legend>
+  <div class="row">
+    <label>Typ<select data-p="background.type"><option value="image">Bild / GIF</option><option value="video">Video</option></select></label>
+    <label>URL oder Upload<input type="text" data-p="background.url" id="bgUrl"></label>
+  </div>
+  <div class="file"><input type="file" data-upload="background" accept="image/*,video/mp4,video/webm"><span class="hint">Bild oder Video (max. 80 MB)</span></div>
+  <div class="row">
+    <label>Unschärfe (0–30)<input type="number" min="0" max="30" data-p="background.blur"></label>
+    <label>Abdunkeln % (0–90)<input type="number" min="0" max="90" data-p="background.dim"></label>
+  </div>
+</fieldset>
+
+<fieldset><legend>Musik</legend>
+  <div class="row">
+    <label>Titelname<input type="text" data-p="music.title"></label>
+    <label>Lautstärke (0–100)<input type="number" min="0" max="100" data-p="music.volume"></label>
+  </div>
+  <label>Audio-URL oder Upload<input type="text" data-p="music.url"></label>
+  <div class="file"><input type="file" data-upload="music" accept="audio/*"><span class="hint">mp3, ogg, wav, m4a</span></div>
+</fieldset>
+
+<fieldset><legend>Spotify</legend>
+  <label>Playlist-, Album- oder Track-Link<input type="url" data-p="spotify" placeholder="https://open.spotify.com/playlist/…"></label>
+</fieldset>
+
+<fieldset><legend>Accounts &amp; Links</legend>
+  <div class="rep" id="steam"><b>Steam-Accounts</b></div>
+  <label>Twitch-Link<input type="url" data-p="links.twitch" placeholder="https://twitch.tv/name"></label>
+  <label>TikTok-Link<input type="url" data-p="links.tiktok" placeholder="https://tiktok.com/@name"></label>
+  <div class="rep" id="custom"><b>Weitere Links (GitHub, Bluesky, …)</b></div>
+</fieldset>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+let me;
+const get = (o, p) => p.split('.').reduce((a, k) => a?.[k], o);
+const set = (o, p, v) => { const ks = p.split('.'), l = ks.pop(); ks.reduce((a, k) => (a[k] ??= {}), o)[l] = v; };
+const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 2200); };
+const api = async (u, opt) => { const r = await fetch(u, opt); const j = await r.json().catch(() => ({})); if (!r.ok) throw new Error(j.error || 'Fehler'); return j; };
+
+function bind() {
+  document.querySelectorAll('[data-p]').forEach(e => {
+    const v = get(me, e.dataset.p);
+    if (e.type === 'checkbox') e.checked = !!v; else e.value = v ?? '';
+    e.oninput = () => set(me, e.dataset.p, e.type === 'checkbox' ? e.checked : e.type === 'number' ? Number(e.value) : e.value);
+  });
+  $('#hAvatar').src = me.discord.avatar;
+  $('#view').href = '/u/' + me.username;
+  const bl = $('#badgeList'); bl.replaceChildren();
+  const list = me.discord.badges;
+  if (!list.length) bl.textContent = 'Keine öffentlichen Badges gefunden.';
+  list.forEach(b => {
+    const s = document.createElement('span');
+    if (b.icon) { const i = new Image(); i.src = `https://cdn.discordapp.com/badge-icons/${b.icon}.png`; i.onerror = () => i.replaceWith(b.emoji); s.append(i); } else s.append(b.emoji);
+    s.append(b.name); bl.append(s);
+  });
+  repeater('#steam', me.links.steam, [['name', 'Name'], ['url', 'Profil-Link']], 'Steam-Account hinzufügen');
+  repeater('#custom', me.links.custom, [['label', 'Titel'], ['url', 'Link']], 'Link hinzufügen');
+}
+
+function repeater(sel, arr, fields, addLabel) {
+  const box = $(sel); box.querySelectorAll('.item,button').forEach(n => n.remove());
+  arr.forEach((it, i) => {
+    const row = document.createElement('div'); row.className = 'item';
+    fields.forEach(([k, ph]) => { const inp = document.createElement('input'); inp.type = 'text'; inp.placeholder = ph; inp.value = it[k] || ''; inp.oninput = () => it[k] = inp.value; row.append(inp); });
+    const del = document.createElement('button'); del.className = 'btn'; del.textContent = '✕'; del.setAttribute('aria-label', 'Entfernen'); del.onclick = () => { arr.splice(i, 1); repeater(sel, arr, fields, addLabel); };
+    row.append(del); box.append(row);
+  });
+  const add = document.createElement('button'); add.className = 'btn'; add.textContent = '+ ' + addLabel;
+  add.onclick = () => { arr.push({}); repeater(sel, arr, fields, addLabel); };
+  box.append(add);
+}
+
+document.querySelectorAll('[data-upload]').forEach(inp => inp.onchange = async () => {
+  const f = inp.files[0]; if (!f) return;
+  const kind = inp.dataset.upload, fd = new FormData(); fd.append('file', f);
+  try {
+    toast('Lade hoch …');
+    const { url } = await api('/api/upload/' + kind, { method: 'POST', body: fd });
+    if (kind === 'background') { me.background.url = url; me.background.type = f.type.startsWith('video') ? 'video' : 'image'; }
+    else me.music.url = url;
+    bind(); toast('Hochgeladen – jetzt speichern');
+  } catch (e) { toast(e.message); }
+});
+
+$('#save').onclick = async () => {
+  try { me = await api('/api/me', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(me) }); bind(); toast('Gespeichert'); }
+  catch (e) { toast(e.message); }
+};
+$('#sync').onclick = async () => {
+  try { const fresh = await api('/api/sync', { method: 'POST' }); me.discord = fresh.discord; bind(); toast('Discord-Daten aktualisiert'); }
+  catch (e) { toast(e.message); }
+};
+
+api('/api/me').then(u => { me = u; bind(); }).catch(() => location.href = '/auth/discord');
+</script>
+</body>
+</html>

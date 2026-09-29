@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>…</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#0e0a0c; --card:rgba(24,16,19,.74); --card-2:rgba(255,255,255,.05);
+  --line:rgba(255,255,255,.09); --pink:#ff2e93; --plum:#6e2a4b; --plum-dark:#5a2340;
+  --text:#f6eff2; --mute:#a99aa2; --dim:.55; --blur:6px;
+  --mono:'JetBrains Mono',ui-monospace,monospace; --display:'Space Grotesk',system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px}
+a{color:inherit;text-decoration:none}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:2px solid var(--pink);outline-offset:2px}
+
+/* Hintergrund */
+.bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
+  background:radial-gradient(60% 40% at 30% 10%,rgba(255,46,147,.28),transparent 70%),radial-gradient(50% 40% at 80% 15%,rgba(255,46,147,.22),transparent 70%),#0e0a0c}
+.bg img,.bg video{position:absolute;inset:-3%;width:106%;height:106%;object-fit:cover;filter:blur(var(--blur))}
+.bg::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(10,6,8,calc(var(--dim)*.7)),rgba(10,6,8,var(--dim)) 60%,rgba(10,6,8,.92))}
+
+/* Enter */
+#enter{position:fixed;inset:0;z-index:100;display:grid;place-items:center;background:rgba(10,6,8,.55);
+  backdrop-filter:blur(22px);-webkit-backdrop-filter:blur(22px);cursor:pointer;transition:opacity .7s,visibility .7s}
+#enter.gone{opacity:0;visibility:hidden}
+#enter span{font-size:15px;letter-spacing:.06em;color:#e9dde3}
+#enter span::after{content:"";display:inline-block;width:8px;height:1.1em;margin-left:6px;vertical-align:-2px;background:var(--pink);animation:blink 1s steps(1) infinite}
+@keyframes blink{50%{opacity:0}}
+
+/* Nav */
+nav{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:20;display:flex;align-items:center;gap:28px;
+  padding:8px 14px;border:1px solid var(--line);border-radius:16px;background:rgba(20,13,16,.8);backdrop-filter:blur(14px);max-width:calc(100vw - 20px)}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;white-space:nowrap}
+.logo b{color:var(--pink);font-size:20px;font-weight:700}
+.logo i{color:var(--pink);font-style:normal}
+nav .links{display:flex;gap:4px}
+nav .links a{padding:6px 12px;border-radius:8px;color:var(--mute);border-bottom:2px solid transparent}
+nav .links a.on{color:var(--pink);background:rgba(255,46,147,.1);border-bottom-color:var(--pink)}
+
+main{width:min(1000px,calc(100vw - 24px));margin:0 auto;padding:96px 0 120px;display:grid;gap:22px}
+section{scroll-margin-top:90px}
+.card{border:1px solid var(--line);background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border-radius:26px}
+
+/* Profil */
+.profile{position:relative;overflow:hidden;padding:0}
+.banner{height:120px;background:#2a1a22 center/cover}
+.profile .inner{display:flex;gap:26px;padding:34px 34px 30px;align-items:flex-start}
+.profile.has-banner .inner{padding-top:0;margin-top:-52px}
+.avatar{position:relative;flex:none;width:132px;height:132px}
+.avatar .pfp{width:100%;height:100%;border-radius:50%;object-fit:cover;border:2px solid var(--ring,#f5a623);background:#1c1216}
+.avatar .deco{position:absolute;left:50%;top:50%;width:120%;height:120%;transform:translate(-50%,-50%);pointer-events:none}
+.dot{position:absolute;right:4px;bottom:4px;width:24px;height:24px;border-radius:50%;background:#141015;border:0;display:grid;place-items:center}
+.dot::after{content:"";width:12px;height:12px;border-radius:50%;background:var(--st,#747f8d)}
+.info{flex:1;min-width:0}
+h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
+.chips{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:12px}
+.chip{display:inline-flex;align-items:center;gap:7px;padding:5px 12px;border:1px solid var(--line);border-radius:999px;background:var(--card-2);color:#d8c9d0;font-size:12px}
+.chip svg{width:12px;height:12px;fill:var(--pink)}
+.chip img{width:15px;height:15px;border-radius:3px}
+.badges{display:flex;gap:6px;margin:0 0 12px}
+.badges span{width:24px;height:24px;display:grid;place-items:center;font-size:15px}
+.badges img{width:22px;height:22px}
+.tagline{min-height:1.4em;color:#cdbcc4;font-style:italic;border-left:1px solid var(--pink);padding-left:10px;margin-bottom:16px;overflow-wrap:anywhere}
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:13px 22px;border-radius:12px;border:1px solid var(--line);background:rgba(255,255,255,.04);font-weight:500}
+.btn.pri{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 8px 26px -8px rgba(255,46,147,.7)}
+.btn svg{width:14px;height:14px;fill:currentColor}
+.cta{position:absolute;right:38px;top:96px;z-index:2;display:flex;align-items:center;gap:12px;padding:6px 16px 6px 6px;background:var(--pink);color:#2a0716;font-weight:700;
+  border:2px solid #fff;outline:3px solid var(--pink);border-radius:2px;box-shadow:5px 5px 0 #fff3}
+.cta i{display:grid;place-items:center;width:34px;height:34px;background:#141015;color:#fff;font-style:normal}
+.profile.has-banner .cta{top:136px}
+
+/* Spotify */
+.spotify{overflow:hidden;padding:0;background:var(--plum);border-color:rgba(255,255,255,.06)}
+.spotify iframe{display:block;width:100%;height:352px;border:0;border-radius:0}
+
+/* Socials */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.link{display:flex;align-items:center;gap:14px;padding:16px;border-radius:18px;text-align:left;border:1px solid var(--line);background:var(--card);backdrop-filter:blur(18px);width:100%;transition:transform .15s,border-color .15s}
+.link:hover{border-color:rgba(255,46,147,.5);transform:translateY(-2px)}
+.ico{flex:none;width:44px;height:44px;border-radius:12px;display:grid;place-items:center;background:var(--tint,rgba(255,255,255,.07))}
+.ico img{width:22px;height:22px}
+.link .t{min-width:0;flex:1}
+.link b{display:block;font:700 14px var(--display)}
+.link small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.link .ext{width:14px;height:14px;fill:#6ea8ff;flex:none}
+
+/* About */
+.about{padding:30px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:#e7dce1}
+
+/* Status */
+.status{justify-self:center;display:none;align-items:center;gap:10px;padding:9px 18px;border:1px solid rgba(255,255,255,.14);border-radius:999px;background:rgba(15,10,12,.8);font-weight:700;letter-spacing:.14em;font-size:11px}
+.status::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--st)}
+
+/* Musik */
+.player{position:fixed;left:14px;bottom:14px;z-index:30;display:none;align-items:center;gap:10px;padding:8px 14px 8px 8px;border:1px solid var(--line);border-radius:999px;background:rgba(20,13,16,.85);backdrop-filter:blur(14px)}
+.player button{width:32px;height:32px;border-radius:50%;border:0;background:var(--pink);display:grid;place-items:center}
+.player button svg{width:14px;height:14px;fill:#fff}
+.player input{width:90px;accent-color:var(--pink)}
+.player span{max-width:160px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mute)}
+.toast{position:fixed;bottom:22px;left:50%;transform:translate(-50%,20px);opacity:0;transition:.25s;background:#1d1317;border:1px solid var(--line);padding:10px 16px;border-radius:12px;z-index:200}
+.toast.show{opacity:1;transform:translate(-50%,0)}
+
+@media (max-width:820px){
+  .grid{grid-template-columns:1fr 1fr}
+  .profile .inner{flex-direction:column;align-items:center;text-align:center;padding:26px 18px}
+  .chips,.btns,.badges{justify-content:center}
+  .tagline{border:0;padding:0}
+  .cta{position:static;margin:20px auto 0;width:fit-content}
+  nav{gap:10px}
+  nav .logo span{display:none}
+  h1{font-size:38px}
+}
+@media (max-width:520px){.grid{grid-template-columns:1fr}.player input{display:none}}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+<div class="bg" id="bg"></div>
+<div id="enter" role="button" tabindex="0"><span id="enterText">click to enter...</span></div>
+
+<nav>
+  <div class="logo"><b>猫</b><span id="logoName"></span></div>
+  <div class="links">
+    <a href="#home" class="on">Home</a><a href="#socials">Socials</a><a href="#about" id="navAbout">About</a>
+  </div>
+</nav>
+
+<main>
+  <section id="home" style="display:grid;gap:22px">
+    <div class="card profile" id="profile"></div>
+    <div class="card spotify" id="spotify" hidden></div>
+  </section>
+  <section id="socials"><div class="grid" id="grid"></div></section>
+  <section id="about" hidden><div class="card about" id="aboutText"></div></section>
+  <div class="status" id="status"></div>
+</main>
+
+<div class="player" id="player">
+  <button id="pp" aria-label="Play/Pause"><svg viewBox="0 0 24 24"><path id="ppIcon" d="M8 5v14l11-7z"/></svg></button>
+  <span id="trackName"></span>
+  <input type="range" id="vol" min="0" max="100" aria-label="Lautstärke">
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const el = (tag, attrs = {}, ...kids) => {
+  const e = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (k === 'class') e.className = v; else if (k.startsWith('on')) e[k] = v; else if (v != null && v !== false) e.setAttribute(k, v);
+  }
+  kids.flat().forEach(c => e.append(c?.nodeType ? c : document.createTextNode(c ?? '')));
+  return e;
+};
+const svg = (d, cls) => { const s = document.createElementNS('http://www.w3.org/2000/svg', 'svg'); s.setAttribute('viewBox', '0 0 24 24'); if (cls) s.setAttribute('class', cls); const p = document.createElementNS('http://www.w3.org/2000/svg', 'path'); p.setAttribute('d', d); s.append(p); return s; };
+const PATH = {
+  tag: 'M21.4 11.6l-9-9A2 2 0 0010 2H4a2 2 0 00-2 2v6a2 2 0 00.6 1.4l9 9a2 2 0 002.8 0l6-6a2 2 0 000-2.8zM6.5 8a1.5 1.5 0 110-3 1.5 1.5 0 010 3z',
+  pin: 'M12 2a7 7 0 00-7 7c0 5 7 13 7 13s7-8 7-13a7 7 0 00-7-7zm0 9.5A2.5 2.5 0 1114.5 9 2.5 2.5 0 0112 11.5z',
+  cake: 'M12 6a2 2 0 002-2c0-.4-.2-.8-.4-1.1L12 1l-1.6 1.9c-.2.3-.4.7-.4 1.1a2 2 0 002 2zm4.6 9.99l-1.34-1.34a2.16 2.16 0 00-3.04 0L10.9 16a2.2 2.2 0 01-3.05 0l-1.36-1.35-1.48 1.35V21h14v-5l-1.4 1zM18 9h-5V7h-2v2H6a3 3 0 00-3 3v1.5c.9.8 2.3.7 3.1-.1l1.4-1.4 1.4 1.4a3.4 3.4 0 004.8 0l1.4-1.4 1.4 1.4c.8.8 2.2.9 3.1.1V12a3 3 0 00-3-3z',
+  link: 'M3.9 12a3.1 3.1 0 013.1-3.1h4V7H7a5 5 0 000 10h4v-1.9H7A3.1 3.1 0 013.9 12zM8 13h8v-2H8v2zm9-6h-4v1.9h4a3.1 3.1 0 010 6.2h-4V17h4a5 5 0 000-10z',
+  user: 'M12 12a4 4 0 100-8 4 4 0 000 8zm0 2c-2.7 0-8 1.3-8 4v2h16v-2c0-2.7-5.3-4-8-4z',
+  ext: 'M14 3v2h3.6l-9.8 9.8 1.4 1.4L19 6.4V10h2V3h-7zM5 5h6V3H5a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-6h-2v6H5V5z',
+  play: 'M8 5v14l11-7z', pause: 'M6 5h4v14H6zm8 0h4v14h-4z',
+};
+const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); };
+const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
+const STATUS = { online: ['#3ba55d', 'ONLINE'], idle: ['#f0b232', 'IDLE'], dnd: ['#ed4245', 'DND'], offline: ['#747f8d', 'OFFLINE'] };
+
+const path = location.pathname.startsWith('/u/') ? decodeURIComponent(location.pathname.slice(3)) : '__home__';
+let audio;
+
+fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
+  document.body.replaceChildren(el('p', { style: 'padding:60px;text-align:center' }, 'Profil nicht gefunden.'));
+});
+
+function render(u) {
+  const d = u.discord, s = u.settings;
+  document.title = u.displayName;
+  $('#logoName').append(u.username, el('i', {}, '.lol'));
+  $('#enterText').textContent = u.enterText;
+
+  // Hintergrund
+  document.documentElement.style.setProperty('--blur', u.background.blur + 'px');
+  document.documentElement.style.setProperty('--dim', u.background.dim / 100);
+  if (u.background.url) {
+    const bg = u.background.type === 'video'
+      ? el('video', { src: u.background.url, autoplay: '', loop: '', muted: '', playsinline: '' })
+      : el('img', { src: u.background.url, alt: '' });
+    if (bg.tagName === 'VIDEO') bg.muted = true;
+    $('#bg').prepend(bg);
+  }
+
+  // Profil-Karte
+  const p = $('#profile');
+  const showBanner = s.showBanner && (d.banner || d.bannerColor);
+  if (showBanner) { p.classList.add('has-banner'); p.append(el('div', { class: 'banner', style: d.banner ? `background-image:url("${d.banner}")` : `background:${d.bannerColor}` })); }
+
+  const avatar = el('div', { class: 'avatar' }, el('img', { class: 'pfp', src: d.avatar, alt: '' }));
+  if (s.showDecoration && d.decoration) avatar.append(el('img', { class: 'deco', src: d.decoration, alt: '' }));
+  if (s.showStatus) avatar.append(el('span', { class: 'dot', id: 'dot' }));
+
+  const chips = el('div', { class: 'chips' });
+  const addChip = (icon, text) => text && chips.append(el('span', { class: 'chip' }, svg(PATH[icon]), text));
+  addChip('tag', u.tags.label); addChip('pin', u.tags.location); addChip('cake', u.tags.age);
+  if (s.showTag && d.serverTag) chips.append(el('span', { class: 'chip', title: 'Server-Tag' }, d.serverTag.badge ? el('img', { src: d.serverTag.badge, alt: '' }) : '', d.serverTag.tag));
+
+  const info = el('div', { class: 'info' }, el('h1', {}, u.displayName), chips);
+  if (s.showBadges && d.badges.length) {
+    info.append(el('div', { class: 'badges' }, d.badges.map(b => {
+      const fb = el('span', { title: b.name }, b.emoji);
+      if (!b.icon) return fb;
+      const img = el('img', { src: `https://cdn.discordapp.com/badge-icons/${b.icon}.png`, alt: b.name });
+      const w = el('span', { title: b.name }, img);
+      img.onerror = () => w.replaceChildren(b.emoji);
+      return w;
+    })));
+  }
+  const tl = el('div', { class: 'tagline', id: 'tagline' });
+  info.append(tl, el('div', { class: 'btns' },
+    el('a', { class: 'btn pri', href: '#socials' }, svg(PATH.link), 'Socials'),
+    u.about ? el('a', { class: 'btn', href: '#about' }, svg(PATH.user), 'About Me') : ''));
+  p.append(el('div', { class: 'inner' }, avatar, info));
+  if (u.cta.url) p.append(el('a', { class: 'cta', href: u.cta.url, target: '_blank', rel: 'noopener noreferrer' }, el('i', {}, '⇄'), u.cta.label || host(u.cta.url), ' ↗'));
+  typewriter(tl, u.tagline);
+
+  // Spotify
+  const m = u.spotify.match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/);
+  if (m) { const sp = $('#spotify'); sp.hidden = false; sp.append(el('iframe', { src: `https://open.spotify.com/embed/${m[1]}/${m[2]}?theme=0`, loading: 'lazy', allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture', title: 'Spotify' })); }
+
+  // Socials
+  const grid = $('#grid');
+  const icon = (slugName, color, tint) => el('div', { class: 'ico', style: tint ? `--tint:${tint}` : '' }, el('img', { src: `https://cdn.simpleicons.org/${slugName}/${color}`, alt: '' }));
+  const card = (ico, title, sub, href, onclick) => {
+    const inner = [ico, el('div', { class: 't' }, el('b', {}, title), el('small', {}, sub)), href ? svg(PATH.ext, 'ext') : ''];
+    return href ? el('a', { class: 'link', href, target: '_blank', rel: 'noopener noreferrer' }, inner)
+                : el('button', { class: 'link', onclick }, inner);
+  };
+  grid.append(card(icon('discord', '5865F2', 'rgba(88,101,242,.16)'), 'Discord', d.username, null, () => { navigator.clipboard?.writeText(d.username); toast('Discord-Name kopiert'); }));
+  u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', x.name || host(x.url), x.url)));
+  if (u.links.twitch) grid.append(card(icon('twitch', '9146FF', 'rgba(145,70,255,.16)'), 'Twitch', u.links.twitch.split('/').filter(Boolean).pop(), u.links.twitch));
+  if (u.links.tiktok) grid.append(card(icon('tiktok', 'ffffff', 'rgba(255,255,255,.08)'), 'TikTok', u.links.tiktok.split('/').filter(Boolean).pop(), u.links.tiktok));
+  u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
+  grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
+
+  // About
+  if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; } else $('#navAbout').remove();
+
+  // Musik
+  if (u.music.url) setupMusic(u.music);
+
+  // Status via Lanyard
+  if (s.showStatus) { pollStatus(d.id); setInterval(() => pollStatus(d.id), 30000); }
+
+  // Enter
+  const enter = $('#enter');
+  const go = () => { enter.classList.add('gone'); audio?.play().catch(() => {}); document.querySelector('#bg video')?.play().catch(() => {}); };
+  enter.onclick = go; enter.onkeydown = e => (e.key === 'Enter' || e.key === ' ') && go();
+
+  // Nav Highlight
+  const links = [...document.querySelectorAll('nav .links a')];
+  const io = new IntersectionObserver(es => es.forEach(e => e.isIntersecting && links.forEach(a => a.classList.toggle('on', a.getAttribute('href') === '#' + e.target.id))), { rootMargin: '-40% 0px -55% 0px' });
+  ['home', 'socials', 'about'].forEach(id => io.observe($('#' + id)));
+}
+
+function typewriter(node, text) {
+  if (!text) return node.remove();
+  if (matchMedia('(prefers-reduced-motion:reduce)').matches) return node.textContent = text;
+  let i = 0, dir = 1;
+  (function tick() {
+    node.textContent = text.slice(0, i);
+    i += dir;
+    let wait = 70;
+    if (i > text.length) { dir = -1; wait = 2200; }
+    else if (i < 0) { dir = 1; i = 0; wait = 600; }
+    setTimeout(tick, wait);
+  })();
+}
+
+function setupMusic(m) {
+  audio = new Audio(m.url); audio.loop = true; audio.volume = m.volume / 100;
+  $('#player').style.display = 'flex';
+  $('#trackName').textContent = m.title || 'Musik';
+  $('#vol').value = m.volume;
+  $('#vol').oninput = e => audio.volume = e.target.value / 100;
+  const icon = $('#ppIcon');
+  $('#pp').onclick = () => audio.paused ? audio.play() : audio.pause();
+  audio.onplay = () => icon.setAttribute('d', PATH.pause);
+  audio.onpause = () => icon.setAttribute('d', PATH.play);
+}
+
+async function pollStatus(id) {
+  try {
+    const r = await (await fetch('https://api.lanyard.rest/v1/users/' + id)).json();
+    if (!r.success) return;
+    const [color, label] = STATUS[r.data.discord_status] || STATUS.offline;
+    document.documentElement.style.setProperty('--st', color);
+    const st = $('#status'); st.style.display = 'inline-flex'; st.textContent = label;
+    document.querySelector('.avatar')?.style.setProperty('--st', color);
+  } catch {}
+}
+</script>
+</body>
+</html>
