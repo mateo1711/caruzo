@@ -1,1 +1,45 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Caruzo · Privat</title><style>:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100svh;display:grid;place-items:center;background:radial-gradient(circle at 20% 10%,#381126 0,transparent 35%),#0e0a0c;color:#f6eff2;font:14px system-ui,sans-serif}.box{width:min(390px,calc(100vw - 32px));padding:28px;border:1px solid #ffffff18;border-radius:22px;background:#181014cc;backdrop-filter:blur(18px);box-shadow:0 25px 80px #0008}h1{margin:0 0 8px;font-size:26px}p{color:#ad9da5;margin:0 0 20px}input,button{width:100%;height:48px;border-radius:12px;border:1px solid #ffffff18;font:inherit}input{padding:0 14px;background:#0f0b0d;color:#fff;outline:none}input:focus{border-color:#ff2e93}button{margin-top:10px;background:#ff2e93;color:#fff;font-weight:800;cursor:pointer}.err{min-height:20px;margin-top:10px;color:#ff8abf;font-size:13px}</style></head><body><form class="box" id="f"><h1>Privater Zugang</h1><p>Diese Hauptseite ist passwortgeschützt.</p><input id="pw" type="password" autocomplete="current-password" placeholder="Passwort" autofocus required><button>Entsperren</button><div class="err" id="err"></div></form><script>f.onsubmit=async e=>{e.preventDefault();err.textContent='';const r=await fetch('/api/private-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw.value})});if(r.ok)location.href='/';else err.textContent='Falsches Passwort';}</script></body></html>
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caruzo · Login</title>
+<meta name="color-scheme" content="dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#8b5cf6;--bg:#050507;--text:#f7f7fa;--muted:#878892;--line:rgba(255,255,255,.105)}*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;min-height:100svh;display:grid;place-items:center;overflow:hidden;background:#050507;color:var(--text);font:14px/1.45 'Inter',system-ui,sans-serif}
+body:before{content:"";position:fixed;inset:0;background:radial-gradient(700px 500px at 15% 10%,rgba(255,126,65,.16),transparent 68%),radial-gradient(680px 520px at 82% 18%,rgba(139,92,246,.23),transparent 65%),radial-gradient(680px 500px at 65% 95%,rgba(236,72,153,.17),transparent 67%),#050507}
+body:after{content:"";position:fixed;inset:0;opacity:.22;background-image:linear-gradient(rgba(255,255,255,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.02) 1px,transparent 1px);background-size:50px 50px;mask-image:radial-gradient(circle at center,black,transparent 80%)}
+.orb{position:fixed;width:420px;height:180px;border-radius:999px;filter:blur(72px);opacity:.18;pointer-events:none;animation:drift 12s ease-in-out infinite alternate}.orb.a{left:-100px;top:24%;background:#ff814a;transform:rotate(18deg)}.orb.b{right:-120px;top:34%;background:#8b5cf6;animation-delay:-4s}.orb.c{right:20%;bottom:-80px;background:#ec4899;animation-delay:-8s}@keyframes drift{to{transform:translate3d(45px,-22px,0) rotate(-8deg)}}
+.wrap{position:relative;z-index:2;width:min(430px,calc(100vw - 28px))}.logoStage{display:grid;place-items:center;margin-bottom:22px}.rings{position:relative;width:108px;height:108px;display:grid;place-items:center}.rings:before,.rings:after{content:"";position:absolute;border-radius:50%;border:1px solid rgba(255,255,255,.13)}.rings:before{inset:0;animation:spin 9s linear infinite;border-top-color:rgba(139,92,246,.9);box-shadow:0 0 28px rgba(139,92,246,.13)}.rings:after{inset:12px;animation:spin 6s linear infinite reverse;border-right-color:rgba(236,72,153,.85)}@keyframes spin{to{transform:rotate(360deg)}}
+.logo{position:relative;width:58px;height:58px;object-fit:contain;filter:drop-shadow(0 0 20px rgba(139,92,246,.35));animation:logoPulse 2.8s ease-in-out infinite}@keyframes logoPulse{50%{transform:scale(1.055);filter:drop-shadow(0 0 30px rgba(139,92,246,.55))}}
+.card{position:relative;padding:27px;border:1px solid var(--line);border-radius:20px;background:linear-gradient(180deg,rgba(15,15,20,.82),rgba(7,7,10,.76));backdrop-filter:blur(28px) saturate(125%);box-shadow:0 28px 90px rgba(0,0,0,.45),inset 0 1px rgba(255,255,255,.035);overflow:hidden}.card:before{content:"";position:absolute;inset:0;pointer-events:none;background:linear-gradient(120deg,transparent 0 38%,rgba(255,255,255,.035) 50%,transparent 62%);transform:translateX(-120%);animation:sheen 5s ease-in-out infinite}@keyframes sheen{55%,100%{transform:translateX(120%)}}
+.eyebrow{font:800 10px/1 'JetBrains Mono',monospace;letter-spacing:.17em;text-transform:uppercase;color:#858690;margin-bottom:10px}.titleRow{display:flex;align-items:center;justify-content:space-between;gap:14px}h1{margin:0;font-size:26px;letter-spacing:-.035em}.lock{width:34px;height:34px;border:1px solid var(--line);border-radius:10px;display:grid;place-items:center;background:rgba(255,255,255,.035);color:#b8b8c1}p{margin:8px 0 21px;color:var(--muted);font-size:13px}
+.field{position:relative}.field input{width:100%;height:50px;border:1px solid rgba(255,255,255,.085);border-radius:12px;background:rgba(0,0,0,.27);color:#fff;padding:0 46px 0 14px;font:600 14px 'JetBrains Mono',monospace;outline:0;transition:.2s}.field input:focus{border-color:rgba(139,92,246,.62);box-shadow:0 0 0 4px rgba(139,92,246,.095),0 0 28px rgba(139,92,246,.08)}.peek{position:absolute;right:7px;top:7px;width:36px;height:36px;border:0;border-radius:9px;background:transparent;color:#757680;cursor:pointer}.peek:hover{background:rgba(255,255,255,.05);color:#fff}.submit{width:100%;height:49px;margin-top:11px;border:1px solid #fff;border-radius:12px;background:#f4f4f5;color:#08080b;font-weight:800;cursor:pointer;transition:.2s;box-shadow:0 12px 34px rgba(255,255,255,.06)}.submit:hover{transform:translateY(-1px);background:#fff}.submit:disabled{opacity:.6;cursor:wait;transform:none}.error{min-height:18px;margin-top:11px;color:#ff7b9b;font-size:12px}.foot{margin-top:13px;text-align:center;color:#5f6068;font-size:11px}.foot b{color:#888993;font-weight:600}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+<link rel="icon" href="/caruzo-logo.png" type="image/png">
+</head>
+<body>
+<div class="orb a"></div><div class="orb b"></div><div class="orb c"></div>
+<main class="wrap">
+  <div class="logoStage"><div class="rings"><img class="logo" src="/caruzo-logo.png" alt="Caruzo"></div></div>
+  <form class="card" id="form">
+    <div class="eyebrow">Private workspace</div>
+    <div class="titleRow"><h1>Willkommen zurück.</h1><div class="lock">⌁</div></div>
+    <p>Diese Caruzo-Instanz ist privat. Gib dein Zugangspasswort ein, um die Hauptseite zu öffnen.</p>
+    <div class="field"><input id="password" type="password" autocomplete="current-password" placeholder="Passwort" autofocus required><button class="peek" id="peek" type="button" aria-label="Passwort anzeigen">◉</button></div>
+    <button class="submit" id="submit">Login</button>
+    <div class="error" id="error" role="status"></div>
+    <div class="foot">Secure access · <b>caruzo.lol/login</b></div>
+  </form>
+</main>
+<script>
+const form=document.getElementById('form'),pw=document.getElementById('password'),error=document.getElementById('error'),submit=document.getElementById('submit');
+document.getElementById('peek').onclick=()=>{pw.type=pw.type==='password'?'text':'password'};
+form.onsubmit=async e=>{e.preventDefault();error.textContent='';submit.disabled=true;submit.textContent='Prüfe …';try{const r=await fetch('/api/private-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw.value})});if(r.ok){submit.textContent='Erfolgreich';location.href='/'}else{error.textContent='Falsches Passwort.';pw.select();submit.disabled=false;submit.textContent='Login'}}catch{error.textContent='Verbindung fehlgeschlagen.';submit.disabled=false;submit.textContent='Login'}};
+</script>
+</body>
+</html>
