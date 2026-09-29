@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
   BASE_URL = 'http://localhost:3000', SESSION_SECRET = 'change-me',
-  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '',
+  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
 // Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
@@ -95,7 +95,7 @@ function defaults(dc) {
     design: { nameEffect: 'standard', nameColor: '#f6eff2' },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, manualNitro: false },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
@@ -126,7 +126,7 @@ function applyUpdate(user, b) {
   const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
-  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus'].map(k => [k, !!s[k]]));
+  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus', 'manualNitro'].map(k => [k, !!s[k]]));
   const bg = b.background || {};
   user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false };
   const m = b.music || {};
@@ -148,6 +148,12 @@ function applyUpdate(user, b) {
 function publicView(u) {
   const { auth, ...rest } = u; // Tokens niemals ausliefern
   const d = { ...rest.discord };
+  const manualNitro = !!rest.settings?.manualNitro;
+  d.nitro = manualNitro || !!d.nitro;
+  d.badges = Array.isArray(d.badges) ? [...d.badges] : [];
+  const hasNitro = d.badges.some(b => b.key === 'nitro');
+  if (d.nitro && !hasNitro) d.badges.unshift(NITRO);
+  if (!d.nitro && hasNitro) d.badges = d.badges.filter(b => b.key !== 'nitro');
   return { ...rest, discord: d };
 }
 
@@ -174,6 +180,22 @@ app.use(session({
   secret: SESSION_SECRET, resave: false, saveUninitialized: false,
   cookie: { httpOnly: true, sameSite: 'lax', secure: BASE_URL.startsWith('https'), maxAge: 30 * 24 * 3600 * 1000 },
 }));
+
+// Private Hauptseite: Passwort wird nur auf dem Server geprüft.
+const siteUnlocked = (req, res, next) => req.session.siteUnlocked ? next() : res.redirect('/private-login');
+app.get('/private-login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'private-login.html')));
+app.post('/api/private-login', (req, res) => {
+  const supplied = String(req.body?.password || '');
+  const expected = String(SITE_PASSWORD || '');
+  const a = Buffer.from(supplied);
+  const b = Buffer.from(expected);
+  const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
+  if (!ok) return res.status(401).json({ error: 'Falsches Passwort' });
+  req.session.siteUnlocked = true;
+  res.json({ ok: true });
+});
+app.post('/api/private-logout', (req, res) => { req.session.siteUnlocked = false; res.json({ ok: true }); });
+app.use((req, res, next) => req.path === '/landing.html' ? siteUnlocked(req, res, next) : next());
 app.use('/uploads', express.static(UP_DIR, { setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
@@ -278,7 +300,7 @@ app.get('/api/profile/:name', (req, res) => {
 
 // --- Seiten ---
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
-app.get('/', (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
+app.get('/', siteUnlocked, (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
 app.get('/u/:name', (req, res) => res.redirect(301, '/' + encodeURIComponent(req.params.name)));
 app.get('/dashboard', (req, res) => (req.session.uid && db[req.session.uid] ? page('dashboard.html')(req, res) : res.redirect('/auth/discord')));
 // Profil unter /name – muss ganz am Ende stehen, damit alle anderen Routen Vorrang haben
