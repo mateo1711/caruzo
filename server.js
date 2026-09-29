@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
   BASE_URL = 'http://localhost:3000', SESSION_SECRET = 'change-me',
-  HOME_USER = '', PORT = 3000,
+  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
 const DATA_DIR = path.join(__dirname, 'data');
@@ -90,14 +90,16 @@ function defaults(dc) {
     about: '',
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
-    cta: { label: '', url: '' },
+    design: { nameEffect: 'standard', nameColor: '#f6eff2' },
+    cursor: { effect: 'none', image: 'system', svg: '' },
+    browser: { effect: 'rotate', speed: 1500, messages: [] },
     settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
     spotify: '',
     floating: [],
-    links: { steam: [], twitch: '', tiktok: '', custom: [] },
+    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', instagram: '', youtube: '', github: '', bluesky: '', custom: [] },
     views: 0,
     createdAt: Date.now(),
   };
@@ -118,8 +120,9 @@ function applyUpdate(user, b) {
   user.enterText = str(b.enterText, 60) || 'click to enter...';
   const t = b.tags || {};
   user.tags = { label: str(t.label, 24), location: str(t.location, 24), age: str(t.age, 4) };
-  const c = b.cta || {};
-  user.cta = { label: str(c.label, 30), url: url(c.url) };
+  const des=b.design||{}; user.design={nameEffect:['standard','gradient','neon','toon','rubber','typewriter'].includes(des.nameEffect)?des.nameEffect:'standard',nameColor:/^#[0-9a-f]{6}$/i.test(des.nameColor||'')?des.nameColor:'#f6eff2'};
+  const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
+  const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
   user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus'].map(k => [k, !!s[k]]));
   const bg = b.background || {};
@@ -134,6 +137,7 @@ function applyUpdate(user, b) {
     steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: url(x.url) })).filter(x => x.url),
     twitch: url(l.twitch),
     tiktok: url(l.tiktok),
+    x: url(l.x), epic: url(l.epic), instagram: url(l.instagram), youtube: url(l.youtube), github: url(l.github), bluesky: url(l.bluesky),
     custom: (Array.isArray(l.custom) ? l.custom : []).slice(0, 12).map(x => ({ label: str(x.label, 30), url: url(x.url) })).filter(x => x.url),
   };
   return null;
@@ -211,6 +215,17 @@ app.post('/api/me', auth, (req, res) => {
   if (err) return res.status(400).json({ error: err });
   save();
   res.json(publicView(user));
+});
+
+// Bot Verify: validates that the Discord user ID exists via a bot token.
+// Important: Discord's bot User object does not expose premium_type, so Nitro itself remains OAuth-verified.
+app.post('/api/bot-verify', auth, async (req,res)=>{
+  if(!DISCORD_BOT_TOKEN) return res.status(400).json({error:'DISCORD_BOT_TOKEN fehlt in .env'});
+  const id=db[req.session.uid].discord.id;
+  const r=await fetch('https://discord.com/api/v10/users/'+id,{headers:{Authorization:'Bot '+DISCORD_BOT_TOKEN}});
+  if(!r.ok) return res.status(r.status).json({error:'Bot konnte User-ID nicht verifizieren'});
+  const u=await r.json();
+  res.json({verified:true,id:u.id,username:u.username,nitro:db[req.session.uid].discord.nitro, nitroSource:'oauth'});
 });
 
 // Discord-Daten (Avatar, Banner, Badges, Tag, Decoration) neu laden
