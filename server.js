@@ -9,7 +9,7 @@ const crypto = require('crypto');
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
   BASE_URL = 'http://localhost:3000', SESSION_SECRET = 'change-me',
-  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '',
+  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
