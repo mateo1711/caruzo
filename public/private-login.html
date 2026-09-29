@@ -39,7 +39,7 @@ body:after{content:"";position:fixed;inset:0;opacity:.22;background-image:linear
 <script>
 const form=document.getElementById('form'),pw=document.getElementById('password'),error=document.getElementById('error'),submit=document.getElementById('submit');
 document.getElementById('peek').onclick=()=>{pw.type=pw.type==='password'?'text':'password'};
-form.onsubmit=async e=>{e.preventDefault();error.textContent='';submit.disabled=true;submit.textContent='Prüfe …';try{const r=await fetch('/api/private-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw.value})});if(r.ok){submit.textContent='Erfolgreich';location.href='/'}else{error.textContent='Falsches Passwort.';pw.select();submit.disabled=false;submit.textContent='Login'}}catch{error.textContent='Verbindung fehlgeschlagen.';submit.disabled=false;submit.textContent='Login'}};
+form.onsubmit=async e=>{e.preventDefault();error.textContent='';submit.disabled=true;submit.textContent='Prüfe …';try{const r=await fetch('/api/private-login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({password:pw.value})});const data=await r.json().catch(()=>({}));if(r.ok){submit.textContent='Erfolgreich';location.href='/'}else{error.textContent=data.error||'Falsches Passwort.';pw.select();submit.disabled=false;submit.textContent='Login'}}catch{error.textContent='Verbindung fehlgeschlagen.';submit.disabled=false;submit.textContent='Login'}};
 </script>
 </body>
 </html>
