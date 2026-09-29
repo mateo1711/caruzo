@@ -175,7 +175,7 @@ const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
 const STATUS = { online: ['#3ba55d', 'ONLINE'], idle: ['#f0b232', 'IDLE'], dnd: ['#ed4245', 'DND'], offline: ['#747f8d', 'OFFLINE'] };
 
-const path = location.pathname.startsWith('/u/') ? decodeURIComponent(location.pathname.slice(3)) : '__home__';
+const path = location.pathname.length > 1 ? decodeURIComponent(location.pathname.slice(1).split('/')[0]) : '__home__';
 let audio;
 
 fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
