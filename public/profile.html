@@ -15,6 +15,7 @@
   --mono:'JetBrains Mono',ui-monospace,monospace; --display:'Space Grotesk',system-ui,sans-serif;
 }
 *{box-sizing:border-box}
+[hidden]{display:none!important}
 html{scroll-behavior:smooth}
 body{margin:0;min-height:100vh;background:var(--bg);color:var(--text);font-family:var(--mono);font-size:13px}
 a{color:inherit;text-decoration:none}
@@ -82,13 +83,19 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .profile.has-banner .cta{top:136px}
 
 /* Spotify */
-.spotify{--dynamic-opacity:1;--dynamic-background-base:rgba(83,83,83,1);--dynamic-background-tinted:rgba(51,51,51,1);--dynamic-background-tinted-50:rgba(51,51,51,.5);--background-base:rgba(83,83,83,1);--background-tinted:rgba(51,51,51,1);--text-base:rgba(255,255,255,1);--text-bright-accent:rgba(255,255,255,1);--text-subdued:rgba(205,205,205,1);--spotify-blur:26px;--spotify-glow:.24;--spotify-height:236px;position:relative;isolation:isolate;overflow:hidden;padding:10px;background:linear-gradient(135deg,color-mix(in srgb,var(--dynamic-background-base) 72%,var(--accent) 28%),var(--dynamic-background-tinted));border-color:rgba(255,255,255,.14);backdrop-filter:blur(var(--spotify-blur)) saturate(150%);-webkit-backdrop-filter:blur(var(--spotify-blur)) saturate(150%);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 calc(30px + 42px * var(--spotify-glow)) color-mix(in srgb,var(--accent) 32%,transparent)}
-.spotify:before{content:"";position:absolute;inset:-35%;z-index:0;background:radial-gradient(circle at 14% 18%,color-mix(in srgb,var(--accent) 44%,transparent),transparent 27%),radial-gradient(circle at 82% 78%,rgba(255,255,255,.10),transparent 28%),linear-gradient(120deg,var(--dynamic-background-tinted-50),transparent 56%);filter:blur(calc(var(--spotify-blur) + 18px));opacity:calc(.34 + var(--spotify-glow));pointer-events:none}
-.spotify:after{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07),transparent 30% 70%,rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
-.spotify iframe{position:relative;z-index:1;display:block;width:100%;height:var(--spotify-height);border:0;border-radius:18px;background:transparent;box-shadow:0 14px 42px rgba(0,0,0,.22);mix-blend-mode:screen;opacity:.94;filter:saturate(.82) contrast(1.03)}
+/* Spotify controls the inside of its cross-origin iframe. Keep the iframe native so
+   Spotify can render its own artwork-based / dynamic background correctly. The
+   Caruzo glass shell is only behind it and never overlays or blends the controls. */
+.spotify{--spotify-blur:26px;--spotify-glow:.24;--spotify-height:352px;position:relative;isolation:isolate;overflow:hidden;padding:8px;background:linear-gradient(135deg,color-mix(in srgb,var(--card) 82%,var(--accent) 18%),color-mix(in srgb,var(--card) 94%,#000 6%));border-color:rgba(255,255,255,.14);backdrop-filter:blur(var(--spotify-blur)) saturate(145%);-webkit-backdrop-filter:blur(var(--spotify-blur)) saturate(145%);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 calc(22px + 36px * var(--spotify-glow)) color-mix(in srgb,var(--accent) 24%,transparent)}
+.spotify:before{content:"";position:absolute;inset:-28%;z-index:0;background:radial-gradient(circle at 10% 20%,color-mix(in srgb,var(--accent) 28%,transparent),transparent 30%),radial-gradient(circle at 88% 78%,rgba(255,255,255,.07),transparent 28%);filter:blur(calc(var(--spotify-blur) + 18px));opacity:.46;pointer-events:none}
+.spotify iframe{position:relative;z-index:1;display:block;width:100%;height:var(--spotify-height);border:0;border-radius:18px;background:#181818;box-shadow:0 16px 46px rgba(0,0,0,.26);opacity:1;filter:none;mix-blend-mode:normal}
 .spotify[data-kind="track"]{--spotify-height:152px}
-.spotify[data-layout="full"]{--spotify-height:292px}
+.spotify[data-kind="playlist"],.spotify[data-kind="album"]{--spotify-height:352px}
+.spotify[data-layout="full"]{--spotify-height:420px}
+.spotify[data-kind="track"][data-layout="full"]{--spotify-height:352px}
+@media(max-width:720px){.spotify{padding:6px}.spotify[data-kind="playlist"],.spotify[data-kind="album"]{--spotify-height:352px}.spotify[data-layout="full"]{--spotify-height:400px}}
 
+.activity-card:empty{display:none!important}
 .activity-card{display:flex;align-items:center;gap:14px;padding:15px 18px;min-height:78px;background:linear-gradient(135deg,color-mix(in srgb,var(--card) 88%,var(--accent) 12%),var(--card));border-color:rgba(255,255,255,.11);backdrop-filter:blur(calc(var(--card-blur,22px) + 5px)) saturate(140%);-webkit-backdrop-filter:blur(calc(var(--card-blur,22px) + 5px)) saturate(140%);overflow:hidden;position:relative}
 .activity-card:before{content:"";position:absolute;inset:-70% 55% -70% -15%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 30%,transparent),transparent 62%);filter:blur(20px);pointer-events:none}
 .activity-icon{position:relative;z-index:1;width:46px;height:46px;flex:none;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.12));border-radius:15px;background:color-mix(in srgb,var(--accent) 16%,rgba(255,255,255,.04));box-shadow:0 0 24px color-mix(in srgb,var(--accent) 16%,transparent)}
@@ -321,7 +328,7 @@ function render(u) {
     sp.dataset.kind = m[1]; sp.dataset.layout = layout;
     sp.style.setProperty('--spotify-blur', (ss.blur ?? 26) + 'px');
     sp.style.setProperty('--spotify-glow', Math.max(0, Math.min(1, (ss.glow ?? 24) / 100)));
-    const embed = `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
+    const embed = `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator`;
     sp.append(el('iframe', { src: embed, loading: 'lazy', allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture', allowfullscreen: '', title: 'Spotify' }));
   }
 
