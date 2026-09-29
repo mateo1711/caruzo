@@ -2,219 +2,131 @@
 <html lang="de">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>caruzo.lol – deine Seite, direkt aus Discord</title>
-<meta name="description" content="Baue dir mit Discord-Login in Sekunden eine eigene Profilseite: Avatar, Badges, Nitro-Stufe, Musik, Links und mehr.">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Caruzo · Home</title>
+<meta name="description" content="Caruzo – deine Profilseite mit Discord, Musik, Socials, Effekten und mehr.">
+<meta name="color-scheme" content="dark">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
 <style>
-:root{--bg:#0e0a0c;--card:rgba(24,16,19,.74);--line:rgba(255,255,255,.09);--pink:#ff2e93;--text:#f6eff2;--mute:#a99aa2;
-  --mono:'JetBrains Mono',ui-monospace,monospace;--display:'Space Grotesk',system-ui,sans-serif}
-*{box-sizing:border-box}
-html{scroll-behavior:smooth}
-body{margin:0;background:var(--bg);color:var(--text);font:14px/1.6 var(--mono);overflow-x:hidden}
-a{color:inherit;text-decoration:none}
-:focus-visible{outline:2px solid var(--pink);outline-offset:3px}
-
-/* Hintergrund: langsam treibende Farbflächen */
-.glow{position:fixed;inset:0;z-index:-1;overflow:hidden;background:var(--bg)}
-.glow i{position:absolute;border-radius:50%;filter:blur(90px);opacity:.5;animation:drift 22s ease-in-out infinite alternate}
-.glow i:nth-child(1){width:46vw;height:46vw;left:-10vw;top:-12vw;background:#ff2e93}
-.glow i:nth-child(2){width:38vw;height:38vw;right:-8vw;top:8vh;background:#6e2a4b;animation-duration:28s}
-.glow i:nth-child(3){width:30vw;height:30vw;left:35vw;bottom:-14vw;background:#5865F2;opacity:.22;animation-duration:34s}
-@keyframes drift{to{transform:translate(6vw,5vh) scale(1.15)}}
-
-/* Navigation */
-nav{position:fixed;top:12px;left:50%;transform:translateX(-50%);z-index:30;display:flex;align-items:center;justify-content:space-between;gap:24px;
-  width:min(1040px,calc(100vw - 20px));padding:8px 8px 8px 16px;border:1px solid var(--line);border-radius:16px;background:rgba(20,13,16,.8);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.logo{font:700 17px var(--display);letter-spacing:-.01em}
-.logo i{color:var(--pink);font-style:normal}
-nav .mid{display:flex;gap:4px}
-nav .mid a{padding:6px 12px;border-radius:8px;color:var(--mute);transition:color .2s,background .2s}
-nav .mid a:hover{color:var(--text);background:rgba(255,255,255,.05)}
-.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 16px;border-radius:10px;border:1px solid var(--line);background:rgba(255,255,255,.05);font-weight:700;cursor:pointer;transition:transform .15s,box-shadow .2s}
-.btn.pri{background:var(--pink);border-color:var(--pink);color:#fff;box-shadow:0 8px 26px -10px rgba(255,46,147,.8)}
-.btn:hover{transform:translateY(-1px)}
-.btn.sm{padding:8px 14px}
-
-main{width:min(1040px,calc(100vw - 32px));margin:0 auto}
-
-/* Hero */
-.hero{display:grid;grid-template-columns:1.15fr .85fr;gap:48px;align-items:center;min-height:100svh;padding:110px 0 60px}
-h1{margin:0 0 18px;font:700 clamp(38px,6.2vw,68px)/1.02 var(--display);letter-spacing:-.035em}
-.url{display:inline-block;margin:0 0 20px;padding:8px 14px;border:1px solid var(--line);border-radius:12px;background:var(--card);font-size:15px}
-.url b{color:var(--pink);font-weight:500}
-.url::after{content:"";display:inline-block;width:8px;height:1.05em;margin-left:3px;vertical-align:-3px;background:var(--pink);animation:blink 1s steps(1) infinite}
-@keyframes blink{50%{opacity:0}}
-.lead{max-width:46ch;margin:0 0 28px;color:var(--mute);font-size:15px}
-.cta{display:flex;flex-wrap:wrap;gap:12px}
-
-/* Profil-Vorschau */
-.mock{position:relative;padding:26px;border:1px solid var(--line);border-radius:26px;background:var(--card);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);animation:float 7s ease-in-out infinite}
-@keyframes float{50%{transform:translateY(-10px)}}
-.mock .top{display:flex;gap:16px;align-items:center}
-.pfp{position:relative;flex:none;width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#ff2e93,#6e2a4b);border:2px solid #f5a623}
-.pfp::after{content:"";position:absolute;inset:-9px;border-radius:50%;border:2px dashed rgba(255,46,147,.55);animation:spin 14s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-.mock h3{margin:0;font:700 22px var(--display)}
-.mock small{color:var(--mute)}
-.chips{display:flex;flex-wrap:wrap;gap:6px;margin:16px 0 4px}
-.chip{padding:3px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;color:var(--mute)}
-.badge-row{display:flex;flex-wrap:wrap;gap:8px;margin:14px 0}
-.badge-row span{display:grid;place-items:center;width:34px;height:34px;border-radius:10px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:17px;animation:pop .5s both}
-.badge-row span:nth-child(1){animation-delay:.6s}.badge-row span:nth-child(2){animation-delay:.75s}.badge-row span:nth-child(3){animation-delay:.9s}
-.badge-row span:nth-child(4){animation-delay:1.05s}.badge-row span:nth-child(5){animation-delay:1.2s}
-@keyframes pop{from{opacity:0;transform:scale(.4) translateY(8px)}}
-.links{display:grid;gap:8px;margin-top:6px}
-.links div{display:flex;justify-content:space-between;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.04)}
-.links div span{color:var(--mute)}
-
-/* Abschnitte */
-section{padding:80px 0;scroll-margin-top:70px}
-h2{margin:0 0 10px;font:700 clamp(28px,4vw,40px)/1.1 var(--display);letter-spacing:-.025em}
-.sub{margin:0 0 36px;max-width:56ch;color:var(--mute)}
-.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(290px,1fr));gap:14px}
-.feat{padding:22px;border:1px solid var(--line);border-radius:20px;background:var(--card);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
-.feat h3{margin:0 0 6px;font:700 17px var(--display)}
-.feat p{margin:0;color:var(--mute);font-size:13px}
-.feat .ic{display:grid;place-items:center;width:40px;height:40px;margin-bottom:14px;border-radius:12px;background:rgba(255,46,147,.12);font-size:19px}
-.feat.wide{grid-column:1/-1;display:grid;grid-template-columns:1fr auto;gap:20px;align-items:center}
-.tiers{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end;max-width:420px}
-.tiers span{padding:5px 11px;border:1px solid var(--line);border-radius:999px;font-size:12px;background:rgba(255,255,255,.05)}
-.tiers span:first-child{border-color:rgba(255,46,147,.5);color:#ffc2de}
-
-/* Ablauf */
-.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;counter-reset:s}
-.step{position:relative;padding:22px 22px 22px 66px;border:1px solid var(--line);border-radius:20px;background:var(--card)}
-.step::before{counter-increment:s;content:counter(s);position:absolute;left:20px;top:20px;display:grid;place-items:center;width:30px;height:30px;border-radius:50%;background:var(--pink);color:#fff;font-weight:700}
-.step b{display:block;font:700 16px var(--display);margin-bottom:4px}
-.step p{margin:0;color:var(--mute);font-size:13px}
-
-.end{margin:20px 0 60px;padding:48px 28px;text-align:center;border:1px solid var(--line);border-radius:28px;background:linear-gradient(180deg,rgba(255,46,147,.14),rgba(24,16,19,.74))}
-.end p{margin:0 auto 24px;max-width:44ch;color:var(--mute)}
-footer{padding:0 0 40px;text-align:center;color:var(--mute);font-size:12px}
-
-/* Einblenden beim Scrollen (nur ein Effekt, nur wenn erlaubt) */
-.js .rv{opacity:0;transform:translateY(16px);transition:opacity .6s,transform .6s}
-.js .rv.in{opacity:1;transform:none}
-
-@media (max-width:820px){
-  .hero{grid-template-columns:1fr;gap:36px;padding-top:100px}
-  nav .mid{display:none}
-  .feat.wide{grid-template-columns:1fr}.tiers{justify-content:flex-start}
+:root{
+  --bg:#050507;--panel:rgba(10,10,14,.78);--panel2:rgba(15,15,21,.72);--field:rgba(255,255,255,.035);
+  --line:rgba(255,255,255,.105);--line2:rgba(255,255,255,.065);--text:#f7f7fa;--muted:#8f9099;--muted2:#62636c;
+  --accent:#8b5cf6;--accent-rgb:139,92,246;--radius:16px;--shadow:0 24px 80px rgba(0,0,0,.38);
+  --font:'Inter',system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;--mono:'JetBrains Mono',monospace;
 }
-@media (prefers-reduced-motion:reduce){
-  *,*::before,*::after{animation:none!important;transition:none!important}
-  .js .rv{opacity:1;transform:none}
-}
-
-/* Responsive glass FAQ */
-.faq{padding-top:90px}.faqHead{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.faqHead>span{padding:7px 11px;border-radius:999px;background:rgba(255,46,147,.10);color:#ffc2de;font-size:11px;border:1px solid rgba(255,46,147,.18)}.faqList{display:grid;gap:10px}.faq details{border:1px solid rgba(255,255,255,.075);border-radius:18px;background:rgba(24,16,19,.58);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:19px 20px;cursor:pointer;font:600 14px var(--display)}.faq summary::-webkit-details-marker{display:none}.faq summary i{font:400 20px var(--mono);color:var(--pink);font-style:normal;transition:transform .2s}.faq details[open] summary i{transform:rotate(45deg)}.faq details p{margin:0;padding:0 54px 20px 20px;color:var(--mute);font-size:13px}.faq details:hover{border-color:rgba(255,255,255,.13)}
-@media(max-width:620px){.faqHead{display:block}.faqHead>span{display:none}.faq summary{padding:17px 16px}.faq details p{padding:0 42px 18px 16px}}
+*{box-sizing:border-box}html{scroll-behavior:smooth;color-scheme:dark;background:var(--bg)}body{margin:0;min-height:100vh;color:var(--text);font:13px/1.5 var(--font);background:var(--bg);overflow-x:hidden}a{color:inherit;text-decoration:none}button{font:inherit;color:inherit}button,a{ -webkit-tap-highlight-color:transparent}:focus-visible{outline:2px solid rgba(var(--accent-rgb),.9);outline-offset:2px}
+body:before{content:"";position:fixed;inset:0;z-index:-5;background:radial-gradient(850px 560px at 13% 7%,rgba(255,139,80,.13),transparent 62%),radial-gradient(860px 620px at 72% 17%,rgba(var(--accent-rgb),.17),transparent 62%),radial-gradient(700px 520px at 82% 92%,rgba(236,72,153,.14),transparent 68%),#050507}
+body:after{content:"";position:fixed;inset:0;z-index:-4;opacity:.18;background-image:linear-gradient(rgba(255,255,255,.018) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.018) 1px,transparent 1px);background-size:54px 54px;mask-image:linear-gradient(to bottom,black,transparent 86%)}
+.ambient{position:fixed;inset:0;z-index:-3;pointer-events:none;overflow:hidden;filter:blur(60px)}.ambient i{position:absolute;border-radius:999px;opacity:.13;animation:float 16s ease-in-out infinite alternate}.ambient i:nth-child(1){width:420px;height:180px;background:#ff814a;left:-70px;top:180px;transform:rotate(16deg)}.ambient i:nth-child(2){width:500px;height:180px;background:var(--accent);right:12%;top:260px;animation-delay:-4s}.ambient i:nth-child(3){width:440px;height:200px;background:#ec4899;right:-100px;bottom:70px;animation-delay:-9s}@keyframes float{to{transform:translate3d(30px,-20px,0) rotate(-6deg)}}
+.shell{width:min(1640px,calc(100vw - 34px));margin:0 auto;padding:8px 0 42px}.topbar{position:sticky;top:8px;z-index:50;display:grid;grid-template-columns:minmax(220px,1fr) auto minmax(220px,1fr);align-items:center;height:58px;padding:0 16px;border:1px solid var(--line);border-radius:13px;background:rgba(5,5,7,.78);backdrop-filter:blur(24px) saturate(130%);box-shadow:0 16px 60px rgba(0,0,0,.35)}
+.brandBox{display:flex;align-items:center;gap:13px;min-width:0}.logoMark{width:28px;height:28px;object-fit:contain;filter:drop-shadow(0 0 14px rgba(var(--accent-rgb),.24))}.brandName{font:800 13px/1 var(--mono);letter-spacing:.12em}.context{padding-left:14px;border-left:1px solid var(--line);color:#9a9aa2;font-size:12px}.topnav{display:flex;gap:4px;padding:5px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.018)}.topnav a{color:#9697a0;padding:8px 12px;border-radius:8px;font-weight:650;transition:.18s}.topnav a:hover{background:rgba(255,255,255,.055);color:#fff}
+.actions{justify-self:end;display:flex;align-items:center;gap:9px;position:relative}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;border:1px solid var(--line);background:rgba(255,255,255,.04);border-radius:9px;height:38px;padding:0 13px;cursor:pointer;font-weight:650;transition:.2s}.btn:hover{background:rgba(255,255,255,.085);border-color:rgba(255,255,255,.2);transform:translateY(-1px)}.btn.primary{background:#f4f4f5;color:#08080b;border-color:#fff}.btn.accent{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 0 28px rgba(var(--accent-rgb),.18)}
+.accountWrap{position:relative}.account{display:flex;align-items:center;gap:9px;padding:5px 8px;border:1px solid var(--line);border-radius:10px;min-width:145px;background:rgba(255,255,255,.025);cursor:pointer}.account:hover,.account[aria-expanded="true"]{background:rgba(255,255,255,.065);border-color:rgba(255,255,255,.18)}.account img{width:28px;height:28px;border-radius:8px;object-fit:cover}.account span{font-weight:700;max-width:84px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.accountMenu{position:absolute;right:0;top:calc(100% + 9px);width:210px;padding:7px;border:1px solid var(--line);border-radius:11px;background:rgba(8,8,12,.96);backdrop-filter:blur(22px);box-shadow:0 18px 60px rgba(0,0,0,.5);opacity:0;visibility:hidden;transform:translateY(-5px);transition:.16s}.accountMenu.open{opacity:1;visibility:visible;transform:none}.accountMenu a{display:flex;align-items:center;gap:9px;padding:10px 11px;border-radius:8px;color:#c9c9ce;font-weight:650}.accountMenu a:hover{background:rgba(255,255,255,.06);color:#fff}.accountMenu .danger{color:#ff8aa3}.accountMenu hr{border:0;border-top:1px solid var(--line2);margin:6px 4px}
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(420px,.95fr);gap:18px;align-items:stretch;margin-top:38px}.heroMain,.heroPreview{border:1px solid var(--line);border-radius:13px;background:rgba(7,7,10,.66);backdrop-filter:blur(22px);box-shadow:var(--shadow)}.heroMain{min-height:550px;padding:56px;display:flex;flex-direction:column;justify-content:center;position:relative;overflow:hidden}.heroMain:after{content:"";position:absolute;width:520px;height:260px;border-radius:999px;background:rgba(var(--accent-rgb),.13);filter:blur(70px);right:-160px;bottom:-100px;pointer-events:none}.eyebrow{display:flex;align-items:center;gap:9px;color:#85868f;font:700 10px/1 var(--mono);letter-spacing:.17em;text-transform:uppercase;margin-bottom:18px}.eyebrow:after{content:"";width:72px;height:1px;background:var(--line)}h1{position:relative;z-index:1;margin:0 0 18px;font-size:clamp(44px,5.5vw,78px);line-height:.98;letter-spacing:-.055em;max-width:10ch}.accentText{background:linear-gradient(90deg,#fff 5%,#c8b6ff 48%,#ff9bca 95%);-webkit-background-clip:text;background-clip:text;color:transparent}.lead{position:relative;z-index:1;margin:0 0 26px;color:var(--muted);font-size:15px;max-width:610px}.cta{position:relative;z-index:1;display:flex;flex-wrap:wrap;gap:9px}.urlBadge{position:relative;z-index:1;display:inline-flex;align-items:center;gap:8px;width:max-content;max-width:100%;margin-top:26px;padding:9px 11px;border:1px solid var(--line2);border-radius:9px;background:rgba(255,255,255,.025);font:700 11px var(--mono);color:#a7a7af}.urlBadge b{color:#fff}.dot{width:6px;height:6px;border-radius:50%;background:var(--accent);box-shadow:0 0 12px var(--accent)}
+.heroPreview{padding:18px;display:grid;grid-template-rows:auto 1fr}.previewHead{display:flex;align-items:center;justify-content:space-between;padding:2px 2px 14px;border-bottom:1px solid var(--line2)}.previewHead b{font:800 10px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:#a7a7af}.previewTag{display:inline-flex;align-items:center;gap:6px;color:#74757e;font-size:11px}.previewStage{position:relative;overflow:hidden;min-height:470px;margin-top:14px;border:1px solid var(--line2);border-radius:11px;background:radial-gradient(460px 240px at 20% 10%,rgba(0,230,118,.18),transparent 70%),radial-gradient(520px 260px at 85% 90%,rgba(var(--accent-rgb),.23),transparent 72%),#08090a;display:grid;place-items:center;padding:28px}.profileCard{width:min(100%,520px);padding:24px;border:1px solid rgba(255,255,255,.12);border-radius:24px;background:rgba(6,8,8,.64);backdrop-filter:blur(24px);box-shadow:0 30px 70px rgba(0,0,0,.36)}.profileTop{display:flex;align-items:center;gap:14px}.avatar{position:relative;width:72px;height:72px;border-radius:50%;padding:3px;background:conic-gradient(from 0deg,var(--accent),#00e676,var(--accent));animation:ring 8s linear infinite}.avatar:after{content:"";position:absolute;inset:-7px;border:1px solid rgba(255,255,255,.08);border-radius:inherit}.avatarInner{width:100%;height:100%;border-radius:inherit;background:linear-gradient(135deg,#191923,#09090d);display:grid;place-items:center;font:800 24px var(--mono)}@keyframes ring{to{transform:rotate(360deg)}}.identity{min-width:0}.identity h3{margin:0;font-size:25px;letter-spacing:-.035em}.handle{color:#00e676;font-weight:700;font-size:12px}.badgeRow{margin-left:auto;display:flex;gap:5px}.badge{display:grid;place-items:center;width:26px;height:26px;border:1px solid var(--line);border-radius:8px;background:rgba(255,255,255,.035);font-size:12px}.bio{margin:20px 0 14px;color:#a5a6ad;font-size:12px}.socialGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.social{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 12px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.025);color:#d5d5da;font-weight:650}.social:hover{border-color:rgba(var(--accent-rgb),.36);background:rgba(var(--accent-rgb),.08)}
+.section{margin-top:18px;border:1px solid var(--line);border-radius:13px;background:rgba(5,5,7,.42);backdrop-filter:blur(16px);padding:18px}.sectionHead{display:flex;justify-content:space-between;align-items:flex-end;gap:20px;padding:2px 3px 16px;border-bottom:1px solid var(--line2)}.sectionHead .kicker{color:#85868f;font:700 10px/1 var(--mono);letter-spacing:.17em;text-transform:uppercase}.sectionHead h2{margin:6px 0 0;font-size:25px;letter-spacing:-.035em}.sectionHead p{margin:0;color:var(--muted);max-width:540px}.featureGrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-top:14px}.feature{min-height:170px;padding:16px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.018);transition:.2s}.feature:hover{border-color:rgba(var(--accent-rgb),.32);background:linear-gradient(135deg,rgba(var(--accent-rgb),.08),rgba(255,255,255,.018));transform:translateY(-2px)}.featureIcon{display:grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);border-radius:9px;background:#0a0a0e;margin-bottom:16px}.featureIcon svg{width:17px}.feature h3{margin:0 0 7px;font-size:14px}.feature p{margin:0;color:var(--muted);font-size:11.5px}.steps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px;counter-reset:step}.step{position:relative;min-height:150px;padding:18px;border:1px solid var(--line2);border-radius:11px;background:rgba(0,0,0,.18)}.step:before{counter-increment:step;content:"0" counter(step);display:inline-flex;margin-bottom:22px;color:#7f8089;font:800 10px var(--mono);letter-spacing:.15em}.step h3{margin:0 0 6px;font-size:14px}.step p{margin:0;color:var(--muted);font-size:11.5px}.faqList{display:grid;gap:8px;margin-top:14px}.faqList details{border:1px solid var(--line2);border-radius:10px;background:rgba(0,0,0,.16);overflow:hidden}.faqList summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px;padding:15px 16px;cursor:pointer;font-weight:700}.faqList summary::-webkit-details-marker{display:none}.faqList summary span{display:grid;place-items:center;width:24px;height:24px;border:1px solid var(--line2);border-radius:7px;background:rgba(255,255,255,.025);transition:.2s}.faqList details[open] summary span{transform:rotate(45deg)}.faqList p{margin:0;padding:0 52px 16px 16px;color:var(--muted);font-size:12px}.end{display:flex;align-items:center;justify-content:space-between;gap:18px;margin-top:18px;padding:26px;border:1px solid var(--line);border-radius:13px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.1),rgba(236,72,153,.055),rgba(255,255,255,.018));backdrop-filter:blur(18px)}.end h2{margin:0 0 4px;font-size:22px}.end p{margin:0;color:var(--muted)}footer{padding:28px 4px 4px;color:#686972;font:700 10px var(--mono);letter-spacing:.12em;text-transform:uppercase}
+@media(max-width:1100px){.topbar{grid-template-columns:1fr auto}.topnav{display:none}.hero{grid-template-columns:1fr}.heroMain{min-height:auto}.featureGrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:700px){.shell{width:min(100% - 20px,1640px)}.topbar{height:54px;padding:0 10px}.context{display:none}.actions>.btn span{display:none}.account{min-width:0}.account span{display:none}.hero{margin-top:18px}.heroMain{padding:34px 22px}.heroPreview{padding:12px}.previewStage{min-height:390px;padding:16px}.profileCard{padding:18px}.badgeRow{display:none}.socialGrid{grid-template-columns:1fr}.section{padding:13px}.sectionHead{display:block}.sectionHead p{margin-top:8px}.featureGrid,.steps{grid-template-columns:1fr}.end{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
 </style>
-<link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
+<link rel="icon" href="/caruzo-logo.png" type="image/png">
+</head>
 <body>
-<div class="glow" aria-hidden="true"><i></i><i></i><i></i></div>
-
-<nav>
-  <a class="logo" href="/">caruzo<i>.lol</i></a>
-  <div class="mid"><a href="#features">Funktionen</a><a href="#ablauf">So geht's</a><a href="#faq">FAQ</a></div>
-  <a class="btn pri sm" href="/dashboard">Dashboard</a>
-</nav>
-
-<main>
-  <header class="hero">
-    <div>
-      <div class="url" aria-label="Beispiel-Adresse">caruzo.lol/<b id="typed"></b></div>
-      <h1>Deine Seite. Direkt aus Discord.</h1>
-      <p class="lead">Melde dich mit Discord an und dein Profil steht: Avatar, Banner, Dekoration und öffentliche Badges werden automatisch übernommen. Design, Sound, Effekte und Links stellst du im Dashboard ein.</p>
-      <div class="cta">
-        <a class="btn pri" href="/dashboard">Mit Discord starten</a>
-        <a class="btn" href="#features">Alle Funktionen</a>
+<div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
+<div class="shell">
+  <header class="topbar">
+    <a class="brandBox" href="/"><img class="logoMark" src="/caruzo-logo.png" alt=""><span class="brandName">CARUZO</span><span class="context">Home</span></a>
+    <nav class="topnav" aria-label="Hauptnavigation"><a href="#features">Features</a><a href="#how">Setup</a><a href="#faq">FAQ</a></nav>
+    <div class="actions" id="navActions">
+      <a class="btn primary" id="dashboardBtn" href="/dashboard"><i data-lucide="layout-dashboard"></i><span>Dashboard</span></a>
+      <div class="accountWrap" id="accountWrap" hidden>
+        <button class="account" id="accountToggle" type="button" aria-expanded="false"><img id="navAvatar" alt=""><span id="navName">Account</span><i data-lucide="chevron-down" style="width:14px"></i></button>
+        <div class="accountMenu" id="accountMenu">
+          <a href="/dashboard"><i data-lucide="layout-dashboard" style="width:15px"></i>Dashboard</a>
+          <a id="profileLink" href="#"><i data-lucide="user-round" style="width:15px"></i>Mein Profil</a>
+          <hr>
+          <a class="danger" href="/logout"><i data-lucide="log-out" style="width:15px"></i>Abmelden</a>
+        </div>
       </div>
-    </div>
-
-    <div class="mock" aria-hidden="true">
-      <div class="top">
-        <div class="pfp"></div>
-        <div><h3>Dein Name</h3><small>Dein Profil. Dein Style.</small></div>
-      </div>
-      <div class="chips"><span class="chip">catlover</span><span class="chip">germany</span><span class="chip">17</span></div>
-      <div class="badge-row"><span>💎</span><span>🎉</span><span>💻</span><span>⭐</span><span>🚀</span></div>
-      <div class="links"><div>Discord <span>deinname</span></div><div>Steam <span>öffnen</span></div><div>Twitch <span>öffnen</span></div></div>
     </div>
   </header>
 
-  <section id="features">
-    <h2>Was du damit machen kannst</h2>
-    <p class="sub">Alles, was du für eine gute Profilseite brauchst, an einem Ort.</p>
-    <div class="grid">
-      <div class="feat"><div class="ic">🔗</div><h3>Eigene Adresse</h3><p>Dein Profil erreichst du unter caruzo.lol/deinname. Kurz, merkbar, überall teilbar.</p></div>
-      <div class="feat"><div class="ic">🪪</div><h3>Discord-Sync</h3><p>Avatar, Banner, Avatar-Dekoration und Server-Tag kommen direkt von Discord und bleiben aktuell.</p></div>
-      <div class="feat"><div class="ic">🏅</div><h3>Badges automatisch</h3><p>Staff, HypeSquad, Active Developer, Early Supporter und alle weiteren öffentlichen Badges werden erkannt.</p></div>
-      <div class="feat wide"><div><div class="ic">✨</div><h3>Profil-Effekte</h3><p>Blur, Schweben, Zoom, Pulsieren oder ein 3D-Profil, das auf deine Maus reagiert.</p></div><div class="tiers"><span>Blur</span><span>3D Tilt</span><span>Float</span><span>Zoom</span><span>Pulse</span></div></div>
-      
-      <div class="feat"><div class="ic">🎨</div><h3>Hintergrund</h3><p>Bild, GIF oder Video mit einstellbarer Unschärfe und Abdunklung.</p></div>
-      <div class="feat"><div class="ic">🎵</div><h3>Musik &amp; Spotify</h3><p>Eigene Audiodatei beim Betreten abspielen oder eine Spotify-Playlist einbetten.</p></div>
-      <div class="feat"><div class="ic">🟢</div><h3>Live-Status</h3><p>Zeigt, ob du online, abwesend oder nicht stören bist.</p></div>
-      <div class="feat"><div class="ic">🧩</div><h3>Links &amp; Accounts</h3><p>Steam, Twitch, TikTok und beliebige weitere Links als saubere Karten.</p></div>
+  <section class="hero">
+    <div class="heroMain">
+      <div class="eyebrow">Personal profile platform</div>
+      <h1>Dein Profil. <span class="accentText">Dein Style.</span></h1>
+      <p class="lead">Verbinde Discord, baue deine persönliche Seite und passe Profil, Media, Socials und Style in einem einzigen Dashboard an.</p>
+      <div class="cta"><a class="btn accent" href="/dashboard"><i data-lucide="sparkles"></i>Profil bearbeiten</a><a class="btn" href="#features"><i data-lucide="arrow-down"></i>Features ansehen</a></div>
+      <div class="urlBadge"><span class="dot"></span>caruzo.lol/<b id="typed">deinname</b></div>
+    </div>
+    <div class="heroPreview">
+      <div class="previewHead"><b>Live profile style</b><span class="previewTag"><i data-lucide="eye" style="width:13px"></i>Preview</span></div>
+      <div class="previewStage">
+        <div class="profileCard">
+          <div class="profileTop"><div class="avatar"><div class="avatarInner">C</div></div><div class="identity"><h3>Dein Name</h3><div class="handle">@deinname</div></div><div class="badgeRow"><span class="badge">◆</span><span class="badge">✦</span><span class="badge">◇</span></div></div>
+          <p class="bio">Deine Bio, dein Look und deine Links – sauber, modern und komplett anpassbar.</p>
+          <div class="socialGrid"><a class="social" href="#"><span>Discord</span><i data-lucide="arrow-up-right" style="width:14px"></i></a><a class="social" href="#"><span>TikTok</span><i data-lucide="arrow-up-right" style="width:14px"></i></a><a class="social" href="#"><span>YouTube</span><i data-lucide="arrow-up-right" style="width:14px"></i></a><a class="social" href="#"><span>Steam</span><i data-lucide="arrow-up-right" style="width:14px"></i></a></div>
+        </div>
+      </div>
     </div>
   </section>
 
-  <section id="ablauf">
-    <h2>In drei Schritten online</h2>
-    <p class="sub">Kein Passwort, keine Formulare.</p>
-    <div class="steps">
-      <div class="step rv"><b>Anmelden</b><p>Klicke oben rechts auf Dashboard und melde dich mit Discord an.</p></div>
-      <div class="step rv"><b>Anpassen</b><p>Im Dashboard findest du alle Einstellungen, sortiert nach Kategorien.</p></div>
-      <div class="step rv"><b>Teilen</b><p>Speichern und deinen Link caruzo.lol/deinname überall posten.</p></div>
+  <section class="section" id="features">
+    <div class="sectionHead"><div><span class="kicker">Features</span><h2>Alles an einem Ort</h2></div><p>Die vorhandenen Caruzo-Funktionen bleiben gleich – die Hauptseite nutzt jetzt denselben visuellen Stil wie dein Dashboard.</p></div>
+    <div class="featureGrid">
+      <article class="feature"><div class="featureIcon"><i data-lucide="badge-check"></i></div><h3>Discord Sync</h3><p>Avatar, Banner, Dekoration, Badges und weitere Profildaten direkt aus Discord.</p></article>
+      <article class="feature"><div class="featureIcon"><i data-lucide="music-2"></i></div><h3>Media & Music</h3><p>Musik, Video, Spotify und eigene Hintergrundmedien für dein Profil.</p></article>
+      <article class="feature"><div class="featureIcon"><i data-lucide="share-2"></i></div><h3>Socials</h3><p>Deine wichtigsten Accounts und Links in einem cleanen Layout.</p></article>
+      <article class="feature"><div class="featureIcon"><i data-lucide="wand-sparkles"></i></div><h3>Style & Effects</h3><p>Rahmen, Blur, Farben, Animationen, Cursor-Effekte und Profil-Design.</p></article>
     </div>
   </section>
 
+  <section class="section" id="how">
+    <div class="sectionHead"><div><span class="kicker">Setup</span><h2>In drei Schritten</h2></div><p>Der Ablauf bleibt bewusst einfach.</p></div>
+    <div class="steps"><article class="step"><h3>Mit Discord anmelden</h3><p>Öffne das Dashboard und verbinde deinen Discord-Account.</p></article><article class="step"><h3>Profil anpassen</h3><p>Ändere Inhalte, Media, Socials und Style direkt im Editor.</p></article><article class="step"><h3>Profil teilen</h3><p>Speichern und deine persönliche caruzo.lol-Adresse verwenden.</p></article></div>
+  </section>
 
-  <section id="faq" class="faq rv">
-    <div class="faqHead"><div><h2>Häufige Fragen</h2><p class="sub">Kurz erklärt, bevor du dein Profil baust.</p></div><span>FAQ</span></div>
+  <section class="section" id="faq">
+    <div class="sectionHead"><div><span class="kicker">FAQ</span><h2>Häufige Fragen</h2></div><p>Die wichtigsten Punkte kurz erklärt.</p></div>
     <div class="faqList">
-      <details><summary>Bleibt mein Profil nach einem Deploy erhalten?<i>+</i></summary><p>Ja – sobald du auf Render einen Persistent Disk nutzt und DATA_DIR auf dessen Mount-Pfad setzt. Profil-Daten und Uploads liegen dann außerhalb des Deploy-Dateisystems.</p></details>
-      <details><summary>Was wird automatisch von Discord übernommen?<i>+</i></summary><p>Avatar, Banner, Dekoration, öffentliche Badges und weitere verfügbare Discord-Profilinformationen werden beim Sync aktualisiert.</p></details>
-      <details><summary>Kann ich Video, Musik und Spotify nutzen?<i>+</i></summary><p>Ja. Du entscheidest im Dashboard, welche Audioquelle verwendet wird. Musik und Video starten bewusst leise und können vom Besucher angepasst werden.</p></details>
-      <details><summary>Kann ich meine Profil-Adresse ändern?<i>+</i></summary><p>Ja. Dein Username bestimmt die Adresse caruzo.lol/deinname und kann im Dashboard angepasst werden, solange der Name frei ist.</p></details>
-      <details><summary>Funktioniert Caruzo auch auf dem Handy?<i>+</i></summary><p>Dashboard und öffentliche Profile sind responsiv und passen Navigation, Karten und Inhalte an kleinere Displays an.</p></details>
+      <details><summary>Bleibt mein Profil nach einem Redeploy erhalten?<span>+</span></summary><p>Ja, wenn du die bereits vorbereitete externe Speicherung nutzt. Die bestehende Anleitung im Projekt bleibt unverändert.</p></details>
+      <details><summary>Was wird von Discord übernommen?<span>+</span></summary><p>Je nach verfügbarer Discord-Information unter anderem Avatar, Banner, Dekoration und öffentliche Badges.</p></details>
+      <details><summary>Kann ich Musik, Video und Socials verwenden?<span>+</span></summary><p>Ja. Diese Funktionen bleiben wie bisher im Dashboard verfügbar.</p></details>
     </div>
   </section>
 
-  <div class="end rv">
-    <h2>Bereit für dein Profil?</h2>
-    <p>Die Anmeldung dauert ein paar Sekunden. Danach steht deine Seite.</p>
-    <a class="btn pri" href="/dashboard">Zum Dashboard</a>
-  </div>
-  <footer>caruzo.lol</footer>
-</main>
-
+  <section class="end"><div><h2>Bereit für dein Profil?</h2><p>Öffne das Dashboard und passe deine Seite an.</p></div><a class="btn primary" href="/dashboard"><i data-lucide="layout-dashboard"></i>Zum Dashboard</a></section>
+  <footer>CARUZO · PROFILE PLATFORM</footer>
+</div>
 <script>
-document.documentElement.classList.add('js');
+const $=s=>document.querySelector(s);
+window.lucide?.createIcons?.();
 
-// Beispiel-Adresse tippt verschiedene Namen
-(() => {
-  const el = document.getElementById('typed');
-  const names = ['deinname', 'yourname', 'creator', 'player'];
-  if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = names[0]; return; }
-  let n = 0, i = 0, dir = 1;
-  (function tick() {
-    const w = names[n];
-    el.textContent = w.slice(0, i);
-    i += dir;
-    let wait = 90;
-    if (i > w.length) { dir = -1; wait = 1800; }
-    else if (i < 0) { dir = 1; i = 0; n = (n + 1) % names.length; wait = 400; }
-    setTimeout(tick, wait);
-  })();
+(async()=>{
+  try{
+    const r=await fetch('/api/session-info',{headers:{Accept:'application/json'}});
+    if(!r.ok)return;
+    const s=await r.json();
+    if(!s.authenticated)return;
+    $('#dashboardBtn').hidden=true;
+    $('#accountWrap').hidden=false;
+    $('#navAvatar').src=s.user.avatar||'/caruzo-logo.png';
+    $('#navName').textContent=s.user.name||s.user.username||'Account';
+    $('#profileLink').href='/'+encodeURIComponent(s.user.username);
+  }catch{}
 })();
 
-// Schritte und Abschluss blenden beim Scrollen ein
-const io = new IntersectionObserver(es => es.forEach(e => { if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); } }), { threshold: .2 });
-document.querySelectorAll('.rv').forEach((n, i) => { n.style.transitionDelay = (i % 3) * 90 + 'ms'; io.observe(n); });
+const toggle=$('#accountToggle'),menu=$('#accountMenu');
+if(toggle){
+  const close=()=>{menu.classList.remove('open');toggle.setAttribute('aria-expanded','false')};
+  toggle.addEventListener('click',e=>{e.stopPropagation();const open=!menu.classList.contains('open');menu.classList.toggle('open',open);toggle.setAttribute('aria-expanded',String(open))});
+  document.addEventListener('click',close);menu.addEventListener('click',e=>e.stopPropagation());document.addEventListener('keydown',e=>{if(e.key==='Escape')close()});
+}
+
+(()=>{const el=$('#typed');if(!el)return;const names=['deinname','creator','player','profile'];if(matchMedia('(prefers-reduced-motion:reduce)').matches){el.textContent=names[0];return}let n=0,i=0,dir=1;(function tick(){const w=names[n];el.textContent=w.slice(0,i);i+=dir;let wait=90;if(i>w.length){dir=-1;wait=1500}else if(i<0){dir=1;i=0;n=(n+1)%names.length;wait=350}setTimeout(tick,wait)})()})();
 </script>
 </body>
 </html>
