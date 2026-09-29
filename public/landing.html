@@ -108,6 +108,10 @@ footer{padding:0 0 40px;text-align:center;color:var(--mute);font-size:12px}
   *,*::before,*::after{animation:none!important;transition:none!important}
   .js .rv{opacity:1;transform:none}
 }
+
+/* Responsive glass FAQ */
+.faq{padding-top:90px}.faqHead{display:flex;justify-content:space-between;gap:24px;align-items:flex-start}.faqHead>span{padding:7px 11px;border-radius:999px;background:rgba(255,46,147,.10);color:#ffc2de;font-size:11px;border:1px solid rgba(255,46,147,.18)}.faqList{display:grid;gap:10px}.faq details{border:1px solid rgba(255,255,255,.075);border-radius:18px;background:rgba(24,16,19,.58);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);overflow:hidden}.faq summary{list-style:none;display:flex;justify-content:space-between;align-items:center;gap:20px;padding:19px 20px;cursor:pointer;font:600 14px var(--display)}.faq summary::-webkit-details-marker{display:none}.faq summary i{font:400 20px var(--mono);color:var(--pink);font-style:normal;transition:transform .2s}.faq details[open] summary i{transform:rotate(45deg)}.faq details p{margin:0;padding:0 54px 20px 20px;color:var(--mute);font-size:13px}.faq details:hover{border-color:rgba(255,255,255,.13)}
+@media(max-width:620px){.faqHead{display:block}.faqHead>span{display:none}.faq summary{padding:17px 16px}.faq details p{padding:0 42px 18px 16px}}
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -115,7 +119,7 @@ footer{padding:0 0 40px;text-align:center;color:var(--mute);font-size:12px}
 
 <nav>
   <a class="logo" href="/">caruzo<i>.lol</i></a>
-  <div class="mid"><a href="#features">Funktionen</a><a href="#ablauf">So geht's</a></div>
+  <div class="mid"><a href="#features">Funktionen</a><a href="#ablauf">So geht's</a><a href="#faq">FAQ</a></div>
   <a class="btn pri sm" href="/dashboard">Dashboard</a>
 </nav>
 
@@ -134,11 +138,11 @@ footer{padding:0 0 40px;text-align:center;color:var(--mute);font-size:12px}
     <div class="mock" aria-hidden="true">
       <div class="top">
         <div class="pfp"></div>
-        <div><h3>lovely1312</h3><small>„the end is never the end"</small></div>
+        <div><h3>Dein Name</h3><small>Dein Profil. Dein Style.</small></div>
       </div>
       <div class="chips"><span class="chip">catlover</span><span class="chip">germany</span><span class="chip">17</span></div>
       <div class="badge-row"><span>💎</span><span>🎉</span><span>💻</span><span>⭐</span><span>🚀</span></div>
-      <div class="links"><div>Discord <span>lovely1312</span></div><div>Steam <span>öffnen</span></div><div>Twitch <span>öffnen</span></div></div>
+      <div class="links"><div>Discord <span>deinname</span></div><div>Steam <span>öffnen</span></div><div>Twitch <span>öffnen</span></div></div>
     </div>
   </header>
 
@@ -168,6 +172,18 @@ footer{padding:0 0 40px;text-align:center;color:var(--mute);font-size:12px}
     </div>
   </section>
 
+
+  <section id="faq" class="faq rv">
+    <div class="faqHead"><div><h2>Häufige Fragen</h2><p class="sub">Kurz erklärt, bevor du dein Profil baust.</p></div><span>FAQ</span></div>
+    <div class="faqList">
+      <details><summary>Bleibt mein Profil nach einem Deploy erhalten?<i>+</i></summary><p>Ja – sobald du auf Render einen Persistent Disk nutzt und DATA_DIR auf dessen Mount-Pfad setzt. Profil-Daten und Uploads liegen dann außerhalb des Deploy-Dateisystems.</p></details>
+      <details><summary>Was wird automatisch von Discord übernommen?<i>+</i></summary><p>Avatar, Banner, Dekoration, öffentliche Badges und weitere verfügbare Discord-Profilinformationen werden beim Sync aktualisiert.</p></details>
+      <details><summary>Kann ich Video, Musik und Spotify nutzen?<i>+</i></summary><p>Ja. Du entscheidest im Dashboard, welche Audioquelle verwendet wird. Musik und Video starten bewusst leise und können vom Besucher angepasst werden.</p></details>
+      <details><summary>Kann ich meine Profil-Adresse ändern?<i>+</i></summary><p>Ja. Dein Username bestimmt die Adresse caruzo.lol/deinname und kann im Dashboard angepasst werden, solange der Name frei ist.</p></details>
+      <details><summary>Funktioniert Caruzo auch auf dem Handy?<i>+</i></summary><p>Dashboard und öffentliche Profile sind responsiv und passen Navigation, Karten und Inhalte an kleinere Displays an.</p></details>
+    </div>
+  </section>
+
   <div class="end rv">
     <h2>Bereit für dein Profil?</h2>
     <p>Die Anmeldung dauert ein paar Sekunden. Danach steht deine Seite.</p>
@@ -182,7 +198,7 @@ document.documentElement.classList.add('js');
 // Beispiel-Adresse tippt verschiedene Namen
 (() => {
   const el = document.getElementById('typed');
-  const names = ['lovely1312', 'deinname', 'max', 'luna'];
+  const names = ['deinname', 'yourname', 'creator', 'player'];
   if (matchMedia('(prefers-reduced-motion:reduce)').matches) { el.textContent = names[0]; return; }
   let n = 0, i = 0, dir = 1;
   (function tick() {

@@ -9,6 +9,7 @@
 :root{--pink:#ff2e93;--bg:#0e0a0c;--card:rgba(24,16,19,.7);--line:rgba(255,255,255,.1);--mute:#a99aa2;--text:#f6eff2;--field:#160e12;
   --mono:'JetBrains Mono',ui-monospace,monospace;--display:'Space Grotesk',system-ui,sans-serif}
 *{box-sizing:border-box}
+html{color-scheme:dark}
 body{margin:0;background:radial-gradient(60% 40% at 20% 0%,rgba(255,46,147,.14),transparent 70%),var(--bg);color:var(--text);font:13px/1.5 var(--mono);min-height:100vh}
 :focus-visible{outline:2px solid var(--pink);outline-offset:2px}
 [hidden]{display:none!important}
@@ -49,7 +50,7 @@ body.is-dirty .dirty{display:flex}
 .card .desc{margin:-8px 0 0;color:var(--mute);font-size:12px}
 label.f{display:grid;gap:6px;color:var(--mute)}
 input[type=text],input[type=url],input[type=number],input[type=month],textarea,select{width:100%;padding:11px 13px;border-radius:12px;border:1px solid rgba(255,255,255,.075);background:rgba(255,255,255,.035);color:var(--text);font:inherit;outline:none;transition:border-color .18s,background .18s,box-shadow .18s} input:focus,textarea:focus,select:focus{border-color:rgba(143,124,255,.55);background:rgba(255,255,255,.055);box-shadow:0 0 0 3px rgba(143,124,255,.10)} input[type=color]{appearance:none;-webkit-appearance:none;width:100%;height:46px;padding:0;border:0!important;border-radius:12px;overflow:hidden;background:transparent;cursor:pointer}input[type=color]::-webkit-color-swatch-wrapper{padding:0}input[type=color]::-webkit-color-swatch{border:0;border-radius:12px}input[type=color]::-moz-color-swatch{border:0;border-radius:12px}
-input:disabled{opacity:.5}
+select{color-scheme:dark;background-color:rgba(255,255,255,.035)} select option{background:#171015;color:#f6eff2} input:disabled{opacity:.5}
 textarea{min-height:96px;resize:vertical}
 .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px}
 .hint{margin:0;color:var(--mute);font-size:12px}
@@ -107,6 +108,16 @@ header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
 .side button[aria-selected=true]{box-shadow:inset 3px 0 var(--pink)}
 .previewName{font:700 34px var(--display);padding:22px;border-radius:14px;text-align:center;background:radial-gradient(circle at 50% 20%,rgba(255,46,147,.14),transparent 60%),#100b0e;border:1px solid var(--line)}
 .previewName.gradient{background-image:linear-gradient(90deg,#ff2e93,#8f7cff,#55e6ff);-webkit-background-clip:text;color:transparent}.previewName.neon{text-shadow:0 0 8px currentColor,0 0 22px #ff2e93}.previewName.toon{text-shadow:3px 3px 0 #000,-2px -2px 0 #ff2e93}.previewName.rubber{animation:rub .9s ease-in-out infinite alternate}@keyframes rub{to{transform:scaleX(1.05) scaleY(.94)}}
+
+/* Caruzo Glass Controls v4 — no native white pickers */
+select,input,textarea,.prefix,.rep .item input{border-color:rgba(255,255,255,.055)!important}
+select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,#a99aa2 50%),linear-gradient(135deg,#a99aa2 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:38px}
+.colorStudio{padding:12px;border-radius:15px;background:rgba(8,6,8,.36);box-shadow:inset 0 1px rgba(255,255,255,.025);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px)}
+.palette{display:grid;grid-template-columns:repeat(8,1fr);gap:8px;margin-bottom:10px}.palette button{aspect-ratio:1;border:0;border-radius:10px;background:var(--c);cursor:pointer;box-shadow:inset 0 0 0 1px rgba(255,255,255,.06),0 5px 16px rgba(0,0,0,.18);transition:transform .15s,box-shadow .15s}.palette button:hover{transform:translateY(-2px);box-shadow:inset 0 0 0 1px rgba(255,255,255,.12),0 8px 20px rgba(0,0,0,.25)}.palette button.active{box-shadow:0 0 0 2px #0e0a0c,0 0 0 4px var(--c)}
+.hexrow{display:grid;grid-template-columns:38px 1fr;gap:9px;align-items:center}.hexrow .swatch{width:38px;height:38px;border-radius:11px;background:#f6eff2;box-shadow:inset 0 0 0 1px rgba(255,255,255,.07)}.hexrow input{height:38px}
+#tabMessages .item{grid-template-columns:1fr auto}#tabMessages .item input{min-width:0;background:rgba(255,255,255,.025);border:0!important;box-shadow:inset 0 0 0 1px rgba(255,255,255,.045)}
+.card, .side{backdrop-filter:blur(24px) saturate(120%);-webkit-backdrop-filter:blur(24px) saturate(120%)}
+@media(max-width:520px){.palette{grid-template-columns:repeat(4,1fr)}}
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -204,7 +215,14 @@ header{box-shadow:0 12px 40px rgba(0,0,0,.25)}
       <div class="card"><h3>Display Name</h3><p class="desc">This is the main name shown on your profile.</p>
         <label class="f">Name<input type="text" data-p="displayName"></label>
         <label class="f">Effekt wählen<select data-p="design.nameEffect"><option value="standard">Standard</option><option value="gradient">Farbverlauf</option><option value="neon">Neon</option><option value="toon">Toon</option><option value="rubber">Gummi</option><option value="typewriter">Typewriter</option></select></label>
-        <label class="f">Farbe wählen<input type="color" data-p="design.nameColor" ></label>
+        <label class="f">Farbe wählen
+          <div class="colorStudio" id="colorStudio">
+            <div class="palette" aria-label="Farbpalette">
+              <button type="button" data-color="#f6eff2" style="--c:#f6eff2" aria-label="Pearl"></button><button type="button" data-color="#ff2e93" style="--c:#ff2e93" aria-label="Pink"></button><button type="button" data-color="#8f7cff" style="--c:#8f7cff" aria-label="Violet"></button><button type="button" data-color="#55e6ff" style="--c:#55e6ff" aria-label="Cyan"></button><button type="button" data-color="#6dffb0" style="--c:#6dffb0" aria-label="Mint"></button><button type="button" data-color="#ffd166" style="--c:#ffd166" aria-label="Gold"></button><button type="button" data-color="#ff725e" style="--c:#ff725e" aria-label="Coral"></button><button type="button" data-color="#ffffff" style="--c:#ffffff" aria-label="White"></button>
+            </div>
+            <div class="hexrow"><span class="swatch" id="nameSwatch"></span><input type="text" data-p="design.nameColor" maxlength="7" placeholder="#f6eff2" aria-label="HEX Farbe"></div>
+          </div>
+        </label>
         <div class="previewName" id="namePreview">Preview</div><p class="hint">Auto+ Vorschau · Typewriter tippt, hält und löscht endlos.</p>
       </div>
       <div class="card"><h3>Cursor effect</h3><p class="desc">Partikel und Trails folgen dem Mauszeiger.</p>
@@ -393,6 +411,18 @@ $('#sync').onclick = async () => {
 };
 
 api('/api/me').then(u => { me = u; bind(); openTab(location.hash.slice(1) || 'profil'); }).catch(() => location.href = '/auth/discord');
+
+// Custom dark color studio (avoids the browser's native white color picker)
+function syncColorStudio(){
+  const c=(me.design?.nameColor||'#f6eff2').toLowerCase();
+  const sw=document.querySelector('#nameSwatch'); if(sw) sw.style.background=c;
+  document.querySelectorAll('[data-color]').forEach(b=>b.classList.toggle('active',b.dataset.color.toLowerCase()===c));
+}
+document.querySelectorAll('[data-color]').forEach(b=>b.addEventListener('click',()=>{
+  me.design.nameColor=b.dataset.color; const inp=document.querySelector('[data-p="design.nameColor"]'); if(inp) inp.value=b.dataset.color; markDirty(true); updateNamePreview(); syncColorStudio();
+}));
+document.querySelector('[data-p="design.nameColor"]')?.addEventListener('input',e=>{if(/^#[0-9a-f]{6}$/i.test(e.target.value)){me.design.nameColor=e.target.value;updateNamePreview();syncColorStudio();}});
+setTimeout(syncColorStudio,0);
 </script>
 </body>
 </html>
