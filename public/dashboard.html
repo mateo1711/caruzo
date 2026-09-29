@@ -193,8 +193,9 @@ select{appearance:none;-webkit-appearance:none;background-image:linear-gradient(
 
     <!-- BADGES -->
     <section class="panel" data-panel="badges" hidden>
-      <h2>Badges</h2><p class="desc">Discord-Badges werden automatisch erkannt. Es gibt keine manuellen Badges.</p>
+      <h2>Badges</h2><p class="desc">Discord-Badges werden automatisch erkannt. Nitro kannst du zusätzlich selbst ein- oder ausschalten.</p>
       <div class="card"><h3>Automatisch erkannt</h3><div class="badges" id="badgeList"></div>
+        <label class="sw"><span>Nitro manuell aktivieren<small>Zeigt das Nitro-Badge unabhängig von der Discord-Erkennung</small></span><input type="checkbox" data-p="settings.manualNitro"><i class="t"></i></label>
         <label class="sw"><span>Badges anzeigen<small>Inklusive Discord Nitro, wenn Discord es für den Account liefert</small></span><input type="checkbox" data-p="settings.showBadges"><i class="t"></i></label>
       </div>
     </section>
@@ -326,7 +327,7 @@ function updateUrl() {
 }
 
 function bind() {
-  me.design ??= {nameEffect:'standard',nameColor:'#f6eff2'}; me.cursor ??= {effect:'none',image:'system',svg:''}; me.browser ??= {effect:'rotate',speed:1500,messages:[]}; me.music ??= {}; if(me.music.volume==null) me.music.volume=30; me.links ??= {}; me.links.steam ??=[]; me.links.custom ??=[];
+  me.settings ??= {}; if(me.settings.manualNitro==null) me.settings.manualNitro=false; me.design ??= {nameEffect:'standard',nameColor:'#f6eff2'}; me.cursor ??= {effect:'none',image:'system',svg:''}; me.browser ??= {effect:'rotate',speed:1500,messages:[]}; me.music ??= {}; if(me.music.volume==null) me.music.volume=30; me.links ??= {}; me.links.steam ??=[]; me.links.custom ??=[];
   document.querySelectorAll('[data-p]').forEach(e => {
     const v = get(me, e.dataset.p);
     if (e.type === 'checkbox') e.checked = !!v; else e.value = v ?? '';
