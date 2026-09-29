@@ -82,10 +82,18 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .profile.has-banner .cta{top:136px}
 
 /* Spotify */
-.spotify{--spotify-blur:26px;--spotify-glow:.24;--spotify-height:152px;position:relative;isolation:isolate;overflow:hidden;padding:10px;background:linear-gradient(145deg,rgba(15,18,17,.68),rgba(8,9,11,.72));border-color:rgba(255,255,255,.11);backdrop-filter:blur(var(--spotify-blur)) saturate(145%);-webkit-backdrop-filter:blur(var(--spotify-blur)) saturate(145%);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 calc(34px + 38px * var(--spotify-glow)) rgba(30,215,96,calc(var(--spotify-glow) * .55))}
-.spotify:before{content:"";position:absolute;inset:-45%;z-index:0;background:radial-gradient(circle at 28% 28%,rgba(30,215,96,.32),transparent 28%),radial-gradient(circle at 76% 72%,color-mix(in srgb,var(--accent) 34%,transparent),transparent 31%);filter:blur(calc(var(--spotify-blur) + 20px));opacity:calc(.28 + var(--spotify-glow));pointer-events:none}
-.spotify:after{content:"";position:absolute;inset:0;z-index:0;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.055),transparent 28% 72%,rgba(255,255,255,.025))}
-.spotify iframe{position:relative;z-index:1;display:block;width:100%;height:var(--spotify-height);border:0;border-radius:18px;background:#121212;box-shadow:inset 0 1px rgba(255,255,255,.04),0 12px 40px rgba(0,0,0,.22)}
+.spotify{--dynamic-opacity:1;--dynamic-background-base:rgba(83,83,83,1);--dynamic-background-tinted:rgba(51,51,51,1);--dynamic-background-tinted-50:rgba(51,51,51,.5);--background-base:rgba(83,83,83,1);--background-tinted:rgba(51,51,51,1);--text-base:rgba(255,255,255,1);--text-bright-accent:rgba(255,255,255,1);--text-subdued:rgba(205,205,205,1);--spotify-blur:26px;--spotify-glow:.24;--spotify-height:236px;position:relative;isolation:isolate;overflow:hidden;padding:10px;background:linear-gradient(135deg,color-mix(in srgb,var(--dynamic-background-base) 72%,var(--accent) 28%),var(--dynamic-background-tinted));border-color:rgba(255,255,255,.14);backdrop-filter:blur(var(--spotify-blur)) saturate(150%);-webkit-backdrop-filter:blur(var(--spotify-blur)) saturate(150%);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 calc(30px + 42px * var(--spotify-glow)) color-mix(in srgb,var(--accent) 32%,transparent)}
+.spotify:before{content:"";position:absolute;inset:-35%;z-index:0;background:radial-gradient(circle at 14% 18%,color-mix(in srgb,var(--accent) 44%,transparent),transparent 27%),radial-gradient(circle at 82% 78%,rgba(255,255,255,.10),transparent 28%),linear-gradient(120deg,var(--dynamic-background-tinted-50),transparent 56%);filter:blur(calc(var(--spotify-blur) + 18px));opacity:calc(.34 + var(--spotify-glow));pointer-events:none}
+.spotify:after{content:"";position:absolute;inset:0;z-index:2;border-radius:inherit;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07),transparent 30% 70%,rgba(255,255,255,.025));box-shadow:inset 0 1px 0 rgba(255,255,255,.10)}
+.spotify iframe{position:relative;z-index:1;display:block;width:100%;height:var(--spotify-height);border:0;border-radius:18px;background:transparent;box-shadow:0 14px 42px rgba(0,0,0,.22);mix-blend-mode:screen;opacity:.94;filter:saturate(.82) contrast(1.03)}
+.spotify[data-kind="track"]{--spotify-height:152px}
+.spotify[data-layout="full"]{--spotify-height:292px}
+
+.activity-card{display:flex;align-items:center;gap:14px;padding:15px 18px;min-height:78px;background:linear-gradient(135deg,color-mix(in srgb,var(--card) 88%,var(--accent) 12%),var(--card));border-color:rgba(255,255,255,.11);backdrop-filter:blur(calc(var(--card-blur,22px) + 5px)) saturate(140%);-webkit-backdrop-filter:blur(calc(var(--card-blur,22px) + 5px)) saturate(140%);overflow:hidden;position:relative}
+.activity-card:before{content:"";position:absolute;inset:-70% 55% -70% -15%;background:radial-gradient(circle,color-mix(in srgb,var(--accent) 30%,transparent),transparent 62%);filter:blur(20px);pointer-events:none}
+.activity-icon{position:relative;z-index:1;width:46px;height:46px;flex:none;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--accent) 35%,rgba(255,255,255,.12));border-radius:15px;background:color-mix(in srgb,var(--accent) 16%,rgba(255,255,255,.04));box-shadow:0 0 24px color-mix(in srgb,var(--accent) 16%,transparent)}
+.activity-icon svg{width:22px;height:22px;fill:var(--accent)}
+.activity-copy{position:relative;z-index:1;min-width:0;flex:1}.activity-copy small{display:block;margin-bottom:3px;color:var(--mute);font-size:10px;font-weight:800;letter-spacing:.13em;text-transform:uppercase}.activity-copy b{display:block;font:700 15px var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.activity-copy span{display:block;margin-top:3px;color:#cdbfc5;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.activity-live{position:relative;z-index:1;display:flex;align-items:center;gap:6px;color:var(--mute);font-size:10px}.activity-live i{width:7px;height:7px;border-radius:50%;background:var(--st,#747f8d);box-shadow:0 0 0 4px color-mix(in srgb,var(--st,#747f8d) 16%,transparent);animation:activityPulse 1.8s ease-in-out infinite}@keyframes activityPulse{50%{transform:scale(.72);opacity:.6}}
 
 /* Socials */
 .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
@@ -184,6 +192,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 <main>
   <section id="home" style="display:grid;gap:22px">
     <div class="card profile" id="profile"></div>
+    <div class="card activity-card" id="activity" hidden></div>
     <div class="card spotify" id="spotify" hidden></div>
   </section>
   <section id="socials"><div class="grid" id="grid"></div></section>
@@ -302,12 +311,18 @@ function render(u) {
   setupProfileHover(p, u);
   typewriter(tl, u.tagline);
 
-  // Spotify
+  // Spotify — adaptive glass shell. The Spotify iframe itself is cross-origin,
+  // so its internal CSS variables cannot be overwritten from caruzo.lol. We blend
+  // the rendered iframe with our own glass background instead of injecting styles.
   const m = String(u.spotify || '').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/);
   if (m) {
-    const sp = $('#spotify'), ss = u.spotifyStyle || {}, compact = (ss.layout || 'compact') !== 'full';
-    sp.hidden = false; sp.style.setProperty('--spotify-blur', (ss.blur ?? 26) + 'px'); sp.style.setProperty('--spotify-glow', Math.max(0, Math.min(1, (ss.glow ?? 24) / 100))); sp.style.setProperty('--spotify-height', (compact ? 152 : 352) + 'px');
-    sp.append(el('iframe', { src: `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`, loading: 'lazy', allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture', allowfullscreen: '', title: 'Spotify' }));
+    const sp = $('#spotify'), ss = u.spotifyStyle || {}, layout = (ss.layout || 'compact');
+    sp.hidden = false;
+    sp.dataset.kind = m[1]; sp.dataset.layout = layout;
+    sp.style.setProperty('--spotify-blur', (ss.blur ?? 26) + 'px');
+    sp.style.setProperty('--spotify-glow', Math.max(0, Math.min(1, (ss.glow ?? 24) / 100)));
+    const embed = `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator&theme=0`;
+    sp.append(el('iframe', { src: embed, loading: 'lazy', allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture', allowfullscreen: '', title: 'Spotify' }));
   }
 
   // Socials
@@ -360,7 +375,7 @@ function render(u) {
   if (video) { video.muted = !useVideoSound; video.volume = Math.max(0,Math.min(1,Number(u.background.videoVolume ?? 30)/100)); }
 
   // Status via Lanyard
-  if (s.showStatus) { pollStatus(d.id); setInterval(() => pollStatus(d.id), 30000); }
+  if (s.showStatus || s.showActivity) { pollStatus(d.id, !!s.showStatus, !!s.showActivity); setInterval(() => pollStatus(d.id, !!s.showStatus, !!s.showActivity), 30000); }
 
   setupCursor(u.cursor || {});
 
@@ -525,14 +540,35 @@ function setupMusic(m) {
   audio.onpause = () => icon.setAttribute('d', PATH.play);
 }
 
-async function pollStatus(id) {
+function renderActivity(data) {
+  const box = $('#activity'); if (!box) return;
+  const acts = Array.isArray(data?.activities) ? data.activities : [];
+  // Prefer a game/stream/watch activity. Spotify is used as fallback.
+  const primary = acts.find(a => a && a.type !== 4 && String(a.name || '').toLowerCase() !== 'spotify')
+    || acts.find(a => a && a.type !== 4);
+  if (!primary) { box.hidden = true; box.replaceChildren(); return; }
+  const labels = {0:'Spielt gerade',1:'Streamt gerade',2:'Hört gerade',3:'Schaut gerade',5:'Im Wettkampf'};
+  const label = labels[primary.type] || 'Aktivität';
+  const detail = [primary.details, primary.state].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' · ');
+  const gamepad = svg('M7 6h10a5 5 0 014.7 6.7l-1.4 4.1a2.3 2.3 0 01-3.7 1l-2.1-1.8h-5l-2.1 1.8a2.3 2.3 0 01-3.7-1l-1.4-4.1A5 5 0 017 6zm1 4H6v2H4v2h2v2h2v-2h2v-2H8v-2zm8.7 1.3a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4zm2.6 2.6a1.2 1.2 0 100 2.4 1.2 1.2 0 000-2.4z');
+  box.replaceChildren(
+    el('div',{class:'activity-icon'},gamepad),
+    el('div',{class:'activity-copy'},el('small',{},label),el('b',{},primary.name || 'Discord Activity'),detail?el('span',{},detail):''),
+    el('div',{class:'activity-live'},el('i'), 'LIVE')
+  );
+  box.hidden = false;
+}
+async function pollStatus(id, showStatus = true, showActivity = false) {
   try {
-    const r = await (await fetch('https://api.lanyard.rest/v1/users/' + id)).json();
+    const r = await (await fetch('https://api.lanyard.rest/v1/users/' + id, { cache:'no-store' })).json();
     if (!r.success) return;
     const [color, label] = STATUS[r.data.discord_status] || STATUS.offline;
     document.documentElement.style.setProperty('--st', color);
-    const st = $('#status'); st.style.display = 'inline-flex'; st.textContent = label;
     document.querySelector('.avatar')?.style.setProperty('--st', color);
+    const st = $('#status');
+    if (showStatus) { st.style.display = 'inline-flex'; st.textContent = label; }
+    else st.style.display = 'none';
+    if (showActivity) renderActivity(r.data); else { const box=$('#activity'); if(box) box.hidden=true; }
   } catch {}
 }
 </script>
