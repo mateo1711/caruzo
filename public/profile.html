@@ -660,7 +660,11 @@ function startLanyardPresenceSocket(id,showStatus,showActivity){
   addEventListener('beforeunload',()=>{closed=true;clearInterval(hb);clearTimeout(retry);try{ws?.close()}catch{}},{once:true});
 }
 function startPresenceSync(id,showStatus=true,showActivity=false){
-  applyPresence({discord_status:'offline',activities:[]},showStatus,showActivity);pollStatus(id,showStatus,showActivity);setInterval(()=>pollStatus(id,showStatus,showActivity),8000);startLanyardPresenceSocket(id,showStatus,showActivity);
+  // Single source of truth: our server merges Discord Gateway + Lanyard fallback.
+  // Avoid a second browser-side Lanyard socket overwriting a fresher Discord Gateway state.
+  applyPresence({discord_status:'offline',activities:[]},showStatus,showActivity);
+  pollStatus(id,showStatus,showActivity);
+  setInterval(()=>pollStatus(id,showStatus,showActivity),5000);
 }
 
 </script>
