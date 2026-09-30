@@ -161,7 +161,9 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
             <div style="display:flex;gap:8px"><a class="btn primary" id="spotifyConnectBtn" href="/auth/spotify"><i data-lucide="music-2"></i>Spotify verbinden</a><button class="btn" id="spotifyDisconnectBtn" type="button" hidden><i data-lucide="unlink"></i>Trennen</button></div>
           </div>
           <label class="switchRow" style="margin-top:12px"><span class="switchText"><b>Aktuell gehörten Song anzeigen</b><small>Zeigt Track, Artist, Cover und Fortschritt live auf deinem öffentlichen Profil.</small></span><span class="switch"><input type="checkbox" data-p="settings.showSpotifyNowPlaying"><i></i></span></label>
-          <div class="statusBox" id="spotifyLiveState" style="margin-top:9px"><span class="statusDot"></span><span>Spotify nicht verbunden</span></div><small id="spotifyRedirectHint" style="display:block;margin-top:8px;color:var(--muted);line-height:1.45"></small>
+          <div class="statusBox" id="spotifyLiveState" style="margin-top:9px"><span class="statusDot"></span><span>Spotify nicht verbunden</span></div>
+          <div class="statusBox" id="spotifyAuthDiagnostic" style="margin-top:8px" hidden><span class="statusDot"></span><span></span></div>
+          <small id="spotifyRedirectHint" style="display:block;margin-top:8px;color:var(--muted);line-height:1.45"></small>
         </div>
         <div class="section"><label class="field"><span>Spotify track / album / playlist</span><input type="url" data-p="spotify" placeholder="https://open.spotify.com/..."></label><div class="grid2" style="margin-top:10px"><label class="field"><span>Spotify layout</span><select data-p="spotifyStyle.layout"><option value="compact">Spotify · large</option><option value="full">Spotify · extra large</option></select><small>Large nutzt die offizielle Spotify-Embed-Höhe (352 px). Extra large zeigt noch mehr von Playlist oder Album.</small></label><div></div><div class="rangeBox"><div class="rangeTop"><span>Spotify glass blur</span><b data-out="spotifyStyle.blur"></b></div><input type="range" min="0" max="50" data-p="spotifyStyle.blur"></div><div class="rangeBox"><div class="rangeTop"><span>Spotify ambient glow</span><b data-out="spotifyStyle.glow"></b></div><input type="range" min="0" max="100" data-p="spotifyStyle.glow"></div></div></div>
       </section>
@@ -677,17 +679,22 @@ $('#zoom').oninput=e=>$('#pvCard').style.setProperty('--pv-scale',e.target.value
 
 
 async function refreshSpotifyAccount(){
-  const name=$('#spotifyAccountName'),sub=$('#spotifyAccountSub'),live=$('#spotifyLiveState'),connect=$('#spotifyConnectBtn'),disconnect=$('#spotifyDisconnectBtn'),hint=$('#spotifyRedirectHint');
+  const name=$('#spotifyAccountName'),sub=$('#spotifyAccountSub'),live=$('#spotifyLiveState'),connect=$('#spotifyConnectBtn'),disconnect=$('#spotifyDisconnectBtn'),hint=$('#spotifyRedirectHint'),diag=$('#spotifyAuthDiagnostic');
   if(!name||!live)return;
   try{
-    const r=await api('/api/spotify/status');
-    if(hint)hint.textContent=r.redirectUri?'Spotify Redirect URI: '+r.redirectUri:'';
-    if(!r.configured){name.textContent='Spotify noch nicht eingerichtet';sub.textContent='SPOTIFY_CLIENT_ID und SPOTIFY_CLIENT_SECRET fehlen auf Render.';connect.hidden=true;disconnect.hidden=true;live.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Spotify API nicht konfiguriert</span>';return}
+    const r=await api('/api/spotify/status?t='+Date.now());
+    if(hint)hint.textContent=r.redirectUri?'Redirect URI: '+r.redirectUri+' · OAuth: '+String(r.authMode||'pkce').toUpperCase():'';
+    if(diag){
+      const d=r.diagnostic;
+      diag.hidden=!d;
+      if(d){const ok=!!d.ok;diag.innerHTML=`<span class="statusDot" style="background:${ok?'#1ed760':'#f23f43'}"></span><span><b>${ok?'Spotify OAuth':'Spotify Fehler'}</b> · ${escapeHtml(d.message||d.stage||'Status unbekannt')}${d.status?' · HTTP '+escapeHtml(String(d.status)):''}</span>`}
+    }
+    if(!r.configured){name.textContent='Spotify noch nicht eingerichtet';sub.textContent='Auf Render fehlt SPOTIFY_CLIENT_ID.';connect.hidden=true;disconnect.hidden=true;live.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Spotify API nicht konfiguriert</span>';return}
     connect.hidden=!!r.connected;disconnect.hidden=!r.connected;
-    if(!r.connected){name.textContent='Nicht verbunden';sub.textContent='Verbinde Spotify, damit dein Profil automatisch zeigt, was du gerade hörst.';live.innerHTML='<span class="statusDot" style="background:#80848e"></span><span>Spotify nicht verbunden</span>';return}
+    if(!r.connected){name.textContent='Nicht verbunden';sub.textContent='Verbinde Spotify über den sicheren PKCE-Login. Falls Spotify ablehnt, steht der genaue Grund direkt darunter.';live.innerHTML='<span class="statusDot" style="background:#80848e"></span><span>Spotify nicht verbunden</span>';return}
     const a=r.account||{};name.textContent=a.displayName||'Spotify verbunden';sub.textContent=a.url?'Account verknüpft · '+a.url.replace(/^https?:\/\//,''):'Account erfolgreich verknüpft';
     const now=r.now||{};live.innerHTML=now.active?`<span class="statusDot" style="background:#1ed760"></span><span><b>${now.isPlaying?'JETZT LÄUFT':'PAUSIERT'}</b> · ${escapeHtml(now.name||'Spotify')}${now.artists?.length?' · '+escapeHtml(now.artists.join(', ')):''}</span>`:'<span class="statusDot" style="background:#1ed760"></span><span>Spotify verbunden · aktuell keine Wiedergabe</span>';
-  }catch(e){live.innerHTML='<span class="statusDot" style="background:#f23f43"></span><span>Spotify Status nicht erreichbar</span>'}
+  }catch(e){live.innerHTML='<span class="statusDot" style="background:#f23f43"></span><span>Spotify Status nicht erreichbar</span>';if(diag){diag.hidden=false;diag.innerHTML='<span class="statusDot" style="background:#f23f43"></span><span><b>API Fehler</b> · '+escapeHtml(e.message||'Spotify Status nicht erreichbar')+'</span>'}}
 }
 $('#spotifyDisconnectBtn')?.addEventListener('click',async()=>{if(!confirm('Spotify-Verknüpfung wirklich trennen?'))return;try{await api('/api/spotify/disconnect',{method:'POST'});me.spotifyAccount=null;refreshSpotifyAccount()}catch(e){toast(e.message||'Trennen fehlgeschlagen')}});
 async function refreshPresenceDiagnostic(){
@@ -732,7 +739,11 @@ function handleSpotifyCallbackNotice(){
     'profile-error':'Spotify Account-Daten konnten nicht geladen werden.',
     error:'Spotify-Verknüpfung ist fehlgeschlagen.'
   };
-  toast((messages[status]||'Spotify Status: '+status)+(detail?' · '+detail:''));
+  const message=(messages[status]||'Spotify Status: '+status)+(detail?' · '+detail:'');
+  toast(message);
+  const diag=$('#spotifyAuthDiagnostic');
+  if(diag){const ok=status==='connected';diag.hidden=false;diag.innerHTML=`<span class="statusDot" style="background:${ok?'#1ed760':'#f23f43'}"></span><span><b>${ok?'Spotify verbunden':'Spotify OAuth'}</b> · ${escapeHtml(message)}</span>`}
+  setTimeout(()=>refreshSpotifyAccount(),250);
   // Query entfernen, Hash #media behalten, damit Reload nicht erneut dieselbe Meldung zeigt.
   history.replaceState(null,'',location.pathname+(location.hash||'#media'));
 }
