@@ -13,8 +13,10 @@ const {
   HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
   ADMIN_DISCORD_IDS = '219224335670312960',
+  SPOTIFY_CLIENT_ID = '', SPOTIFY_CLIENT_SECRET = '',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
+const SPOTIFY_REDIRECT = `${BASE_URL}/auth/spotify/callback`;
 // Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
 // This keeps profiles and uploaded media across deploys.
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -204,12 +206,14 @@ function defaults(dc) {
     pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, manualNitro: false, nitroTier: '' },
-    background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30 },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, manualNitro: false, nitroTier: '' },
+    background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
     spotify: '',
     spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
+    spotifyAccount: null,
+    spotifyAuth: null,
     floating: [],
     premiumSections: [],
     links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', custom: [] },
@@ -259,12 +263,12 @@ function applyUpdate(user, b) {
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
   const prevSettings = user.settings || {};
-  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, showModeratorBadge:true, manualNitro:false };
+  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showSpotifyNowPlaying:true, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, showModeratorBadge:true, manualNitro:false };
   user.settings = {};
   for (const [k, def] of Object.entries(settingDefaults)) user.settings[k] = s[k] !== undefined ? !!s[k] : (prevSettings[k] !== undefined ? !!prevSettings[k] : def);
   user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : (prevSettings.nitroTier || '');
   const bg = b.background || {};
-  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30) };
+  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30), videoStart: num(bg.videoStart, 0, 21600, 0) };
   const m = b.music || {};
   user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
   user.soundMode = ['auto','music','video','mute'].includes(b.soundMode) ? b.soundMode : 'auto';
@@ -310,7 +314,7 @@ function applyUpdate(user, b) {
 }
 
 function publicView(u) {
-  const { auth, adminMeta, ...rest } = u; // Tokens und interne Moderationsdaten niemals ausliefern
+  const { auth, adminMeta, spotifyAuth, ...rest } = u; // Tokens und interne Moderationsdaten niemals ausliefern
   const d = { ...rest.discord };
   const manualNitro = !!rest.settings?.manualNitro;
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
@@ -324,7 +328,8 @@ function publicView(u) {
   }
   const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
-  return { ...rest, premiumSections, platform, discord: d };
+  const spotifyAccount = rest.spotifyAccount?.connected ? { connected: true, displayName: str(rest.spotifyAccount.displayName, 80), url: url(rest.spotifyAccount.url), image: url(rest.spotifyAccount.image) } : null;
+  return { ...rest, spotifyAccount, premiumSections, platform, discord: d };
 }
 
 async function discordMe(token) {
@@ -340,6 +345,106 @@ async function tokenRequest(params) {
   return r.ok ? r.json() : null;
 }
 
+
+
+/* ------------------------------------------------------------------ */
+/* Spotify OAuth + Now Playing                                        */
+/* ------------------------------------------------------------------ */
+const spotifyNowCache = new Map();
+function spotifyConfigured() { return !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET); }
+async function spotifyTokenRequest(params) {
+  if (!spotifyConfigured()) return null;
+  try {
+    const r = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams(params),
+    });
+    if (!r.ok) { console.error('Spotify token:', r.status, await r.text()); return null; }
+    return await r.json();
+  } catch (e) { console.error('Spotify token:', e.message); return null; }
+}
+async function spotifyApi(token, endpoint) {
+  try {
+    const r = await fetch(`https://api.spotify.com/v1${endpoint}`, { headers: { Authorization: `Bearer ${token}` } });
+    if (r.status === 204) return { ok: true, status: 204, data: null };
+    let data = null; try { data = await r.json(); } catch {}
+    return { ok: r.ok, status: r.status, data };
+  } catch (e) { return { ok: false, status: 0, data: null, error: e.message }; }
+}
+async function ensureSpotifyAccess(user) {
+  const a = user?.spotifyAuth;
+  if (!a?.access) return '';
+  if (Number(a.expiresAt || 0) > Date.now() + 60000) return a.access;
+  if (!a.refresh) return '';
+  const tok = await spotifyTokenRequest({ grant_type: 'refresh_token', refresh_token: a.refresh });
+  if (!tok?.access_token) return '';
+  user.spotifyAuth = {
+    access: tok.access_token,
+    refresh: tok.refresh_token || a.refresh,
+    expiresAt: Date.now() + Number(tok.expires_in || 3600) * 1000,
+    scope: tok.scope || a.scope || '',
+  };
+  await saveUser(user);
+  return user.spotifyAuth.access;
+}
+function spotifyAccountView(me) {
+  if (!me) return null;
+  return {
+    connected: true,
+    accountId: String(me.account_id || me.id || ''),
+    id: String(me.id || ''),
+    displayName: str(me.display_name || 'Spotify', 80),
+    url: url(me.external_urls?.spotify || ''),
+    image: url(me.images?.[0]?.url || ''),
+    connectedAt: Date.now(),
+  };
+}
+function spotifyNowView(data) {
+  const item = data?.item;
+  if (!item) return { active: false, isPlaying: false };
+  const isEpisode = item.type === 'episode';
+  const artists = isEpisode
+    ? [item.show?.name].filter(Boolean)
+    : (Array.isArray(item.artists) ? item.artists.map(x => x?.name).filter(Boolean) : []);
+  const image = isEpisode ? item.images?.[0]?.url : item.album?.images?.[0]?.url;
+  return {
+    active: true,
+    isPlaying: !!data.is_playing,
+    type: isEpisode ? 'episode' : 'track',
+    name: str(item.name, 180),
+    artists: artists.slice(0, 5).map(x => str(x, 100)),
+    album: str(isEpisode ? (item.show?.name || '') : (item.album?.name || ''), 180),
+    image: url(image || ''),
+    url: url(item.external_urls?.spotify || ''),
+    progressMs: num(data.progress_ms, 0, 1000 * 60 * 60 * 24, 0),
+    durationMs: num(item.duration_ms, 0, 1000 * 60 * 60 * 24, 0),
+    fetchedAt: Date.now(),
+  };
+}
+async function getSpotifyNowForUser(user, force = false) {
+  if (!user?.spotifyAuth?.access || !user?.spotifyAccount?.connected) return { active: false, connected: false };
+  const key = String(user.id);
+  const cached = spotifyNowCache.get(key);
+  if (!force && cached && Date.now() - cached.at < 12000) return cached.value;
+  let token = await ensureSpotifyAccess(user);
+  if (!token) return { active: false, connected: true, error: 'spotify-auth-expired' };
+  let r = await spotifyApi(token, '/me/player/currently-playing');
+  if (r.status === 401 && user.spotifyAuth?.refresh) {
+    user.spotifyAuth.expiresAt = 0;
+    token = await ensureSpotifyAccess(user);
+    if (token) r = await spotifyApi(token, '/me/player/currently-playing');
+  }
+  let value;
+  if (r.status === 204) value = { active: false, isPlaying: false, connected: true, fetchedAt: Date.now() };
+  else if (r.ok) value = { ...spotifyNowView(r.data), connected: true };
+  else value = { active: false, connected: true, error: r.status === 403 ? 'spotify-forbidden' : 'spotify-unavailable', status: r.status };
+  spotifyNowCache.set(key, { at: Date.now(), value });
+  return value;
+}
 
 /* ------------------------------------------------------------------ */
 /* Discord Presence Gateway                                            */
@@ -633,6 +738,66 @@ app.post('/api/me', auth, async (req, res) => {
   if (err) return res.status(400).json({ error: err });
   await saveUser(user);
   res.json(publicView(user));
+});
+
+
+// --- Spotify OAuth ---
+app.get('/auth/spotify', auth, (req, res) => {
+  if (!spotifyConfigured()) return res.status(500).send('SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET fehlen in Render Environment.');
+  req.session.spotifyState = crypto.randomBytes(18).toString('hex');
+  const q = new URLSearchParams({
+    client_id: SPOTIFY_CLIENT_ID,
+    response_type: 'code',
+    redirect_uri: SPOTIFY_REDIRECT,
+    state: req.session.spotifyState,
+    scope: 'user-read-private user-read-currently-playing',
+  });
+  res.redirect(`https://accounts.spotify.com/authorize?${q}`);
+});
+
+app.get('/auth/spotify/callback', async (req, res) => {
+  try {
+    const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
+    if (!user) return res.redirect('/login');
+    const { code, state, error } = req.query;
+    if (error) return res.redirect('/dashboard?spotify=denied');
+    if (!code || !state || state !== req.session.spotifyState) return res.status(400).send('Ungültige Spotify-Verknüpfung (state).');
+    delete req.session.spotifyState;
+    const tok = await spotifyTokenRequest({ grant_type: 'authorization_code', code, redirect_uri: SPOTIFY_REDIRECT });
+    if (!tok?.access_token) return res.redirect('/dashboard?spotify=error');
+    const meResp = await spotifyApi(tok.access_token, '/me');
+    if (!meResp.ok || !meResp.data) return res.redirect('/dashboard?spotify=profile-error');
+    user.spotifyAuth = {
+      access: tok.access_token,
+      refresh: tok.refresh_token || '',
+      expiresAt: Date.now() + Number(tok.expires_in || 3600) * 1000,
+      scope: tok.scope || '',
+    };
+    user.spotifyAccount = spotifyAccountView(meResp.data);
+    spotifyNowCache.delete(String(user.id));
+    await saveUser(user);
+    return res.redirect('/dashboard?spotify=connected');
+  } catch (e) { console.error('Spotify callback:', e); return res.redirect('/dashboard?spotify=error'); }
+});
+
+app.get('/api/spotify/status', auth, async (req, res) => {
+  const user = db[req.session.uid];
+  const connected = !!(user.spotifyAuth?.access && user.spotifyAccount?.connected);
+  const now = connected ? await getSpotifyNowForUser(user) : { active: false, connected: false };
+  res.json({ connected, configured: spotifyConfigured(), account: user.spotifyAccount || null, now });
+});
+app.post('/api/spotify/disconnect', auth, async (req, res) => {
+  const user = db[req.session.uid];
+  user.spotifyAuth = null; user.spotifyAccount = null; spotifyNowCache.delete(String(user.id));
+  await saveUser(user); res.json({ ok: true });
+});
+app.get('/api/spotify/now/:name', async (req, res) => {
+  const user = findByName(req.params.name === '__home__' ? HOME_USER : req.params.name);
+  if (!user || isBanned(user)) return res.status(404).json({ active: false });
+  if (user.settings?.showSpotifyNowPlaying === false || !user.spotifyAccount?.connected) return res.json({ active: false, connected: !!user.spotifyAccount?.connected });
+  const now = await getSpotifyNowForUser(user);
+  res.set('Cache-Control', 'no-store');
+  res.json(now);
 });
 
 // Bot Verify: validates that the Discord user ID exists via a bot token.
