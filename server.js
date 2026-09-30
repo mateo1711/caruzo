@@ -32,7 +32,7 @@ const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
 let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
 adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= [];
-function ensureAdminSettings() { adminState.settings ||= {}; adminState.settings.backgrounds ||= {}; for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-5])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none'; }
+function ensureAdminSettings() { adminState.settings ||= {}; adminState.settings.backgrounds ||= {}; for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|10)$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none'; }
 ensureAdminSettings();
 const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
 const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
@@ -1169,7 +1169,7 @@ app.get('/api/site-settings', (req, res) => { ensureAdminSettings(); res.set('Ca
 app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
   const page = String(req.body?.page || ''), preset = String(req.body?.preset ?? '');
   if (!['landing', 'dashboard'].includes(page)) return res.status(400).json({ error: 'Ungültige Seite' });
-  if (!/^(none|[1-5])$/.test(preset)) return res.status(400).json({ error: 'Ungültiges Preset' });
+  if (!/^(none|[1-9]|10)$/.test(preset)) return res.status(400).json({ error: 'Ungültiges Preset' });
   ensureAdminSettings();
   adminState.settings.backgrounds[page] = preset;
   audit('background_changed', { page, preset, by: req.session.uid });
