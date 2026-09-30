@@ -231,6 +231,8 @@ function defaults(dc) {
     settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, showBoostBadge: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
     music: { url: '', title: '', volume: 40 },
+    musicPlayer: { enabled:false, title:'My Playlist', style:'glass-wave', position:'below-profile', accent:'#8b5cf6', secondary:'#22d3ee', volume:65, showCover:true, sources:[] },
+    analytics: { viewsDaily:{}, eventsDaily:{}, socialClicks:{}, highlightClicks:{}, musicPlays:0, musicSkips:0, referrers:{}, devices:{} },
     soundMode: 'auto',
     spotify: '',
     spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
@@ -331,6 +333,27 @@ function applyUpdate(user, b) {
   user.background = { type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30), videoStart: num(bg.videoStart, 0, 21600, 0) };
   const m = b.music || {};
   user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
+  if (metaFor(user).premium && b.musicPlayer !== undefined) {
+    const mp = b.musicPlayer || {};
+    const mpColor=(v,d)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:d;
+    const sources=(Array.isArray(mp.sources)?mp.sources:[]).slice(0,12).map((x,i)=>({
+      id:str(x?.id,48)||`source-${i+1}`,
+      url:url(x?.url),
+      title:str(x?.title,80),
+      artist:str(x?.artist,80),
+      cover:url(x?.cover),
+    })).filter(x=>x.url);
+    user.musicPlayer={
+      enabled:mp.enabled!==false,
+      title:str(mp.title,60)||'My Playlist',
+      style:['glass-wave','vinyl','neon-deck','compact-bar','minimal','cover-flow'].includes(mp.style)?mp.style:'glass-wave',
+      position:['below-profile','before-highlights','before-socials','after-socials','floating-bottom'].includes(mp.position)?mp.position:'below-profile',
+      accent:mpColor(mp.accent,'#8b5cf6'), secondary:mpColor(mp.secondary,'#22d3ee'),
+      volume:num(mp.volume,0,100,65), showCover:mp.showCover!==false, sources,
+    };
+  } else if (!user.musicPlayer) {
+    user.musicPlayer={enabled:false,title:'My Playlist',style:'glass-wave',position:'below-profile',accent:'#8b5cf6',secondary:'#22d3ee',volume:65,showCover:true,sources:[]};
+  }
   user.soundMode = ['auto','music','video','mute'].includes(b.soundMode) ? b.soundMode : 'auto';
   user.spotify = url(b.spotify);
   const sp = b.spotifyStyle || {};
@@ -376,7 +399,7 @@ function applyUpdate(user, b) {
 }
 
 function publicView(u) {
-  const { auth, adminMeta, spotifyAuth, spotifyDiag, reactionStats, ...rest } = u; // Tokens, Analytics-Rohdaten und interne Moderationsdaten niemals ausliefern
+  const { auth, adminMeta, spotifyAuth, spotifyDiag, reactionStats, analytics, ...rest } = u; // Tokens, Analytics-Rohdaten und interne Moderationsdaten niemals ausliefern
   const d = { ...rest.discord };
   const manualNitro = !!rest.settings?.manualNitro;
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
@@ -393,11 +416,12 @@ function publicView(u) {
   }
   const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
+  const musicPlayer = platform.premium ? (rest.musicPlayer || {enabled:false,sources:[]}) : {enabled:false,sources:[]};
   const spotifyAccount = rest.spotifyAccount?.connected ? { connected: true, displayName: str(rest.spotifyAccount.displayName, 80), url: url(rest.spotifyAccount.url), image: url(rest.spotifyAccount.image) } : null;
   const reactionCfg = rest.reactions || { enabled:true, title:'React', position:'profile-bottom', animation:'pop', showCounts:true, items:[] };
   const byItem = u.reactionStats?.byItem || {};
   const reactions = { ...reactionCfg, items: (Array.isArray(reactionCfg.items) ? reactionCfg.items : []).map(x => ({ ...x, count: Number(byItem[x.id] || 0) })) };
-  return { ...rest, reactions, spotifyAccount, premiumSections, platform, discord: d };
+  return { ...rest, reactions, spotifyAccount, premiumSections, musicPlayer, platform, discord: d };
 }
 
 /* ------------------------------------------------------------------ */
@@ -408,7 +432,7 @@ const MARKET_VIS = new Set(['private','public']);
 const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
 function privatePresetSnapshot(user) {
   const src = publicView(user);
-  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
   const out = {};
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
   return out;
@@ -482,7 +506,7 @@ function applyPresetSnapshot(user, snapshot, scope = 'full') {
     const taken = Object.values(db).some(x => x && x.id !== user.id && x.username === s);
     if (s.length >= 2 && !RESERVED.includes(s) && !taken) user.username = s;
   }
-  const keys = ['displayName','tagline','about','enterText','tags','highlights','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','links'];
+  const keys = ['displayName','tagline','about','enterText','tags','highlights','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','links'];
   for (const k of keys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
   if (metaFor(user).premium && snapshot.premiumSections !== undefined) user.premiumSections = deepClone(snapshot.premiumSections);
 }
@@ -1061,6 +1085,51 @@ app.post('/api/me', auth, async (req, res) => {
   if (err) return res.status(400).json({ error: err });
   await saveUser(user);
   res.json(publicView(user));
+});
+
+// --- Public profile statistics ---
+function analyticsDayKey(ts = Date.now()) {
+  const d = new Date(ts);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+function ensureAnalytics(user) {
+  user.analytics ||= { viewsDaily:{}, eventsDaily:{}, socialClicks:{}, highlightClicks:{}, musicPlays:0, musicSkips:0, referrers:{}, devices:{} };
+  const a=user.analytics;
+  a.viewsDaily ||= {}; a.eventsDaily ||= {}; a.socialClicks ||= {}; a.highlightClicks ||= {}; a.referrers ||= {}; a.devices ||= {};
+  a.musicPlays=Number(a.musicPlays||0);a.musicSkips=Number(a.musicSkips||0);
+  const cutoff=Date.now()-370*86400000;
+  for(const bucket of [a.viewsDaily,a.eventsDaily]) for(const k of Object.keys(bucket)){const t=Date.parse(`${k}T00:00:00Z`);if(!Number.isFinite(t)||t<cutoff)delete bucket[k]}
+  return a;
+}
+function deviceBucket(req){const ua=String(req.get('user-agent')||'');if(/ipad|tablet/i.test(ua))return 'Tablet';if(/mobile|android|iphone/i.test(ua))return 'Mobile';return 'Desktop'}
+function referrerBucket(req){try{const supplied=str(req.query?.ref,80).trim().toLowerCase().replace(/^www\./,'');if(supplied&&/^[a-z0-9.-]+$/i.test(supplied)){const own=new URL(BASE_URL).hostname.replace(/^www\./,'');return supplied===own?'Caruzo':supplied}const raw=String(req.get('referer')||'');if(!raw)return 'Direct';const h=new URL(raw).hostname.replace(/^www\./,'');if(!h||h===new URL(BASE_URL).hostname)return 'Caruzo';return h.slice(0,80)}catch{return 'Direct'}}
+function recordProfileView(user, req){
+  const a=ensureAnalytics(user),key=analyticsDayKey();a.viewsDaily[key]=Number(a.viewsDaily[key]||0)+1;
+  const dev=deviceBucket(req);a.devices[dev]=Number(a.devices[dev]||0)+1;
+  const ref=referrerBucket(req);a.referrers[ref]=Number(a.referrers[ref]||0)+1;
+}
+function recordProfileEvent(user,type,key=''){
+  const a=ensureAnalytics(user),day=analyticsDayKey();a.eventsDaily[day]||={social:0,highlight:0,musicPlay:0,musicSkip:0};const d=a.eventsDaily[day];
+  if(type==='social'){d.social=Number(d.social||0)+1;key=str(key,48)||'other';a.socialClicks[key]=Number(a.socialClicks[key]||0)+1}
+  if(type==='highlight'){d.highlight=Number(d.highlight||0)+1;key=str(key,48)||'highlight';a.highlightClicks[key]=Number(a.highlightClicks[key]||0)+1}
+  if(type==='music_play'){d.musicPlay=Number(d.musicPlay||0)+1;a.musicPlays++}
+  if(type==='music_skip'){d.musicSkip=Number(d.musicSkip||0)+1;a.musicSkips++}
+}
+function statisticsSummary(user,days=30){
+  const allowed=[7,30,90,365];days=allowed.includes(Number(days))?Number(days):30;const a=ensureAnalytics(user),r=ensureReactionStats(user);
+  const daily=[];let viewsPeriod=0,reactionsPeriod=0,socialPeriod=0,musicPeriod=0,highlightPeriod=0;
+  for(let i=days-1;i>=0;i--){const key=analyticsDayKey(Date.now()-i*86400000),ev=a.eventsDaily[key]||{},rv=Number(a.viewsDaily[key]||0),rr=Number(r.daily?.[key]?.total||0),sc=Number(ev.social||0),mp=Number(ev.musicPlay||0),hc=Number(ev.highlight||0);viewsPeriod+=rv;reactionsPeriod+=rr;socialPeriod+=sc;musicPeriod+=mp;highlightPeriod+=hc;daily.push({date:key,views:rv,reactions:rr,social:sc,music:mp,highlights:hc})}
+  const topMap=(obj,limit=6)=>Object.entries(obj||{}).map(([key,value])=>({key,value:Number(value||0)})).sort((x,y)=>y.value-x.value).slice(0,limit);
+  const totalReactions=Number(r.total||0),totalViews=Number(user.views||0),totalSocial=Object.values(a.socialClicks).reduce((n,v)=>n+Number(v||0),0),totalHighlights=Object.values(a.highlightClicks).reduce((n,v)=>n+Number(v||0),0);
+  const today=daily[daily.length-1]||{};
+  return {days,totalViews,viewsToday:Number(today.views||0),viewsPeriod,totalReactions,reactionsPeriod,totalSocial,socialPeriod,totalHighlights,highlightPeriod,musicPlays:Number(a.musicPlays||0),musicPeriod,musicSkips:Number(a.musicSkips||0),engagementRate:totalViews?Math.round(((totalReactions+totalSocial+totalHighlights)/totalViews)*1000)/10:0,daily,topSocials:topMap(a.socialClicks),topHighlights:topMap(a.highlightClicks),topReferrers:topMap(a.referrers),devices:topMap(a.devices),topReactions:reactionSummary(user,days).breakdown.slice(0,6)};
+}
+app.get('/api/statistics', auth, (req,res)=>res.json(statisticsSummary(db[req.session.uid],req.query.days)));
+app.post('/api/profile/:name/event', async (req,res)=>{
+  const user=findByName(req.params.name);if(!user||isBanned(user)||user.privacy?.visibility==='disabled')return res.status(404).json({error:'Profil nicht verfügbar'});
+  const type=str(req.body?.type,24),key=str(req.body?.key,48);if(!['social','highlight','music_play','music_skip'].includes(type))return res.status(400).json({error:'Unbekanntes Event'});
+  req.session.profileEvents ||= {};const lock=`${user.id}:${type}:${key}`;const last=Number(req.session.profileEvents[lock]||0);if(Date.now()-last<1200)return res.json({ok:true,ignored:true});req.session.profileEvents[lock]=Date.now();
+  recordProfileEvent(user,type,key);await saveUser(user);res.json({ok:true});
 });
 
 // --- Profile Reactions ---
@@ -1793,6 +1862,7 @@ app.get('/api/profile/:name', async (req, res) => {
   let shouldSave = beforeBooster !== !!user.discord?.booster || beforeBoostChecked !== Number(user.discord?.boosterCheckedAt || 0);
   if (shouldCountView(req, user)) {
     user.views = (user.views || 0) + 1;
+    recordProfileView(user, req);
     shouldSave = true;
   }
   if (shouldSave) await saveUser(user);
