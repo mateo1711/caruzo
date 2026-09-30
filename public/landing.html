@@ -35,6 +35,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-4;opacity:.18;background-i
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;scroll-behavior:auto!important;transition:none!important}}
 </style>
 <link rel="icon" href="/caruzo-logo.png" type="image/png">
+<script src="/site-bg.js"></script>
 </head>
 <body>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -111,6 +112,7 @@ body:after{content:"";position:fixed;inset:0;z-index:-4;opacity:.18;background-i
 <script>
 const $=s=>document.querySelector(s);
 window.lucide?.createIcons?.();
+window.CaruzoBG&&CaruzoBG.mount('landing');
 
 (async()=>{
   try{
