@@ -145,6 +145,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .name-gradient{background:linear-gradient(90deg,#ff2e93,#8f7cff,#55e6ff,#ff2e93);background-size:300% 100%;-webkit-background-clip:text;color:transparent!important;animation:nameFlow 5s linear infinite}@keyframes nameFlow{to{background-position:300% 0}}
 .name-neon{text-shadow:0 0 8px currentColor,0 0 18px currentColor,0 0 34px #ff2e93}.name-toon{text-shadow:3px 3px 0 #080507,-2px -2px 0 #ff2e93}.name-rubber{animation:nameRub .9s ease-in-out infinite alternate}@keyframes nameRub{to{transform:scaleX(1.07) scaleY(.93)}}.name-chrome{background:linear-gradient(180deg,#fff,#73737d 38%,#fff 49%,#4b4b55 72%,#fff);-webkit-background-clip:text;background-clip:text;color:transparent!important;text-shadow:none}.name-shimmer{background:linear-gradient(100deg,#fff 0 34%,var(--accent) 46%,#fff 56% 100%);background-size:260% 100%;-webkit-background-clip:text;background-clip:text;color:transparent!important;animation:nameFlow 2.6s linear infinite}.name-glitch{text-shadow:3px 0 #22d3ee,-3px 0 #ff2e93;animation:nameGlitch 1.05s steps(2) infinite}.name-wave{animation:nameWave 2.2s ease-in-out infinite}@keyframes nameGlitch{25%{transform:translate(2px,-1px)}50%{transform:translate(-2px,1px)}75%{transform:translate(1px,0)}}@keyframes nameWave{50%{transform:translateY(-3px);letter-spacing:-.01em}}
 .cursor-particle{position:fixed;z-index:999;pointer-events:none;transform:translate(-50%,-50%);animation:particleOut .8s ease-out forwards}@keyframes particleOut{to{opacity:0;transform:translate(-50%,-50%) translateY(-20px) scale(.3)}}
+.custom-pointer-on,.custom-pointer-on *{cursor:none!important}.custom-pointer{position:fixed;left:0;top:0;z-index:1002;pointer-events:none;width:18px;height:18px;transform:translate(-50%,-50%);color:var(--accent);filter:drop-shadow(0 0 7px color-mix(in srgb,var(--accent) 60%,transparent));transition:width .12s,height .12s,opacity .12s}.custom-pointer.dot{width:7px;height:7px;border-radius:50%;background:currentColor}.custom-pointer.ring{border:1.5px solid currentColor;border-radius:50%;background:rgba(255,255,255,.02)}.custom-pointer.cross:before,.custom-pointer.cross:after{content:"";position:absolute;left:50%;top:50%;background:currentColor;transform:translate(-50%,-50%)}.custom-pointer.cross:before{width:16px;height:1.5px}.custom-pointer.cross:after{width:1.5px;height:16px}.custom-pointer.crosshair{border:1px solid currentColor;border-radius:50%}.custom-pointer.crosshair:before,.custom-pointer.crosshair:after{content:"";position:absolute;left:50%;top:50%;background:currentColor;transform:translate(-50%,-50%)}.custom-pointer.crosshair:before{width:24px;height:1px}.custom-pointer.crosshair:after{width:1px;height:24px}.custom-pointer.star:before{content:"✦";position:absolute;inset:-7px;display:grid;place-items:center;font-size:24px}.custom-pointer.diamond{width:13px;height:13px;border:1.5px solid currentColor;transform:translate(-50%,-50%) rotate(45deg)}.custom-pointer.triangle{width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-bottom:14px solid currentColor;filter:drop-shadow(0 0 6px currentColor)}.custom-pointer.beam{width:3px;height:22px;border-radius:999px;background:currentColor;box-shadow:0 0 12px currentColor}.custom-pointer.neon{width:9px;height:9px;border-radius:50%;background:#fff;box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 20%,transparent),0 0 18px var(--accent)}.custom-pointer.arrow{width:0;height:0;border-top:16px solid currentColor;border-right:8px solid transparent;transform:translate(-3px,-3px) rotate(-18deg)}
 
 /* Caruzo Motion Engine v3 */
 .bg.fx-aurora:before,.bg.fx-plasma:before,.bg.fx-dither:before{content:"";position:absolute;inset:-20%;z-index:2;pointer-events:none;mix-blend-mode:screen;opacity:.42}
@@ -279,6 +280,16 @@ const path = location.pathname.length > 1 ? decodeURIComponent(location.pathname
 let audio;
 let spotifyPlaying = false;
 let spotifyApiPromise = null;
+let backgroundYouTubeFrame = null;
+let backgroundYouTubeSound = false;
+let backgroundYouTubeVolume = 30;
+let profileEntered = false;
+function commandBackgroundYouTube(){
+  if(!backgroundYouTubeFrame?.contentWindow||!profileEntered)return;
+  const send=(func,args=[])=>{try{backgroundYouTubeFrame.contentWindow.postMessage(JSON.stringify({event:'command',func,args}),'*')}catch{}};
+  send('playVideo');
+  if(backgroundYouTubeSound){send('unMute');send('setVolume',[backgroundYouTubeVolume])}else send('mute');
+}
 
 fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
   document.body.replaceChildren(el('p', { style: 'padding:60px;text-align:center' }, 'Profil nicht gefunden.'));
@@ -317,8 +328,12 @@ function render(u) {
       const ytId = extractYouTubeId(u.background.url);
       if (ytId) {
         const start = Math.max(0, Number(u.background.videoStart || 0));
-        const mute = (u.background.videoSound === false || (u.soundMode || 'auto') === 'music' || (u.soundMode || 'auto') === 'mute') ? 1 : 0;
-        bg = el('iframe', { class: 'bg-yt', src: `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=1&controls=0&showinfo=0&modestbranding=1&playsinline=1&mute=${mute}&loop=1&playlist=${ytId}&start=${start}&enablejsapi=1`, allow: 'autoplay; encrypted-media; picture-in-picture', referrerpolicy: 'strict-origin-when-cross-origin', title: 'YouTube background' });
+        const sm=(u.soundMode||'auto'); const mute = (u.background.videoSound === false || sm === 'music' || sm === 'mute' || (sm==='auto' && !!u.music?.url)) ? 1 : 0;
+        bg = el('iframe', { class: 'bg-yt', src: `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=0&controls=0&showinfo=0&modestbranding=1&playsinline=1&mute=${mute}&loop=1&playlist=${ytId}&start=${start}&enablejsapi=1`, allow: 'autoplay; encrypted-media; picture-in-picture', referrerpolicy: 'strict-origin-when-cross-origin', title: 'YouTube background' });
+        backgroundYouTubeFrame = bg;
+        backgroundYouTubeSound = !mute;
+        backgroundYouTubeVolume = Math.max(0,Math.min(100,Number(u.background.videoVolume ?? 30)));
+        bg.addEventListener('load',()=>setTimeout(commandBackgroundYouTube,120));
         $('#bg').classList.add('youtube-bg');
       }
     }
@@ -456,7 +471,14 @@ function render(u) {
 
   // Enter
   const enter = $('#enter');
-  const go = () => { enter.classList.add('gone'); audio?.play().catch(() => {}); document.querySelector('#bg video')?.play().catch(() => {}); };
+  const go = () => {
+    enter.classList.add('gone');
+    profileEntered = true;
+    audio?.play().catch(() => {});
+    try{youtubePlayer?.playVideo?.()}catch{}
+    document.querySelector('#bg video')?.play().catch(() => {});
+    commandBackgroundYouTube();
+  };
   enter.onclick = go; enter.onkeydown = e => (e.key === 'Enter' || e.key === ' ') && go();
 
 
@@ -494,21 +516,27 @@ function setupProfileHover(card,u){
   const layer=el('div',{class:'profile-hover-layer','aria-hidden':'true'});card.append(layer);
   const k=Math.max(0,Math.min(1,Number(d.hoverIntensity??55)/100));
   let frame=0;
-  const reset=()=>{cancelAnimationFrame(frame);card.style.transform='';card.style.filter='';card.style.setProperty('--hover-x','50%');card.style.setProperty('--hover-y','50%')};
+  const reset=()=>{cancelAnimationFrame(frame);card.style.transform='';card.style.filter='';card.style.boxShadow='';card.style.setProperty('--hover-x','50%');card.style.setProperty('--hover-y','50%')};
   card.addEventListener('pointermove',e=>{
     const r=card.getBoundingClientRect(),nx=(e.clientX-r.left)/r.width-.5,ny=(e.clientY-r.top)/r.height-.5;
     card.style.setProperty('--hover-x',((nx+.5)*100)+'%');card.style.setProperty('--hover-y',((ny+.5)*100)+'%');
     cancelAnimationFrame(frame);frame=requestAnimationFrame(()=>{
       let rx=0,ry=0,tx=0,ty=0,scale=1;
-      if(['tilt','depth','prism'].includes(preset)){rx=-ny*9*k;ry=nx*12*k;scale=1+.008*k}
+      if(['tilt','depth','prism','snap-tilt','micro-parallax'].includes(preset)){rx=-ny*9*k;ry=nx*12*k;scale=1+.008*k}
       if(preset==='soft-follow'){tx=nx*11*k;ty=ny*8*k;rx=-ny*2.4*k;ry=nx*3.2*k}
       if(preset==='magnetic'){tx=nx*22*k;ty=ny*15*k;scale=1+.006*k}
       if(preset==='spotlight'){rx=-ny*2.2*k;ry=nx*2.2*k}
       if(preset==='depth'){tx=nx*6*k;ty=ny*5*k;rx*=1.18;ry*=1.18;scale=1+.014*k}
+      if(preset==='float-zoom'){tx=nx*8*k;ty=ny*7*k;rx=-ny*2.2*k;ry=nx*2.2*k;scale=1+.022*k}
+      if(preset==='elastic'){tx=nx*26*k;ty=ny*18*k;rx=-ny*3.4*k;ry=nx*4.6*k;scale=1+.007*k}
+      if(preset==='glow-track'){rx=-ny*1.6*k;ry=nx*1.6*k;scale=1+.006*k}
+      if(preset==='micro-parallax'){tx=nx*4*k;ty=ny*4*k;rx*=.55;ry*=.55;scale=1+.004*k}
+      if(preset==='snap-tilt'){rx=Math.round(rx/2)*2;ry=Math.round(ry/2)*2;scale=1+.01*k}
       card.style.transform=`perspective(980px) translate3d(${tx}px,${ty}px,0) rotateX(${rx}deg) rotateY(${ry}deg) scale(${scale})`;
       if(preset==='prism')card.style.filter=`hue-rotate(${nx*22*k}deg) saturate(${1+k*.22})`;
       const glow=Math.max(0,Number(d.hoverGlow??35))/100;
-      card.style.boxShadow=`0 30px 90px rgba(0,0,0,.34),${-nx*18}px ${-ny*14}px ${32+glow*34}px color-mix(in srgb,var(--accent) ${Math.round(12+glow*24)}%,transparent)`;
+      const glowBoost=preset==='glow-track'?1.55:1;
+      card.style.boxShadow=`0 30px 90px rgba(0,0,0,.34),${-nx*18}px ${-ny*14}px ${32+glow*34}px color-mix(in srgb,var(--accent) ${Math.round((12+glow*24)*glowBoost)}%,transparent)`;
     });
   },{passive:true});
   card.addEventListener('pointerleave',reset);
@@ -636,15 +664,43 @@ function setupBrowserTab(u){
   const tick=()=>{const m=msgs[i%msgs.length];document.title=m.slice(0,pos);pos+=dir;if(pos>m.length){dir=-1;setTimeout(tick,speed)}else if(pos<0){dir=1;pos=0;i++;setTimeout(tick,350)}else setTimeout(tick,90)};tick();
 }
 function setupCursor(c){
-  const cursors={crosshair:'crosshair',dot:'crosshair',ring:'crosshair',cross:'crosshair',arrow:'default',star:'crosshair'};
-  if(c.svg&&c.svg.startsWith('data:image/svg+xml')) document.body.style.cursor=`url("${c.svg}"), auto`; else if(c.image&&c.image!=='system') document.body.style.cursor=cursors[c.image]||'default';
+  const image=String(c.image||'system');
+  if(c.svg&&c.svg.startsWith('data:image/svg+xml')){
+    document.body.style.cursor=`url("${c.svg}"), auto`;
+  }else if(image!=='system'){
+    document.body.classList.add('custom-pointer-on');
+    const pointer=el('span',{class:'custom-pointer '+image,'aria-hidden':'true'});document.body.append(pointer);
+    let px=innerWidth/2,py=innerHeight/2,tx=px,ty=py,raf=0;
+    const animate=()=>{px+=(tx-px)*.36;py+=(ty-py)*.36;pointer.style.left=px+'px';pointer.style.top=py+'px';raf=requestAnimationFrame(animate)};raf=requestAnimationFrame(animate);
+    addEventListener('pointermove',e=>{tx=e.clientX;ty=e.clientY;pointer.style.opacity='1'},{passive:true});
+    addEventListener('pointerleave',()=>pointer.style.opacity='0',{passive:true});
+    addEventListener('pointerenter',()=>pointer.style.opacity='1',{passive:true});
+    addEventListener('pointerdown',()=>{pointer.style.width='13px';pointer.style.height='13px'},{passive:true});
+    addEventListener('pointerup',()=>{pointer.style.width='';pointer.style.height=''},{passive:true});
+    addEventListener('beforeunload',()=>cancelAnimationFrame(raf),{once:true});
+  }
   if(!c.effect||c.effect==='none'||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
-  let last=0, hue=190; const glyph={spark:'✦',snow:'❄',hearts:'♥',fire:'✦',magic:'✧',orbit:'◌',matrix:'▪'};
+  let last=0, hue=190;
+  const glyph={spark:'✦',snow:'❄',hearts:'♥',fire:'✦',magic:'✧',orbit:'◌',matrix:'▪',comet:'◆',ripple:'◯',bubbles:'○',cyber:'◇',twinkle:'✦'};
   addEventListener('pointermove',e=>{
-    const now=performance.now(); if(now-last<28)return; last=now; hue=(hue+7)%360;
+    const now=performance.now(); if(now-last<24)return; last=now; hue=(hue+7)%360;
     const p=document.createElement('span');
-    if(c.effect==='trail'){p.className='cursor-trail-dot';p.style.color=`hsl(${hue} 90% 65%)`;} else {p.className='cursor-particle';p.textContent=glyph[c.effect]||'✦';p.style.color=`hsl(${hue} 92% 68%)`;p.style.textShadow='0 0 12px currentColor';p.style.fontSize=(c.effect==='matrix'?8:10+Math.random()*8)+'px';}
-    p.style.left=e.clientX+'px';p.style.top=e.clientY+'px';document.body.append(p);setTimeout(()=>p.remove(),900);
+    if(c.effect==='trail'||c.effect==='comet'){
+      p.className='cursor-trail-dot';p.style.color=`hsl(${hue} 90% 65%)`;
+      if(c.effect==='comet'){p.style.width='10px';p.style.height='4px';p.style.borderRadius='999px';p.style.transform='translate(-50%,-50%) rotate(-24deg)';}
+    } else {
+      p.className='cursor-particle';p.textContent=glyph[c.effect]||'✦';p.style.color=`hsl(${hue} 92% 68%)`;p.style.textShadow='0 0 12px currentColor';
+      let size=10+Math.random()*8;
+      if(c.effect==='matrix')size=8;
+      if(c.effect==='ripple'){size=20+Math.random()*9;p.style.fontWeight='200';p.style.opacity='.65'}
+      if(c.effect==='bubbles'){size=12+Math.random()*16;p.style.opacity='.55'}
+      if(c.effect==='cyber'){size=8+Math.random()*8;p.style.transform='translate(-50%,-50%) rotate(45deg)'}
+      if(c.effect==='twinkle'){size=9+Math.random()*13}
+      p.style.fontSize=size+'px';
+    }
+    p.style.left=(e.clientX+(c.effect==='bubbles'?(Math.random()-.5)*18:0))+'px';
+    p.style.top=(e.clientY+(c.effect==='bubbles'?(Math.random()-.5)*18:0))+'px';
+    document.body.append(p);setTimeout(()=>p.remove(),900);
   },{passive:true});
 }
 function typewriter(node, text) {
@@ -748,7 +804,7 @@ async function setupMusic(m) {
         width: '1', height: '1', videoId: ytId,
         playerVars: { autoplay: 0, controls: 0, loop: 1, playlist: ytId, modestbranding: 1, playsinline: 1, rel: 0, start: 0 },
         events: {
-          onReady: ev => { try{ev.target.setVolume(startVolume)}catch{} },
+          onReady: ev => { try{ev.target.setVolume(startVolume);if(profileEntered)ev.target.playVideo()}catch{} },
           onStateChange: ev => {
             if(ev.data===YT.PlayerState.PLAYING){ if(spotifyPlaying){try{ev.target.pauseVideo()}catch{}; return} icon.setAttribute('d', PATH.pause); }
             if([YT.PlayerState.PAUSED,YT.PlayerState.ENDED,YT.PlayerState.CUED].includes(ev.data)) icon.setAttribute('d', PATH.play);
