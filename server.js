@@ -17,7 +17,9 @@ const {
 } = process.env;
 const BASE_URL = String(BASE_URL_RAW || 'http://localhost:3000').trim().replace(/\/+$/, '');
 const REDIRECT = `${BASE_URL}/auth/callback`;
-const SPOTIFY_REDIRECT = String(process.env.SPOTIFY_REDIRECT_URI || `${BASE_URL}/auth/spotify/callback`).trim();
+const SPOTIFY_REDIRECT = String(process.env.SPOTIFY_REDIRECT_URI || `${BASE_URL}/auth/spotify/callback`).trim().replace(/\/+$/, '');
+const SPOTIFY_ID = String(SPOTIFY_CLIENT_ID || '').trim();
+const SPOTIFY_SECRET = String(SPOTIFY_CLIENT_SECRET || '').trim();
 // Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
 // This keeps profiles and uploaded media across deploys.
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -315,7 +317,7 @@ function applyUpdate(user, b) {
 }
 
 function publicView(u) {
-  const { auth, adminMeta, spotifyAuth, ...rest } = u; // Tokens und interne Moderationsdaten niemals ausliefern
+  const { auth, adminMeta, spotifyAuth, spotifyDiag, ...rest } = u; // Tokens und interne Moderationsdaten niemals ausliefern
   const d = { ...rest.discord };
   const manualNitro = !!rest.settings?.manualNitro;
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
@@ -352,21 +354,36 @@ async function tokenRequest(params) {
 /* Spotify OAuth + Now Playing                                        */
 /* ------------------------------------------------------------------ */
 const spotifyNowCache = new Map();
-function spotifyConfigured() { return !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET); }
-async function spotifyTokenRequest(params) {
-  if (!spotifyConfigured()) return { ok: false, status: 0, error: 'spotify_not_configured' };
+// V15.2 uses Spotify Authorization Code + PKCE for new connections. This removes
+// Client-Secret mistakes from the normal login flow and follows Spotify's current
+// OAuth recommendations. Existing legacy connections keep using their old flow.
+function spotifyConfigured() { return !!SPOTIFY_ID; }
+function spotifyPkceVerifier() { return crypto.randomBytes(64).toString('base64url').slice(0, 96); }
+function spotifyPkceChallenge(verifier) { return crypto.createHash('sha256').update(String(verifier)).digest('base64url'); }
+function setSpotifyDiag(user, stage, ok, message = '', extra = {}) {
+  if (!user) return;
+  user.spotifyDiag = {
+    stage: str(stage, 48), ok: !!ok, message: str(message, 260), at: Date.now(),
+    ...Object.fromEntries(Object.entries(extra || {}).filter(([k]) => ['status','flow'].includes(k)).map(([k,v]) => [k, typeof v === 'number' ? v : str(v, 32)])),
+  };
+}
+async function spotifyTokenRequest(params, flow = 'legacy') {
+  if (!SPOTIFY_ID) return { ok: false, status: 0, error: 'SPOTIFY_CLIENT_ID fehlt' };
+  const headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+  const body = { ...params };
+  if (flow === 'pkce') {
+    body.client_id = SPOTIFY_ID;
+  } else {
+    if (!SPOTIFY_SECRET) return { ok: false, status: 0, error: 'SPOTIFY_CLIENT_SECRET fehlt für eine alte Spotify-Verknüpfung' };
+    headers.Authorization = 'Basic ' + Buffer.from(`${SPOTIFY_ID}:${SPOTIFY_SECRET}`).toString('base64');
+  }
   try {
     const r = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Basic ' + Buffer.from(`${SPOTIFY_CLIENT_ID}:${SPOTIFY_CLIENT_SECRET}`).toString('base64'),
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: new URLSearchParams(params),
+      method: 'POST', headers, body: new URLSearchParams(body),
     });
-    let data = null;
-    let raw = '';
-    try { data = await r.json(); } catch { try { raw = await r.text(); } catch {} }
+    let data = null, raw = '';
+    const txt = await r.text();
+    if (txt) { try { data = JSON.parse(txt); } catch { raw = txt; } }
     if (!r.ok) {
       const detail = String(data?.error_description || data?.error || raw || `HTTP ${r.status}`).slice(0, 300);
       console.error('Spotify token:', r.status, detail);
@@ -391,15 +408,24 @@ async function ensureSpotifyAccess(user) {
   if (!a?.access) return '';
   if (Number(a.expiresAt || 0) > Date.now() + 60000) return a.access;
   if (!a.refresh) return '';
-  const tr = await spotifyTokenRequest({ grant_type: 'refresh_token', refresh_token: a.refresh });
+  const flow = a.flow === 'pkce' ? 'pkce' : 'legacy';
+  const tr = await spotifyTokenRequest({ grant_type: 'refresh_token', refresh_token: a.refresh }, flow);
   const tok = tr?.ok ? tr.data : null;
-  if (!tok?.access_token) return '';
+  if (!tok?.access_token) {
+    setSpotifyDiag(user, 'refresh', false, tr?.error || 'Spotify Token konnte nicht erneuert werden.', { status: tr?.status || 0, flow });
+    if (String(tr?.error || '').includes('invalid_grant')) { user.spotifyAuth = null; user.spotifyAccount = null; }
+    await saveUser(user);
+    return '';
+  }
   user.spotifyAuth = {
+    ...a,
     access: tok.access_token,
     refresh: tok.refresh_token || a.refresh,
     expiresAt: Date.now() + Number(tok.expires_in || 3600) * 1000,
     scope: tok.scope || a.scope || '',
+    flow,
   };
+  setSpotifyDiag(user, 'refresh', true, 'Spotify Access Token aktualisiert.', { flow });
   await saveUser(user);
   return user.spotifyAuth.access;
 }
@@ -754,87 +780,114 @@ app.post('/api/me', auth, async (req, res) => {
 
 
 // --- Spotify OAuth ---
-function spotifyStateSign(payload) {
-  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
-  const sig = crypto.createHmac('sha256', String(SESSION_SECRET)).update(body).digest('base64url');
-  return `${body}.${sig}`;
+// Encrypted state keeps the PKCE verifier off the URL while still surviving a
+// lost Express session during the external Spotify redirect.
+function spotifyStateKey() { return crypto.createHash('sha256').update(String(SESSION_SECRET)).digest(); }
+function spotifyStateSeal(payload) {
+  const iv = crypto.randomBytes(12);
+  const cipher = crypto.createCipheriv('aes-256-gcm', spotifyStateKey(), iv);
+  const plain = Buffer.from(JSON.stringify(payload));
+  const enc = Buffer.concat([cipher.update(plain), cipher.final()]);
+  const tag = cipher.getAuthTag();
+  return `${iv.toString('base64url')}.${tag.toString('base64url')}.${enc.toString('base64url')}`;
 }
-function spotifyStateVerify(value) {
+function spotifyStateOpen(value) {
   try {
-    const [body, sig] = String(value || '').split('.');
-    if (!body || !sig) return null;
-    const expected = crypto.createHmac('sha256', String(SESSION_SECRET)).update(body).digest('base64url');
-    const a = Buffer.from(sig), b = Buffer.from(expected);
-    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
-    const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
-    if (!data?.uid || !data?.at || Date.now() - Number(data.at) > 15 * 60 * 1000) return null;
+    const [ivB64, tagB64, encB64] = String(value || '').split('.');
+    if (!ivB64 || !tagB64 || !encB64) return null;
+    const decipher = crypto.createDecipheriv('aes-256-gcm', spotifyStateKey(), Buffer.from(ivB64, 'base64url'));
+    decipher.setAuthTag(Buffer.from(tagB64, 'base64url'));
+    const plain = Buffer.concat([decipher.update(Buffer.from(encB64, 'base64url')), decipher.final()]);
+    const data = JSON.parse(plain.toString('utf8'));
+    if (!data?.uid || !data?.at || !data?.verifier || Date.now() - Number(data.at) > 15 * 60 * 1000) return null;
     return data;
   } catch { return null; }
 }
 function spotifyDashboardRedirect(status, detail = '') {
   const q = new URLSearchParams({ spotify: status });
-  if (detail) q.set('detail', String(detail).slice(0, 220));
+  if (detail) q.set('detail', String(detail).slice(0, 260));
   return `/dashboard?${q.toString()}#media`;
 }
 app.get('/auth/spotify', auth, (req, res) => {
-  if (!spotifyConfigured()) return res.redirect(spotifyDashboardRedirect('not-configured'));
+  if (!spotifyConfigured()) return res.redirect(spotifyDashboardRedirect('not-configured', 'SPOTIFY_CLIENT_ID fehlt auf Render.'));
   const uid = String(req.session.uid || '');
-  if (!uid || !db[uid]) return res.redirect('/login');
-  const state = spotifyStateSign({ uid, at: Date.now(), nonce: crypto.randomBytes(12).toString('hex') });
-  req.session.spotifyState = state;
+  const user = db[uid];
+  if (!uid || !user) return res.redirect('/login');
+  const verifier = spotifyPkceVerifier();
+  const challenge = spotifyPkceChallenge(verifier);
+  const state = spotifyStateSeal({ uid, at: Date.now(), nonce: crypto.randomBytes(12).toString('hex'), verifier });
+  setSpotifyDiag(user, 'authorize', true, 'Weiterleitung zu Spotify gestartet.', { flow: 'pkce' });
+  // Do not make a failed diagnostic save block the redirect.
+  saveUser(user).catch(() => {});
   const q = new URLSearchParams({
-    client_id: SPOTIFY_CLIENT_ID,
+    client_id: SPOTIFY_ID,
     response_type: 'code',
     redirect_uri: SPOTIFY_REDIRECT,
     state,
     scope: 'user-read-private user-read-currently-playing user-read-playback-state',
     show_dialog: 'true',
+    code_challenge_method: 'S256',
+    code_challenge: challenge,
   });
-  // Session explizit speichern, bevor der Browser Caruzo verlässt. Das verhindert
-  // verlorene Sessions bei externen OAuth-Redirects auf Reverse-Proxy-Hosts.
-  req.session.save(err => {
-    if (err) console.error('Spotify session save:', err.message);
-    res.redirect(`https://accounts.spotify.com/authorize?${q}`);
-  });
+  res.redirect(`https://accounts.spotify.com/authorize?${q}`);
 });
 
 app.get('/auth/spotify/callback', async (req, res) => {
+  let user = null;
   try {
     const { code, state, error, error_description: errorDescription } = req.query;
-    if (error) return res.redirect(spotifyDashboardRedirect('denied', errorDescription || error));
-
-    // State ist HMAC-signiert und enthält die Discord-User-ID. Dadurch bleibt der
-    // Callback auch stabil, falls die Browser-Session beim externen Redirect neu
-    // aufgebaut wurde (z. B. www/non-www oder Proxy-Cookie-Wechsel).
-    const verified = spotifyStateVerify(state);
-    if (!verified) return res.redirect(spotifyDashboardRedirect('state-error', 'OAuth state konnte nicht validiert werden.'));
+    const verified = spotifyStateOpen(state);
+    if (!verified) return res.redirect(spotifyDashboardRedirect('state-error', 'OAuth State/PKCE konnte nicht validiert werden. Bitte erneut verbinden.'));
     const uid = String(verified.uid);
-    const user = db[uid];
+    user = db[uid];
     if (!user) return res.redirect('/login');
-    if (!code) return res.redirect(spotifyDashboardRedirect('error', 'Spotify hat keinen Authorization Code zurückgegeben.'));
-
-    // Session nach erfolgreicher State-Prüfung wieder an den User binden.
     req.session.uid = uid;
     req.session.siteUnlocked = true;
-    delete req.session.spotifyState;
 
-    const tr = await spotifyTokenRequest({ grant_type: 'authorization_code', code, redirect_uri: SPOTIFY_REDIRECT });
+    if (error) {
+      const detail = errorDescription || error;
+      setSpotifyDiag(user, 'authorize', false, detail, { flow: 'pkce' });
+      await saveUser(user);
+      return res.redirect(spotifyDashboardRedirect('denied', detail));
+    }
+    if (!code) {
+      setSpotifyDiag(user, 'callback', false, 'Spotify hat keinen Authorization Code zurückgegeben.', { flow: 'pkce' });
+      await saveUser(user);
+      return res.redirect(spotifyDashboardRedirect('error', 'Spotify hat keinen Authorization Code zurückgegeben.'));
+    }
+
+    const tr = await spotifyTokenRequest({
+      grant_type: 'authorization_code',
+      code,
+      redirect_uri: SPOTIFY_REDIRECT,
+      code_verifier: verified.verifier,
+    }, 'pkce');
     const tok = tr?.ok ? tr.data : null;
-    if (!tok?.access_token) return res.redirect(spotifyDashboardRedirect('token-error', tr?.error || `Token HTTP ${tr?.status || 0}`));
+    if (!tok?.access_token) {
+      const detail = tr?.error || `Token HTTP ${tr?.status || 0}`;
+      setSpotifyDiag(user, 'token', false, detail, { status: tr?.status || 0, flow: 'pkce' });
+      await saveUser(user);
+      return res.redirect(spotifyDashboardRedirect('token-error', detail));
+    }
 
     const meResp = await spotifyApi(tok.access_token, '/me');
     if (!meResp.ok || !meResp.data) {
       const detail = meResp.data?.error?.message || `Spotify Profil HTTP ${meResp.status || 0}`;
+      setSpotifyDiag(user, 'profile', false, detail, { status: meResp.status || 0, flow: 'pkce' });
+      await saveUser(user);
       return res.redirect(spotifyDashboardRedirect('profile-error', detail));
     }
 
     user.spotifyAuth = {
       access: tok.access_token,
-      refresh: tok.refresh_token || user.spotifyAuth?.refresh || '',
+      refresh: tok.refresh_token || '',
       expiresAt: Date.now() + Number(tok.expires_in || 3600) * 1000,
       scope: tok.scope || '',
+      flow: 'pkce',
+      authorizedAt: Date.now(),
     };
     user.spotifyAccount = spotifyAccountView(meResp.data);
+    setSpotifyDiag(user, 'connected', true, `Spotify verbunden: ${user.spotifyAccount?.displayName || 'Account'}`, { flow: 'pkce' });
     spotifyNowCache.delete(String(user.id));
     await saveUser(user);
 
@@ -844,6 +897,7 @@ app.get('/auth/spotify/callback', async (req, res) => {
     });
   } catch (e) {
     console.error('Spotify callback:', e);
+    if (user) { setSpotifyDiag(user, 'callback', false, e?.message || 'Unbekannter Callback-Fehler', { flow: 'pkce' }); await saveUser(user).catch(()=>{}); }
     return res.redirect(spotifyDashboardRedirect('error', e?.message || 'Unbekannter Callback-Fehler'));
   }
 });
@@ -852,13 +906,25 @@ app.get('/api/spotify/status', auth, async (req, res) => {
   const user = db[req.session.uid];
   const connected = !!(user.spotifyAuth?.access && user.spotifyAccount?.connected);
   const now = connected ? await getSpotifyNowForUser(user) : { active: false, connected: false };
-  res.json({ connected, configured: spotifyConfigured(), redirectUri: SPOTIFY_REDIRECT, account: user.spotifyAccount || null, now });
+  res.setHeader('Cache-Control', 'no-store');
+  res.json({
+    connected,
+    configured: spotifyConfigured(),
+    authMode: 'pkce',
+    redirectUri: SPOTIFY_REDIRECT,
+    clientIdSet: !!SPOTIFY_ID,
+    account: user.spotifyAccount || null,
+    diagnostic: user.spotifyDiag || null,
+    now,
+  });
 });
 app.post('/api/spotify/disconnect', auth, async (req, res) => {
   const user = db[req.session.uid];
   user.spotifyAuth = null; user.spotifyAccount = null; spotifyNowCache.delete(String(user.id));
+  setSpotifyDiag(user, 'disconnected', true, 'Spotify-Verknüpfung getrennt.', { flow: 'pkce' });
   await saveUser(user); res.json({ ok: true });
 });
+
 app.get('/api/spotify/now/:name', async (req, res) => {
   const user = findByName(req.params.name === '__home__' ? HOME_USER : req.params.name);
   if (!user || isBanned(user)) return res.status(404).json({ active: false });
