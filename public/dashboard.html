@@ -280,6 +280,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
           <div class="moderatorNote" id="bgModNote" hidden>Hintergründe können nur von Admins geändert werden. Du siehst hier die aktuelle Auswahl.</div>
           <div id="bgAdminBox"></div>
           <div id="scrollAdminBox" hidden></div>
+          <div id="cursorAdminBox" hidden></div>
           <p class="miniHint" style="margin:10px 2px 0">Die Auswahl gilt für alle Besucher. „Kein Hintergrund“ behält den bisherigen statischen Look. Die Hauptseite prüfst du in einem neuen Tab unter <a href="/" target="_blank" rel="noopener" style="text-decoration:underline">/</a>.</p>
         </div>
       </section>
@@ -759,13 +760,28 @@ $$('[data-admin-tab]').forEach(b=>b.onclick=()=>{if(b.dataset.adminOnly&&!canAdm
 const BG_PAGES=[['landing','Hauptseite','Öffentliche Startseite'],['dashboard','Dashboard','Editor & Admin Panel']];
 let bgState={landing:'none',dashboard:'none'};
 let scrollState={landing:'fade-rise'};
+let cursorState='none';
 const SCROLL_ANIMATIONS=[
   ['none','Keine','Keine zusätzliche Reveal-Animation'],
   ['fade-rise','Fade Rise','Sanftes Einblenden von unten'],
   ['slide-sides','Slide Sides','Abschnitte kommen abwechselnd von links und rechts'],
   ['scale-soft','Scale Soft','Leichtes Zoom-In beim Erscheinen'],
   ['blur-focus','Blur Focus','Von weich/unscharf zu klar'],
-  ['stagger-cards','Stagger Cards','Karten erscheinen nacheinander']
+  ['stagger-cards','Stagger Cards','Karten erscheinen nacheinander'],
+  ['depth-flip','Depth Flip','Sanfter 3D-Kipp-Effekt beim Auftauchen'],
+  ['clip-reveal','Clip Reveal','Bereiche werden wie eine Maske aufgezogen'],
+  ['glide-skew','Glide Skew','Seitliches Gleiten mit dezenter Neigung']
+];
+const LANDING_CURSORS=[
+  ['none','Standard','Browser-Cursor','↖'],
+  ['neon-dot','Neon Dot','Kleiner leuchtender Punkt','●'],
+  ['halo-ring','Halo Ring','Cleaner Ring mit Mittelpunkt','◎'],
+  ['precision','Precision','Feines Fadenkreuz','＋'],
+  ['diamond','Diamond','Minimaler Diamant','◇'],
+  ['spark','Spark','Kleine Glanzspitze','✦'],
+  ['pixel','Pixel','Retro Pixel-Pointer','▰'],
+  ['orbit','Orbit','Ring mit Orbitpunkt','◉'],
+  ['minimal-arrow','Minimal Arrow','Schlanker Caruzo-Pfeil','➤']
 ];
 function bgCard(page,id){const P=window.CaruzoBG?.presets?.[page]?.[id];const b=document.createElement('button');b.type='button';b.className='bgCard'+(bgState[page]===String(id)?' on':'');const sw=document.createElement('span');sw.className='bgSwatch';if(P){const grad=`radial-gradient(circle at 28% 30%,${P.c[0]}cc 0,transparent 52%),radial-gradient(circle at 76% 72%,${P.c[1]} 0,transparent 58%),${P.c[2]}`;sw.style.background=Number(id)<=10?`url(/bg-thumbs/${page}-${id}.jpg) center/cover no-repeat,${grad}`:grad}else sw.classList.add('none');const n=document.createElement('b');n.textContent=P?P.name:'Kein Hintergrund';const m=document.createElement('small');m.textContent=P?CaruzoBG.modeLabel[P.mode]:'Standard-Look';b.append(sw,n,m);b.disabled=!canAdmin;b.onclick=()=>setBg(page,String(id));return b}
 function renderBgAdmin(){const box=$('#bgAdminBox');if(!box)return;box.replaceChildren();BG_PAGES.forEach(([page,title,sub])=>{const sec=document.createElement('div');sec.className='section';const h=document.createElement('div');h.className='sectionTitle';const h3=document.createElement('h3');h3.textContent=title;const sp=document.createElement('span');sp.className='miniHint';sp.textContent=sub;h.append(h3,sp);const grid=document.createElement('div');grid.className='bgGrid';['none',1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17].forEach(id=>grid.append(bgCard(page,id)));sec.append(h,grid);box.append(sec)})}
@@ -778,10 +794,20 @@ function renderScrollAdmin(){
   SCROLL_ANIMATIONS.forEach(([id,name,desc])=>{const b=document.createElement('button');b.type='button';b.className='bgCard'+(scrollState.landing===id?' on':'');const sw=document.createElement('span');sw.className='bgSwatch';sw.style.background=id==='none'?'linear-gradient(135deg,#111,#09090d)':id==='fade-rise'?'linear-gradient(180deg,#17151f,#8b5cf6)':id==='slide-sides'?'linear-gradient(90deg,#8b5cf6,#0e0e14 46%,#ff5ba8)':id==='scale-soft'?'radial-gradient(circle,#b79cff,#111 62%)':id==='blur-focus'?'linear-gradient(135deg,#d9d9ff55,#171720)': 'linear-gradient(135deg,#8b5cf6 0 33%,#1a1a20 33% 66%,#ff5ba8 66%)';const n=document.createElement('b');n.textContent=name;const m=document.createElement('small');m.textContent=desc;b.append(sw,n,m);b.onclick=()=>setScrollAnimation(id);grid.append(b)});
   sec.append(grid);box.append(sec);
 }
-async function loadBgAdmin(){try{const r=await api('/api/site-settings');bgState={...bgState,...(r.backgrounds||{})};scrollState={...scrollState,...(r.scrollAnimations||{})}}catch{}renderBgAdmin();renderScrollAdmin()}
+function renderCursorAdmin(){
+  const box=$('#cursorAdminBox');if(!box)return;box.hidden=!canAdmin;if(!canAdmin)return;box.replaceChildren();
+  const sec=document.createElement('div');sec.className='section';
+  const h=document.createElement('div');h.className='sectionTitle';h.innerHTML='<h3>Hauptseite · Custom Cursor</h3><span class="miniHint">8 Presets · nur Admin</span>';sec.append(h);
+  const p=document.createElement('p');p.className='desc';p.textContent='Wähle den Cursor, der auf der öffentlichen Hauptseite für alle Besucher verwendet wird.';sec.append(p);
+  const grid=document.createElement('div');grid.className='bgGrid';
+  LANDING_CURSORS.forEach(([id,name,desc,symbol])=>{const b=document.createElement('button');b.type='button';b.className='bgCard'+(cursorState===id?' on':'');const sw=document.createElement('span');sw.className='bgSwatch';sw.style.cssText='display:grid;place-items:center;font-size:28px;font-weight:800;background:radial-gradient(circle at 50% 45%,rgba(139,92,246,.22),transparent 50%),linear-gradient(135deg,#0d0d12,#16131e)';sw.textContent=symbol;const n=document.createElement('b');n.textContent=name;const m=document.createElement('small');m.textContent=desc;b.append(sw,n,m);b.onclick=()=>setLandingCursor(id);grid.append(b)});
+  sec.append(grid);box.append(sec);
+}
+async function loadBgAdmin(){try{const r=await api('/api/site-settings');bgState={...bgState,...(r.backgrounds||{})};scrollState={...scrollState,...(r.scrollAnimations||{})};cursorState=r.landingCursor||'none'}catch{}renderBgAdmin();renderScrollAdmin();renderCursorAdmin()}
 async function setBg(page,id){if(!canAdmin)return;try{const r=await api('/api/admin/backgrounds',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page,preset:id})});bgState={...bgState,...r.backgrounds};renderBgAdmin();if(page==='dashboard')CaruzoBG.apply('dashboard',id);toast(page==='landing'?'Hauptseite gespeichert':'Dashboard gespeichert')}catch(e){toast(e.message)}}
 async function setScrollAnimation(id){if(!canAdmin)return;try{const r=await api('/api/admin/scroll-animation',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({page:'landing',animation:id})});scrollState={...scrollState,...(r.scrollAnimations||{})};renderScrollAdmin();toast('Scroll Animation gespeichert')}catch(e){toast(e.message)}}
-function initBgAdmin(){const note=$('#bgModNote');if(note)note.hidden=canAdmin;const scrollBox=$('#scrollAdminBox');if(scrollBox)scrollBox.hidden=!canAdmin;loadBgAdmin()}
+async function setLandingCursor(id){if(!canAdmin)return;try{const r=await api('/api/admin/landing-cursor',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({cursor:id})});cursorState=r.landingCursor||id;renderCursorAdmin();toast('Hauptseiten-Cursor gespeichert')}catch(e){toast(e.message)}}
+function initBgAdmin(){const note=$('#bgModNote');if(note)note.hidden=canAdmin;const scrollBox=$('#scrollAdminBox');if(scrollBox)scrollBox.hidden=!canAdmin;const cursorBox=$('#cursorAdminBox');if(cursorBox)cursorBox.hidden=!canAdmin;loadBgAdmin()}
 $('#adminRefresh').onclick=()=>Promise.all(canAdmin?[loadAdminOverview(),loadAdminKeys(),loadAdminUsers(),loadAdminChangelog()]:[loadAdminOverview(),loadAdminKeys(),loadAdminUsers()]).then(()=>toast('Panel aktualisiert'));
 $('#createInviteKey').onclick=createAdminKey;$('#createChangelog').onclick=createChangelog;const CHANGE_TEMPLATES={update:{title:'Update',body:'Verbessert:\n• ...\n\nGeändert:\n• ...'},new:{title:'Neue Funktion',body:'Neu:\n• ...\n\nDetails:\n• ...'},fix:{title:'Fix',body:'Behoben:\n• ...\n\nVerbessert:\n• ...'},maintenance:{title:'Maintenance',body:'Wartung:\n• ...\n\nHinweis:\n• ...'}};$('#changelogType').onchange=()=>{const t=CHANGE_TEMPLATES[$('#changelogType').value];if(!t)return;if(!$('#changelogTitle').value.trim())$('#changelogTitle').value=t.title;if(!$('#changelogBody').value.trim())$('#changelogBody').value=t.body};$('#adminUserSearchBtn').onclick=loadAdminUsers;$('#adminUserSearch').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();loadAdminUsers()}});$('#banCancel').onclick=closeBanModal;$('#banConfirm').onclick=confirmBan;$('#banModal').addEventListener('click',e=>{if(e.target===$('#banModal'))closeBanModal()});
 
