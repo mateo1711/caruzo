@@ -194,6 +194,10 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .premium-custom-list{display:grid;gap:34px}.premium-custom-section{display:grid;gap:13px}.premium-custom-section>h2{margin:0;font:700 27px/1.15 var(--mono);letter-spacing:-.05em;color:var(--text);text-shadow:0 0 24px color-mix(in srgb,var(--accent) 10%,transparent)}.premium-text-card{padding:20px 22px;white-space:pre-wrap;overflow-wrap:anywhere;color:#d7cad0;line-height:1.75;border-radius:var(--card-radius,26px)}.premium-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.premium-gallery a{position:relative;aspect-ratio:1;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;background:rgba(0,0,0,.24);box-shadow:0 18px 50px rgba(0,0,0,.24);transform:translateZ(0);transition:transform .28s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s}.premium-gallery a:after{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.08),transparent 34%);opacity:0;transition:.25s}.premium-gallery a:hover{transform:translateY(-5px) scale(1.015);border-color:color-mix(in srgb,var(--accent) 44%,rgba(255,255,255,.1));box-shadow:0 24px 60px rgba(0,0,0,.35),0 0 30px color-mix(in srgb,var(--accent) 14%,transparent)}.premium-gallery a:hover:after{opacity:1}.premium-gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s cubic-bezier(.2,.7,.2,1),filter .35s}.premium-gallery a:hover img{transform:scale(1.055);filter:saturate(1.08)}
 .spotify-target{position:relative;z-index:1;width:100%;min-height:var(--spotify-height)}
 
+.spotify-now{display:grid;grid-template-columns:74px minmax(0,1fr) auto;align-items:center;gap:15px;padding:13px 16px;border-radius:20px;overflow:hidden;position:relative;background:linear-gradient(135deg,color-mix(in srgb,var(--card) 88%,#1ed760 12%),color-mix(in srgb,var(--card) 96%,#000 4%));border:1px solid color-mix(in srgb,#1ed760 24%,rgba(255,255,255,.1));box-shadow:0 18px 55px rgba(0,0,0,.26),0 0 30px color-mix(in srgb,#1ed760 10%,transparent);backdrop-filter:blur(calc(var(--card-blur) + 4px)) saturate(145%);-webkit-backdrop-filter:blur(calc(var(--card-blur) + 4px)) saturate(145%)}
+.spotify-now:before{content:"";position:absolute;inset:-60% 35% -60% -20%;background:radial-gradient(circle,#1ed76022,transparent 64%);filter:blur(22px);pointer-events:none}.spotify-now>*{position:relative;z-index:1}.spotify-now-cover{width:74px;height:74px;object-fit:cover;border-radius:14px;box-shadow:0 10px 30px rgba(0,0,0,.35)}.spotify-now-info{min-width:0}.spotify-now-kicker{display:flex;align-items:center;gap:7px;color:#1ed760;font:800 9px var(--mono);letter-spacing:.12em;text-transform:uppercase;margin-bottom:7px}.spotify-now-kicker:before{content:"";width:7px;height:7px;border-radius:50%;background:#1ed760;box-shadow:0 0 12px #1ed760}.spotify-now.paused .spotify-now-kicker{color:#9d9599}.spotify-now.paused .spotify-now-kicker:before{background:#777;box-shadow:none}.spotify-now-title{display:block;color:#fff;font:800 15px/1.25 var(--sans);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spotify-now-artists,.spotify-now-album{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.spotify-now-artists{color:#d4cbd0;font-size:11px;margin-top:4px}.spotify-now-album{color:#8f858a;font-size:9px;margin-top:4px}.spotify-now-progress{height:3px;border-radius:999px;background:rgba(255,255,255,.1);overflow:hidden;margin-top:10px}.spotify-now-progress i{display:block;height:100%;width:0;background:#1ed760;border-radius:inherit;transition:width .7s linear}.spotify-now-open{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:#1ed760;color:#07140b;text-decoration:none;box-shadow:0 8px 24px rgba(30,215,96,.2);transition:transform .2s,box-shadow .2s}.spotify-now-open:hover{transform:translateY(-2px) scale(1.04);box-shadow:0 12px 30px rgba(30,215,96,.3)}.spotify-now-open svg{width:17px;height:17px;fill:currentColor}@media(max-width:620px){.spotify-now{grid-template-columns:58px minmax(0,1fr) auto;gap:11px}.spotify-now-cover{width:58px;height:58px;border-radius:12px}.spotify-now-title{font-size:13px}}
+
+
 .premium-tabbed{overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 36%,rgba(255,255,255,.1));border-radius:18px;background:color-mix(in srgb,var(--card) 94%,var(--accent) 6%);box-shadow:0 20px 60px rgba(0,0,0,.24)}.premium-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(8,6,7,.38)}.premium-tab{flex:none;display:flex;align-items:center;gap:7px;min-height:42px;padding:0 16px;border:0;border-right:1px solid rgba(255,255,255,.055);background:transparent;color:#91858b;font:700 10px var(--mono);cursor:pointer;transition:.2s}.premium-tab:before{content:'●';font-size:7px;color:var(--accent);opacity:.7}.premium-tab.on{color:#fff;background:color-mix(in srgb,var(--accent) 8%,transparent);box-shadow:inset 0 -2px 0 var(--accent)}.premium-tab-panel{padding:0}.premium-tab-copy{padding:18px 20px;color:#d8ccd1;white-space:pre-wrap;line-height:1.7}.premium-info-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.premium-info-cell{min-height:70px;padding:14px 18px;border-right:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.05)}.premium-info-cell:last-child{border-right:0}.premium-info-cell small{display:block;color:#7c7478;font:700 8px var(--mono);letter-spacing:.18em;text-transform:uppercase;margin-bottom:7px}.premium-info-cell b{display:block;color:#f4edf0;font:650 12px var(--mono);overflow-wrap:anywhere}
 @media(max-width:760px){.premium-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-info-cell:nth-child(2n){border-right:0}}
 @media(max-width:760px){.premium-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-custom-section>h2{font-size:22px}}
@@ -211,6 +215,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
   <section id="home" style="display:grid;gap:22px">
     <div class="card profile" id="profile"></div>
     <div class="card activity-card" id="activity" hidden></div>
+    <div class="card spotify-now" id="spotifyNow" hidden></div>
     <div class="card spotify" id="spotify" hidden></div>
   </section>
   <section id="socials"><div class="grid" id="grid"></div></section>
@@ -289,9 +294,19 @@ function render(u) {
   }
   if (u.background.url) {
     const bg = u.background.type === 'video'
-      ? el('video', { src: u.background.url, loop: '', playsinline: '' })
+      ? el('video', { src: u.background.url, playsinline: '' })
       : el('img', { src: u.background.url, alt: '' });
-    if (bg.tagName === 'VIDEO') bg.muted = true;
+    if (bg.tagName === 'VIDEO') {
+      bg.muted = true;
+      const requestedStart = Math.max(0, Number(u.background.videoStart || 0));
+      const seekToStart = () => {
+        const max = Number.isFinite(bg.duration) && bg.duration > .35 ? Math.max(0, bg.duration - .25) : requestedStart;
+        const target = Math.min(requestedStart, max);
+        try { bg.currentTime = target; } catch {}
+      };
+      bg.addEventListener('loadedmetadata', seekToStart, { once: true });
+      bg.addEventListener('ended', () => { seekToStart(); bg.play().catch(() => {}); });
+    }
     $('#bg').prepend(bg);
   }
   const fx = u.background.effect || 'none';
@@ -347,6 +362,9 @@ function render(u) {
     setupSpotifyEmbed(sp, m[1], m[2], layout);
   }
 
+
+  if (u.spotifyAccount?.connected && s.showSpotifyNowPlaying !== false) startSpotifyNowPlaying(u.username);
+
   // Socials
   const grid = $('#grid');
   const icon = (slugName, color, tint) => {
@@ -371,6 +389,7 @@ function render(u) {
   if(u.links.epic)grid.append(card(icon('epicgames','ffffff','rgba(255,255,255,.08)'),'Epic Games',u.links.epic,null,()=>copyAccount('Epic Benutzername',u.links.epic)));
   if(u.links.valorant)grid.append(card(icon('valorant','ff4655','rgba(255,70,85,.14)'),'Valorant',u.links.valorant,null,()=>copyAccount('Valorant / Riot ID',u.links.valorant)));
   if(u.links.discordServer)grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server','Discord Server · beitreten',u.links.discordServer));
+  if(u.spotifyAccount?.connected&&u.spotifyAccount?.url)grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify',u.spotifyAccount.displayName||'Spotify',u.spotifyAccount.url));
   u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
   grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
   setupSocialHover(grid, des.socialEffect || 'lift');
@@ -412,6 +431,29 @@ function render(u) {
 
 }
 
+
+
+let spotifyNowTimer=0;
+function formatSpotifyTime(ms){const s=Math.max(0,Math.floor(Number(ms||0)/1000));return `${Math.floor(s/60)}:${String(s%60).padStart(2,'0')}`}
+function renderSpotifyNow(data){
+  const box=$('#spotifyNow');if(!box)return;
+  if(!data?.active){box.hidden=true;box.replaceChildren();return}
+  box.hidden=false;box.classList.toggle('paused',!data.isPlaying);
+  const cover=data.image?el('img',{class:'spotify-now-cover',src:data.image,alt:''}):el('div',{class:'spotify-now-cover',style:'background:#171717'});
+  const kicker=el('span',{class:'spotify-now-kicker'},data.isPlaying?'Now playing on Spotify':'Paused on Spotify');
+  const title=el('b',{class:'spotify-now-title'},data.name||'Spotify');
+  const artists=el('span',{class:'spotify-now-artists'},(data.artists||[]).join(', '));
+  const album=data.album?el('span',{class:'spotify-now-album'},data.album):'';
+  const progress=el('div',{class:'spotify-now-progress',title:`${formatSpotifyTime(data.progressMs)} / ${formatSpotifyTime(data.durationMs)}`},el('i'));
+  const pct=data.durationMs?Math.max(0,Math.min(100,Number(data.progressMs||0)/Number(data.durationMs)*100)):0;progress.querySelector('i').style.width=pct+'%';
+  const info=el('div',{class:'spotify-now-info'},kicker,title,artists,album,progress);
+  const open=data.url?el('a',{class:'spotify-now-open',href:data.url,target:'_blank',rel:'noopener noreferrer',title:'Auf Spotify öffnen'},svg(PATH.ext)):el('span');
+  box.replaceChildren(cover,info,open);
+}
+async function refreshSpotifyNow(username){
+  try{const r=await fetch('/api/spotify/now/'+encodeURIComponent(username)+'?t='+Date.now(),{cache:'no-store'});if(!r.ok)return renderSpotifyNow(null);renderSpotifyNow(await r.json())}catch{renderSpotifyNow(null)}
+}
+function startSpotifyNowPlaying(username){clearInterval(spotifyNowTimer);refreshSpotifyNow(username);spotifyNowTimer=setInterval(()=>refreshSpotifyNow(username),15000)}
 
 function setupProfileHover(card,u){
   const d=u.design||{}, preset=d.profileHover||'tilt';
