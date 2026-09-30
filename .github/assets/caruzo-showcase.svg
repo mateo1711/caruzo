@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="360" viewBox="0 0 1280 360" role="img" aria-label="Caruzo animated feature showcase">
+<defs>
+ <linearGradient id="b" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#080a11"/><stop offset="1" stop-color="#0e0b18"/></linearGradient>
+ <linearGradient id="g" x1="0" y1="0" x2="1" y2="0"><stop stop-color="#23e4ff"/><stop offset=".5" stop-color="#7c5cff"/><stop offset="1" stop-color="#ff41c5"/></linearGradient>
+ <filter id="gl"><feGaussianBlur stdDeviation="8" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+ <pattern id="p" width="26" height="26" patternUnits="userSpaceOnUse"><path d="M26 0H0V26" fill="none" stroke="#fff" stroke-opacity=".025"/></pattern>
+</defs>
+<rect width="1280" height="360" rx="28" fill="url(#b)"/><rect width="1280" height="360" rx="28" fill="url(#p)"/>
+<text x="54" y="52" fill="#8c91a2" font-family="Segoe UI,Arial" font-size="12" font-weight="700" letter-spacing="3">BUILT TO FEEL ALIVE</text>
+<text x="54" y="91" fill="#fff" font-family="Segoe UI,Arial" font-size="30" font-weight="800">Not just a bio link.</text>
+
+<!-- card 1 -->
+<g transform="translate(54 126)"><rect width="350" height="180" rx="20" fill="#fff" fill-opacity=".035" stroke="#fff" stroke-opacity=".09"/>
+ <circle cx="39" cy="39" r="16" fill="#5865F2" fill-opacity=".17" stroke="#5865F2" stroke-opacity=".45"/><circle cx="39" cy="39" r="5" fill="#7b86ff"><animate attributeName="opacity" values=".35;1;.35" dur="2s" repeatCount="indefinite"/></circle>
+ <text x="68" y="44" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="800">LIVE PRESENCE</text>
+ <text x="24" y="82" fill="#858b9d" font-family="Segoe UI,Arial" font-size="12">Discord status, activity, banner &amp; badges</text>
+ <rect x="24" y="109" width="302" height="46" rx="12" fill="#05060a" stroke="#ffffff" stroke-opacity=".07"/>
+ <circle cx="50" cy="132" r="10" fill="#111622" stroke="#7d5cff"/><circle cx="57" cy="139" r="4" fill="#39e58c"/>
+ <rect x="72" y="121" width="92" height="7" rx="3.5" fill="#fff" fill-opacity=".74"/><rect x="72" y="136" width="130" height="5" rx="2.5" fill="#fff" fill-opacity=".14"/>
+ <text x="264" y="136" fill="#39e58c" font-family="Segoe UI,Arial" font-size="9" font-weight="800">ONLINE</text>
+</g>
+
+<!-- card 2 -->
+<g transform="translate(465 126)"><rect width="350" height="180" rx="20" fill="#fff" fill-opacity=".035" stroke="#fff" stroke-opacity=".09"/>
+ <circle cx="39" cy="39" r="16" fill="#a855f7" fill-opacity=".14" stroke="#a855f7" stroke-opacity=".45"/><text x="34" y="45" fill="#caa7ff" font-family="Segoe UI Emoji,Arial" font-size="17">★</text>
+ <text x="68" y="44" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="800">REACTIONS + ANALYTICS</text>
+ <text x="24" y="82" fill="#858b9d" font-family="Segoe UI,Arial" font-size="12">Interactive profile reactions with real stats</text>
+ <path d="M28 151 C72 142 92 119 124 128 S178 158 208 123 S258 116 322 94" fill="none" stroke="url(#g)" stroke-width="3" filter="url(#gl)" stroke-linecap="round" stroke-dasharray="400" stroke-dashoffset="400"><animate attributeName="stroke-dashoffset" values="400;0;0" keyTimes="0;.55;1" dur="5s" repeatCount="indefinite"/></path>
+ <g fill="#7c5cff"><circle cx="124" cy="128" r="4"/><circle cx="208" cy="123" r="4"/><circle cx="322" cy="94" r="4"/></g>
+</g>
+
+<!-- card 3 -->
+<g transform="translate(876 126)"><rect width="350" height="180" rx="20" fill="#fff" fill-opacity=".035" stroke="#fff" stroke-opacity=".09"/>
+ <circle cx="39" cy="39" r="16" fill="#ff41c5" fill-opacity=".14" stroke="#ff41c5" stroke-opacity=".45"/><text x="34" y="45" fill="#ff8de1" font-family="Segoe UI Emoji,Arial" font-size="17">♪</text>
+ <text x="68" y="44" fill="#fff" font-family="Segoe UI,Arial" font-size="16" font-weight="800">PREMIUM AUDIO</text>
+ <text x="24" y="82" fill="#858b9d" font-family="Segoe UI,Arial" font-size="12">Spotify / YouTube playlists with custom players</text>
+ <g transform="translate(24 108)"><rect width="302" height="46" rx="13" fill="#05060a" stroke="#ffffff" stroke-opacity=".07"/><rect x="10" y="9" width="28" height="28" rx="7" fill="url(#g)"/><rect x="49" y="11" width="88" height="7" rx="3.5" fill="#fff" fill-opacity=".7"/><rect x="49" y="26" width="62" height="5" rx="2.5" fill="#fff" fill-opacity=".14"/><circle cx="212" cy="23" r="12" fill="#fff" fill-opacity=".06"/><text x="208" y="27" fill="#fff" font-family="Arial" font-size="11">▶</text><text x="246" y="27" fill="#6d7385" font-family="Arial" font-size="12">▮▮</text><text x="277" y="27" fill="#fff" font-family="Arial" font-size="12">›</text></g>
+</g>
+<rect x="1" y="1" width="1278" height="358" rx="27" fill="none" stroke="url(#g)" stroke-opacity=".22"><animate attributeName="stroke-opacity" values=".12;.36;.12" dur="6s" repeatCount="indefinite"/></rect>
+</svg>
