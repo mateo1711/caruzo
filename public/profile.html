@@ -217,6 +217,11 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .reaction-anim-burst{animation:reactionPop .42s cubic-bezier(.2,.9,.2,1)}.reaction-anim-confetti{animation:reactionPop .42s cubic-bezier(.2,.9,.2,1)}
 @media(max-width:760px){.reaction-wrap.floating{top:auto;bottom:16px;left:50%!important;right:auto!important;transform:translateX(-50%);display:flex;max-width:calc(100vw - 24px);overflow-x:auto}.reaction-wrap.floating .reaction-label{writing-mode:initial;transform:none;margin:0 2px 0 0}.reaction-wrap.floating .reaction-buttons{display:flex;flex-wrap:nowrap}.reaction-wrap.profile-bottom{margin-left:15px;margin-right:15px}.reaction-wrap.section-placement{width:min(var(--profile-width),calc(100vw - 20px))}}
 
+
+/* Premium playlist player */
+.premium-music-host{width:100%}.premium-music-player{--mp-a:#8b5cf6;--mp-b:#22d3ee;position:relative;overflow:hidden;border:1px solid rgba(255,255,255,.1);border-radius:20px;background:radial-gradient(circle at 5% 0%,color-mix(in srgb,var(--mp-a) 20%,transparent),transparent 42%),radial-gradient(circle at 95% 100%,color-mix(in srgb,var(--mp-b) 15%,transparent),transparent 44%),rgba(9,9,13,.72);backdrop-filter:blur(22px) saturate(125%);-webkit-backdrop-filter:blur(22px) saturate(125%);box-shadow:0 22px 60px rgba(0,0,0,.28),0 0 28px color-mix(in srgb,var(--mp-a) 10%,transparent);padding:16px;color:#f7f7fb}.premium-music-player .mp-head{display:flex;align-items:center;gap:14px}.premium-music-player .mp-cover{width:74px;height:74px;flex:0 0 74px;border-radius:14px;object-fit:cover;background:linear-gradient(135deg,var(--mp-a),var(--mp-b));box-shadow:0 14px 34px rgba(0,0,0,.32)}.premium-music-player .mp-copy{min-width:0;flex:1}.premium-music-player .mp-kicker{display:flex;align-items:center;gap:7px;color:#9d9faa;font:800 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase}.premium-music-player .mp-kicker i{width:6px;height:6px;border-radius:50%;background:var(--mp-a);box-shadow:0 0 10px var(--mp-a)}.premium-music-player .mp-title{display:block;margin-top:7px;font-size:16px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.premium-music-player .mp-artist{display:block;margin-top:4px;color:#8a8b95;font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.premium-music-player .mp-controls{display:flex;align-items:center;gap:7px}.premium-music-player .mp-controls button{width:36px;height:36px;display:grid;place-items:center;border:1px solid rgba(255,255,255,.09);border-radius:999px;background:rgba(255,255,255,.035);color:#fff;cursor:pointer;transition:.15s}.premium-music-player .mp-controls button:hover{transform:translateY(-1px);border-color:color-mix(in srgb,var(--mp-a) 42%,transparent);background:color-mix(in srgb,var(--mp-a) 9%,transparent)}.premium-music-player .mp-controls .mp-play{width:44px;height:44px;background:var(--mp-a);color:#09090d;border-color:transparent;box-shadow:0 0 22px color-mix(in srgb,var(--mp-a) 36%,transparent)}.premium-music-player .mp-controls svg{width:16px;height:16px;fill:currentColor}.premium-music-player .mp-progress{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:9px;align-items:center;margin-top:13px;color:#666975;font:700 8px var(--mono)}.premium-music-player .mp-track{height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}.premium-music-player .mp-track i{display:block;width:0;height:100%;border-radius:inherit;background:linear-gradient(90deg,var(--mp-a),var(--mp-b));box-shadow:0 0 12px color-mix(in srgb,var(--mp-a) 35%,transparent);transition:width .2s linear}.premium-music-player .mp-bottom{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:11px}.premium-music-player .mp-source{display:flex;align-items:center;gap:7px;color:#6f717b;font-size:9px}.premium-music-player .mp-source b{color:#aaaab3}.premium-music-player .mp-volume{display:flex;align-items:center;gap:7px;min-width:130px}.premium-music-player .mp-volume input{width:100%;accent-color:var(--mp-a)}.premium-music-player .mp-embed{margin-top:12px;border-radius:12px;overflow:hidden;max-height:152px}.premium-music-player .mp-embed iframe{display:block;width:100%;height:152px;border:0}.premium-music-player .mp-hidden{position:absolute;width:1px;height:1px;overflow:hidden;opacity:.001;pointer-events:none}.premium-music-player.style-vinyl .mp-cover{border-radius:50%;box-shadow:inset 0 0 0 17px rgba(0,0,0,.35),inset 0 0 0 19px rgba(255,255,255,.06),0 14px 34px rgba(0,0,0,.34);animation:vinylSpin 12s linear infinite paused}.premium-music-player.style-vinyl.playing .mp-cover{animation-play-state:running}@keyframes vinylSpin{to{transform:rotate(360deg)}}.premium-music-player.style-neon-deck{border-color:color-mix(in srgb,var(--mp-a) 30%,rgba(255,255,255,.08));box-shadow:0 20px 64px rgba(0,0,0,.36),inset 0 0 30px color-mix(in srgb,var(--mp-a) 10%,transparent),0 0 36px color-mix(in srgb,var(--mp-a) 16%,transparent)}.premium-music-player.style-neon-deck .mp-title{text-shadow:0 0 18px color-mix(in srgb,var(--mp-a) 55%,transparent)}.premium-music-player.style-compact-bar{padding:11px 13px;border-radius:14px}.premium-music-player.style-compact-bar .mp-cover{width:48px;height:48px;flex-basis:48px;border-radius:9px}.premium-music-player.style-compact-bar .mp-progress,.premium-music-player.style-compact-bar .mp-bottom{margin-top:8px}.premium-music-player.style-compact-bar .mp-embed{margin-top:8px}.premium-music-player.style-minimal{background:rgba(7,7,10,.48);box-shadow:none;border-color:rgba(255,255,255,.07)}.premium-music-player.style-minimal .mp-cover{box-shadow:none}.premium-music-player.style-cover-flow .mp-cover{transform:rotate(-4deg);box-shadow:13px 4px 0 -5px color-mix(in srgb,var(--mp-b) 35%,transparent),22px 8px 0 -8px color-mix(in srgb,var(--mp-a) 25%,transparent),0 14px 34px rgba(0,0,0,.28)}.music-floating-bottom{position:fixed;left:50%;bottom:20px;z-index:80;width:min(720px,calc(100% - 28px));transform:translateX(-50%)}.music-floating-bottom .premium-music-player{box-shadow:0 24px 80px rgba(0,0,0,.5),0 0 32px color-mix(in srgb,var(--mp-a) 14%,transparent)}
+@media(max-width:650px){.premium-music-player{padding:12px;border-radius:16px}.premium-music-player .mp-head{gap:10px}.premium-music-player .mp-cover{width:56px;height:56px;flex-basis:56px;border-radius:10px}.premium-music-player .mp-controls{gap:4px}.premium-music-player .mp-controls button{width:32px;height:32px}.premium-music-player .mp-controls .mp-play{width:38px;height:38px}.premium-music-player .mp-bottom{align-items:flex-start;flex-direction:column}.premium-music-player .mp-volume{width:100%}.music-floating-bottom{bottom:10px}}
+
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -230,15 +235,19 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 <main>
   <section id="home" style="display:grid;gap:22px">
     <div class="card profile" id="profile"></div>
+    <div id="musicPlayerBelowProfile"></div>
     <div class="card activity-card" id="activity" hidden></div>
     <div class="card spotify-now" id="spotifyNow" hidden></div>
     <div class="card spotify" id="spotify" hidden></div>
   </section>
+  <div id="musicPlayerBeforeHighlights"></div>
   <div id="reactionBeforeHighlights"></div>
   <section id="highlights" hidden><div class="highlight-grid" id="highlightGrid"></div></section>
   <div id="reactionAfterHighlights"></div>
+  <div id="musicPlayerBeforeSocials"></div>
   <div id="reactionBeforeSocials"></div>
   <section id="socials"><div class="grid" id="grid"></div></section>
+  <div id="musicPlayerAfterSocials"></div>
   <section id="premiumCustom" hidden><div class="premium-custom-list" id="premiumSectionsList"></div></section>
   <section id="about" hidden><div class="card about" id="aboutText"></div></section>
   <div class="status" id="status"></div>
@@ -250,6 +259,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
   <span id="trackName"></span>
   <input type="range" id="vol" min="0" max="100" aria-label="Lautstärke">
 </div>
+<div id="musicPlayerFloating"></div>
 <div class="toast" id="toast"></div>
 
 <script>
@@ -303,6 +313,7 @@ let backgroundYouTubeFrame = null;
 let backgroundYouTubeSound = false;
 let backgroundYouTubeVolume = 30;
 let profileEntered = false;
+let premiumPlaylistActive=false, playlistYT=null, playlistSpotifyController=null, playlistIndex=0, playlistUser=null, playlistShell=null;
 function commandBackgroundYouTube(){
   if(!backgroundYouTubeFrame?.contentWindow||!profileEntered)return;
   const send=(func,args=[])=>{try{backgroundYouTubeFrame.contentWindow.postMessage(JSON.stringify({event:'command',func,args}),'*')}catch{}};
@@ -310,10 +321,49 @@ function commandBackgroundYouTube(){
   if(backgroundYouTubeSound){send('unMute');send('setVolume',[backgroundYouTubeVolume])}else send('mute');
 }
 
-fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
+const externalRef=(()=>{try{return document.referrer?new URL(document.referrer).hostname:''}catch{return ''}})();
+fetch('/api/profile/' + encodeURIComponent(path)+(externalRef?'?ref='+encodeURIComponent(externalRef):'')).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
   document.body.replaceChildren(el('p', { style: 'padding:60px;text-align:center' }, 'Profil nicht gefunden.'));
 });
 
+
+
+function trackProfileEvent(u,type,key=''){
+  if(!u?.username)return;try{fetch('/api/profile/'+encodeURIComponent(u.username)+'/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,key:String(key||'').slice(0,48)}),keepalive:true}).catch(()=>{})}catch{}
+}
+function parseSpotifySource(raw){const m=String(raw||'').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/i);return m?{kind:m[1],id:m[2]}:null}
+function parseYouTubePlaylist(raw){try{return new URL(String(raw||'')).searchParams.get('list')||''}catch{return ''}}
+function premiumMusicTarget(pos){if(pos==='before-highlights')return $('#musicPlayerBeforeHighlights');if(pos==='before-socials')return $('#musicPlayerBeforeSocials');if(pos==='after-socials')return $('#musicPlayerAfterSocials');if(pos==='floating-bottom')return $('#musicPlayerFloating');return $('#musicPlayerBelowProfile')}
+function playlistCover(src){if(src?.cover)return src.cover;const id=extractYouTubeId(src?.url);return id?`https://i.ytimg.com/vi/${id}/hqdefault.jpg`:''}
+function timeLabel(sec){sec=Math.max(0,Number(sec||0));const m=Math.floor(sec/60),s=Math.floor(sec%60);return `${m}:${String(s).padStart(2,'0')}`}
+function setPlaylistPlaying(on){const root=playlistShell?.root;if(!root)return;root.classList.toggle('playing',!!on);if(playlistShell.play)playlistShell.play.textContent=on?'Ⅱ':'▶'}
+function updatePlaylistProgress(cur=0,dur=0){if(!playlistShell)return;playlistShell.cur.textContent=timeLabel(cur);playlistShell.dur.textContent=timeLabel(dur);playlistShell.bar.style.width=(dur?Math.max(0,Math.min(100,cur/dur*100)):0)+'%'}
+async function mountPremiumMusicSource(index=0){
+  const mp=playlistUser?.musicPlayer||{},sources=mp.sources||[];if(!sources.length||!playlistShell)return;playlistIndex=(index+sources.length)%sources.length;const src=sources[playlistIndex],sp=parseSpotifySource(src.url),ytId=extractYouTubeId(src.url),ytList=parseYouTubePlaylist(src.url);
+  try{playlistYT?.destroy?.()}catch{}playlistYT=null;try{playlistSpotifyController?.pause?.()}catch{}playlistSpotifyController=null;playlistShell.embed.replaceChildren();playlistShell.hiddenMount.replaceChildren();setPlaylistPlaying(false);updatePlaylistProgress(0,0);
+  const cover=playlistCover(src);if(playlistShell.cover){playlistShell.cover.src=cover||'/caruzo-logo.png';playlistShell.cover.style.display='block'}playlistShell.title.textContent=src.title|| (sp?'Spotify':ytId||ytList?'YouTube':'Track');playlistShell.artist.textContent=src.artist|| (sp?`Spotify ${sp.kind}`:ytList?'YouTube Playlist':ytId?'YouTube':'Audio');playlistShell.source.textContent=`${playlistIndex+1} / ${sources.length} · ${sp?'Spotify':ytId||ytList?'YouTube':'Audio'}`;
+  if(sp){
+    const target=el('div',{class:'mp-spotify-target'});playlistShell.embed.append(target);playlistShell.embed.hidden=false;
+    try{const api=await getSpotifyIframeApi();api.createController(target,{uri:`spotify:${sp.kind}:${sp.id}`,width:'100%',height:152},controller=>{playlistSpotifyController=controller;controller.addListener('playback_update',e=>{const d=e?.data||{};const playing=d.isPaused===false;setPlaylistPlaying(playing);updatePlaylistProgress((d.position||0)/1000,(d.duration||0)/1000);if(playing){silenceSiteSoundForSpotify();trackProfileEvent(playlistUser,'music_play',src.id)}});});}
+    catch{target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${sp.kind}/${sp.id}`,allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',loading:'lazy',title:'Spotify'}))}
+    return;
+  }
+  playlistShell.embed.hidden=true;
+  if(ytId||ytList){
+    const mount=el('div',{id:'premiumPlaylistYT'+Date.now()});playlistShell.hiddenMount.append(mount);try{const YT=await getYouTubeApi();const vars={autoplay:0,controls:0,modestbranding:1,playsinline:1,rel:0};if(ytList){vars.listType='playlist';vars.list=ytList}playlistYT=new YT.Player(mount,{width:'1',height:'1',videoId:ytId||undefined,playerVars:vars,events:{onReady:e=>{try{e.target.setVolume(Number(mp.volume??65))}catch{}},onStateChange:e=>{const on=e.data===YT.PlayerState.PLAYING;setPlaylistPlaying(on);if(on)trackProfileEvent(playlistUser,'music_play',src.id);if(e.data===YT.PlayerState.ENDED&&!ytList)mountPremiumMusicSource(playlistIndex+1)}}});}catch{}
+  }
+}
+function playlistSkip(dir){if(!playlistUser||!playlistShell)return;trackProfileEvent(playlistUser,'music_skip',String(dir));const src=playlistUser.musicPlayer.sources?.[playlistIndex]||{},sp=parseSpotifySource(src.url),ytList=parseYouTubePlaylist(src.url);if(sp&&['playlist','album'].includes(sp.kind)&&playlistSpotifyController){try{dir>0?playlistSpotifyController.next?.():playlistSpotifyController.previous?.();return}catch{}}if(ytList&&playlistYT){try{dir>0?playlistYT.nextVideo():playlistYT.previousVideo();return}catch{}}mountPremiumMusicSource(playlistIndex+dir)}
+function renderPremiumMusicPlayer(u){
+  const mp=u.musicPlayer||{},sources=Array.isArray(mp.sources)?mp.sources:[];if(!u.platform?.premium||mp.enabled===false||!sources.length)return;playlistUser=u;const host=premiumMusicTarget(mp.position);if(!host)return;host.className=mp.position==='floating-bottom'?'music-floating-bottom':'premium-music-host';host.replaceChildren();
+  const root=el('section',{class:`premium-music-player style-${mp.style||'glass-wave'}`});root.style.setProperty('--mp-a',mp.accent||'#8b5cf6');root.style.setProperty('--mp-b',mp.secondary||'#22d3ee');
+  const src=sources[0]||{},cover=playlistCover(src);const coverEl=el('img',{class:'mp-cover',alt:'',src:cover||'/caruzo-logo.png'});if(mp.showCover===false)coverEl.style.display='none';
+  const kicker=el('span',{class:'mp-kicker'},el('i'),mp.title||'Playlist');const title=el('b',{class:'mp-title'},src.title||'Playlist');const artist=el('span',{class:'mp-artist'},src.artist||'Spotify / YouTube');const copy=el('div',{class:'mp-copy'},kicker,title,artist);
+  const prev=el('button',{type:'button','aria-label':'Previous'},'‹'),play=el('button',{type:'button',class:'mp-play','aria-label':'Play'},'▶'),next=el('button',{type:'button','aria-label':'Next'},'›');const controls=el('div',{class:'mp-controls'},prev,play,next);const head=el('div',{class:'mp-head'},coverEl,copy,controls);
+  const cur=el('span',{},'0:00'),bar=el('i'),dur=el('span',{},'0:00'),progress=el('div',{class:'mp-progress'},cur,el('div',{class:'mp-track'},bar),dur);const source=el('span',{class:'mp-source'},el('b',{},'SOURCE'),`1 / ${sources.length}`);const vol=el('input',{type:'range',min:'0',max:'100',value:String(mp.volume??65),'aria-label':'Playlist volume'}),bottom=el('div',{class:'mp-bottom'},source,el('label',{class:'mp-volume'},el('span',{},'VOL'),vol));const embed=el('div',{class:'mp-embed'}),hiddenMount=el('div',{class:'mp-hidden'});root.append(head,progress,bottom,embed,hiddenMount);host.append(root);playlistShell={root,cover:coverEl,title,artist,play,source,cur,dur,bar,embed,hiddenMount};
+  prev.onclick=()=>playlistSkip(-1);next.onclick=()=>playlistSkip(1);play.onclick=()=>{const src=sources[playlistIndex]||{},sp=parseSpotifySource(src.url);if(sp&&playlistSpotifyController){try{playlistSpotifyController.togglePlay?.();return}catch{}}if(playlistYT){try{const st=playlistYT.getPlayerState?.();if(st===YT.PlayerState.PLAYING)playlistYT.pauseVideo();else playlistYT.playVideo();return}catch{}}};vol.oninput=e=>{try{playlistYT?.setVolume?.(Number(e.target.value)||0)}catch{}};
+  mountPremiumMusicSource(0);if(window.__premiumMusicProgressTimer)clearInterval(window.__premiumMusicProgressTimer);window.__premiumMusicProgressTimer=setInterval(()=>{if(playlistYT){try{updatePlaylistProgress(playlistYT.getCurrentTime?.()||0,playlistYT.getDuration?.()||0)}catch{}}},500);
+}
 
 function reactionPlacementTarget(position, profileCard){
   if(position==='profile-bottom') return profileCard;
@@ -361,6 +411,7 @@ function renderProfileReactions(u,profileCard){
 
 function render(u) {
   const d = u.discord, s = u.settings, des = u.design || {}, vs = u.viewsStyle || {}, pf = u.pageFx || {};
+  premiumPlaylistActive=!!u.platform?.premium&&u.musicPlayer?.enabled!==false&&Array.isArray(u.musicPlayer?.sources)&&u.musicPlayer.sources.length>0;
   const hexToRgb = h => { const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(h||''); return m ? `${parseInt(m[1],16)},${parseInt(m[2],16)},${parseInt(m[3],16)}` : '139,92,246'; };
   const accent = des.accentColor || '#8b5cf6';
   document.documentElement.style.setProperty('--pink', accent); document.documentElement.style.setProperty('--accent', accent);
@@ -392,7 +443,7 @@ function render(u) {
       const ytId = extractYouTubeId(u.background.url);
       if (ytId) {
         const start = Math.max(0, Number(u.background.videoStart || 0));
-        const sm=(u.soundMode||'auto'); const mute = (u.background.videoSound === false || sm === 'music' || sm === 'mute' || (sm==='auto' && !!u.music?.url)) ? 1 : 0;
+        const sm=(u.soundMode||'auto'); const mute = (premiumPlaylistActive || u.background.videoSound === false || sm === 'music' || sm === 'mute' || (sm==='auto' && !!u.music?.url)) ? 1 : 0;
         bg = el('iframe', { class: 'bg-yt', src: `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=0&controls=0&showinfo=0&modestbranding=1&playsinline=1&mute=${mute}&loop=1&playlist=${ytId}&start=${start}&enablejsapi=1`, allow: 'autoplay; encrypted-media; picture-in-picture', referrerpolicy: 'strict-origin-when-cross-origin', title: 'YouTube background' });
         backgroundYouTubeFrame = bg;
         backgroundYouTubeSound = !mute;
@@ -470,7 +521,7 @@ function render(u) {
       const body=el('div',{class:'highlight-copy'},el('small',{},x.label||'Highlight'),el('b',{},x.value||'—'));
       const open=x.url?el('span',{class:'highlight-open'},svg(PATH.ext)):'';
       const children=[el('span',{class:'highlight-icon'},x.icon||'✦'),body,open];
-      highlightGrid.append(x.url?el('a',{class:'highlight-card',href:x.url,target:'_blank',rel:'noopener noreferrer'},children):el('div',{class:'highlight-card'},children));
+      if(x.url){const a=el('a',{class:'highlight-card',href:x.url,target:'_blank',rel:'noopener noreferrer'},children);a.addEventListener('click',()=>trackProfileEvent(u,'highlight',x.id||x.label||'highlight'));highlightGrid.append(a)}else highlightGrid.append(el('div',{class:'highlight-card'},children));
     });
     highlightSection.hidden=false;
   }
@@ -499,22 +550,22 @@ function render(u) {
     wrap.append(img);
     return wrap;
   };
-  const card = (ico, title, sub, href, onclick) => {
+  const card = (ico, title, sub, href, onclick, statKey='') => {
     const inner = [ico, el('div', { class: 't' }, el('b', {}, title), el('small', {}, sub)), href ? svg(PATH.ext, 'ext') : ''];
-    return href ? el('a', { class: 'link', href, target: '_blank', rel: 'noopener noreferrer' }, inner)
-                : el('button', { class: 'link', onclick }, inner);
+    if(href){const a=el('a',{class:'link',href,target:'_blank',rel:'noopener noreferrer'},inner);a.addEventListener('click',()=>trackProfileEvent(u,'social',statKey||title));return a}
+    return el('button', { class: 'link', onclick }, inner);
   };
   const copyAccount=(label,value)=>{navigator.clipboard?.writeText(value);toast(label+' kopiert')};
   socialOrder(u).forEach(key=>{
-    if(key==='discord') return grid.append(card(icon('discord', '5865F2', 'rgba(88,101,242,.16)'), 'Discord', d.username, null, () => { navigator.clipboard?.writeText(d.username); toast('Discord-Name kopiert'); }));
-    if(key==='steam') return u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', x.name || host(x.url) || `Steam ${i+1}`, x.url)));
-    if(key==='custom') return u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
-    if(key==='discordServer' && u.links.discordServer) return grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server','Discord Server · beitreten',u.links.discordServer));
-    if(key==='spotifyProfile' && u.links.spotifyProfile) return grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify','Spotify Profil',u.links.spotifyProfile));
-    if(key==='epic' && u.links.epic) return grid.append(card(icon('epicgames','ffffff','rgba(255,255,255,.08)'),'Epic Games',u.links.epic,null,()=>copyAccount('Epic Benutzername',u.links.epic)));
-    if(key==='valorant' && u.links.valorant) return grid.append(card(icon('valorant','ff4655','rgba(255,70,85,.14)'),'Valorant',u.links.valorant,null,()=>copyAccount('Valorant / Riot ID',u.links.valorant)));
+    if(key==='discord') return grid.append(card(icon('discord', '5865F2', 'rgba(88,101,242,.16)'), 'Discord', d.username, null, () => { trackProfileEvent(u,'social','discord');navigator.clipboard?.writeText(d.username); toast('Discord-Name kopiert'); }));
+    if(key==='steam') return u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', x.name || host(x.url) || `Steam ${i+1}`, x.url,null,'steam')));
+    if(key==='custom') return u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url,null,'custom')));
+    if(key==='discordServer' && u.links.discordServer) return grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server','Discord Server · beitreten',u.links.discordServer,null,'discordServer'));
+    if(key==='spotifyProfile' && u.links.spotifyProfile) return grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify','Spotify Profil',u.links.spotifyProfile,null,'spotify'));
+    if(key==='epic' && u.links.epic) return grid.append(card(icon('epicgames','ffffff','rgba(255,255,255,.08)'),'Epic Games',u.links.epic,null,()=>{trackProfileEvent(u,'social','epic');copyAccount('Epic Benutzername',u.links.epic)}));
+    if(key==='valorant' && u.links.valorant) return grid.append(card(icon('valorant','ff4655','rgba(255,70,85,.14)'),'Valorant',u.links.valorant,null,()=>{trackProfileEvent(u,'social','valorant');copyAccount('Valorant / Riot ID',u.links.valorant)}));
     const meta=SOCIAL_META[key], v=u.links[key];
-    if(meta&&v) grid.append(card(icon(meta.icon,meta.color,meta.tint),meta.title,v.split('/').filter(Boolean).pop(),v));
+    if(meta&&v) grid.append(card(icon(meta.icon,meta.color,meta.tint),meta.title,v.split('/').filter(Boolean).pop(),v,null,key));
   });
   grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
   setupSocialHover(grid, des.socialEffect || 'lift');
@@ -538,10 +589,11 @@ function render(u) {
   // Musik / Video-Ton: Musik hat in 'auto' immer Vorrang.
   const video = document.querySelector('#bg video');
   const mode = u.soundMode || 'auto';
-  const useMusic = !!u.music.url && (mode === 'auto' || mode === 'music');
-  const useVideoSound = !!video && u.background.videoSound !== false && (mode === 'video' || (mode === 'auto' && !u.music.url));
+  const useMusic = !premiumPlaylistActive && !!u.music.url && (mode === 'auto' || mode === 'music');
+  const useVideoSound = !premiumPlaylistActive && !!video && u.background.videoSound !== false && (mode === 'video' || (mode === 'auto' && !u.music.url));
   if (useMusic) setupMusic(u.music);
   if (video) { video.muted = !useVideoSound; video.volume = Math.max(0,Math.min(1,Number(u.background.videoVolume ?? 30)/100)); }
+  if(premiumPlaylistActive)renderPremiumMusicPlayer(u);
 
   // Status via Lanyard
   if (s.showStatus || s.showActivity) startPresenceSync(d.id, !!s.showStatus, !!s.showActivity);
