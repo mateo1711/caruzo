@@ -303,7 +303,7 @@ function render(u) {
   document.documentElement.style.setProperty('--blur', u.background.blur + 'px');
   document.documentElement.style.setProperty('--dim', u.background.dim / 100);
   if (pf.type && pf.type !== 'none') {
-    if (['matrix','snow','particles','constellation','halo','pulse-grid','ribbons','bubbles','trail','wavefield','lightscape'].includes(pf.type)) setupAmbientCanvas(pf);
+    if (['matrix','snow','particles','constellation'].includes(pf.type)) setupAmbientCanvas(pf);
     else {
       const layer = el('div', { class: 'page-fx page-fx-' + pf.type });
       layer.style.setProperty('--fx-color', pf.color || accent); layer.style.setProperty('--fx-secondary', pf.secondary || '#ff2e93');
@@ -410,10 +410,9 @@ function render(u) {
     return href ? el('a', { class: 'link', href, target: '_blank', rel: 'noopener noreferrer' }, inner)
                 : el('button', { class: 'link', onclick }, inner);
   };
-  grid.append(card(icon('discord', '5865F2', 'rgba(88,101,242,.16)'), 'Discord', d.username, null, () => { navigator.clipboard?.writeText(d.username); toast('Discord-Name kopiert'); }));
   const copyAccount=(label,value)=>{navigator.clipboard?.writeText(value);toast(label+' kopiert')};
   socialOrder(u).forEach(key=>{
-    if(key==='discord') return;
+    if(key==='discord') return grid.append(card(icon('discord', '5865F2', 'rgba(88,101,242,.16)'), 'Discord', d.username, null, () => { navigator.clipboard?.writeText(d.username); toast('Discord-Name kopiert'); }));
     if(key==='steam') return u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', x.name || host(x.url) || `Steam ${i+1}`, x.url)));
     if(key==='custom') return u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
     if(key==='discordServer' && u.links.discordServer) return grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server','Discord Server · beitreten',u.links.discordServer));

@@ -1,7 +1,7 @@
 /* Caruzo animierte Hintergründe – gemeinsame Engine für Hauptseite und Dashboard.
    Nutzung: CaruzoBG.mount('landing') bzw. CaruzoBG.mount('dashboard').
    Die Auswahl kommt von /api/site-settings und wird im Admin Panel geändert.
-   10 Effekte (mode 0-9), je Seite mit eigener Farbwelt, Helligkeit und Tempo. */
+   17 Presets je Seite auf 10 GPU-Effektmodi, jeweils mit eigener Farbwelt, Helligkeit und Tempo. */
 (function () {
   'use strict';
   var MODE_LABEL = ['Nebula', 'Topografie', 'Caustics', 'Halftone', 'Lichtstrahlen', 'Data Rain', 'Sonar', 'Mesh Gradient', 'Hex Grid', 'Bokeh'];
@@ -18,7 +18,14 @@
       7: P('Sonar Blau',       6, ['#7fd0ff', '#3b6bff', '#0a1f52'], 1.0, 1.0, .2),
       8: P('Mesh Aurora',      7, ['#2bffc0', '#8b5cf6', '#ff3d9a'], 1.0, 1.0, .25),
       9: P('Hex Neon',         8, ['#ff4fd8', '#22e5ff', '#3a1060'], 1.0, 1.0, .25),
-      10: P('Bokeh Nacht',     9, ['#ff8fc4', '#ffd27a', '#4a1030'], 1.0, 1.0, .2)
+      10: P('Bokeh Nacht',     9, ['#ff8fc4', '#ffd27a', '#4a1030'], 1.0, 1.0, .2),
+      11: P('Fluid Gradient',   7, ['#8fffe0', '#8b5cf6', '#ff66b7'], 1.04, .82, .18),
+      12: P('Velvet Aurora',    0, ['#d7c4ff', '#ff7ad9', '#24134b'], .96, .72, .18),
+      13: P('Liquid Glass',     2, ['#c4fbff', '#58b6ff', '#11294a'], .95, .65, .16),
+      14: P('Prism Rays',       4, ['#fff1d5', '#ff89c9', '#30184d'], .94, .74, .14),
+      15: P('Soft Radar',       6, ['#bfe8ff', '#7d8cff', '#151b48'], .90, .64, .18),
+      16: P('Contour Bloom',    1, ['#ffe0ef', '#ff65a8', '#45152e'], .93, .66, .20),
+      17: P('Glass Bokeh',      9, ['#d8fff5', '#c7a1ff', '#1f214d'], .94, .58, .14)
     },
     dashboard: {
       1: P('Nebula Indigo',    0, ['#8b5cf6', '#4f7bff', '#1a1050'], .85, .7, 1),
@@ -30,7 +37,14 @@
       7: P('Sonar Violett',    6, ['#c4b0ff', '#8b5cf6', '#1c1050'], .62, .7, 1),
       8: P('Mesh Twilight',    7, ['#5b7cff', '#b25cff', '#ff5c9e'], .62, .7, 1),
       9: P('Hex Cyan',         8, ['#5ee7ff', '#4d7cff', '#0c2a55'], .62, .7, 1),
-      10: P('Bokeh Amber',     9, ['#ffd27a', '#ff8a3c', '#3a2010'], .62, .7, 1)
+      10: P('Bokeh Amber',     9, ['#ffd27a', '#ff8a3c', '#3a2010'], .62, .7, 1),
+      11: P('Fluid Gradient',  7, ['#8cc8ff', '#8b5cf6', '#291f55'], .70, .56, .92),
+      12: P('Midnight Aurora', 0, ['#9bb7ff', '#7d5cff', '#17132f'], .66, .52, .96),
+      13: P('Liquid Slate',    2, ['#a8e9f0', '#4f8ca6', '#0f252c'], .58, .50, .96),
+      14: P('Prism Graphite',  4, ['#e4ebff', '#7f8dff', '#14192c'], .60, .48, .96),
+      15: P('Soft Sonar',      6, ['#b9a8ff', '#6d7cff', '#171537'], .56, .50, .98),
+      16: P('Contour Smoke',   1, ['#d9d8ef', '#8b5cf6', '#1b1831'], .66, .48, .98),
+      17: P('Bokeh Steel',     9, ['#cdd9ff', '#7c8cff', '#151b34'], .58, .46, .98)
     }
   };
 
