@@ -209,6 +209,9 @@ function defaults(dc) {
     about: '',
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
+    highlights: [],
+    privacy: { visibility: 'public', noIndex: false },
+    share: { title: '', description: '', imageMode: 'avatar', image: '' },
     design: {
       nameEffect: 'standard', nameColor: '#f6eff2', accentColor: '#8b5cf6',
       avatarFrameEffect: 'glow', avatarFrameColor: '#8b5cf6', avatarFrameWidth: 2, avatarShape: 'circle',
@@ -252,6 +255,25 @@ function applyUpdate(user, b) {
   user.enterText = str(b.enterText, 60) || 'click to enter...';
   const t = b.tags || {};
   user.tags = { label: str(t.label, 24), location: str(t.location, 24), age: str(t.age, 4) };
+  user.highlights = (Array.isArray(b.highlights) ? b.highlights : []).slice(0, 6).map((x, i) => ({
+    id: str(x?.id, 48) || `highlight-${i + 1}`,
+    icon: str(x?.icon, 8) || '✦',
+    label: str(x?.label, 28),
+    value: str(x?.value, 80),
+    url: url(x?.url),
+  })).filter(x => x.label || x.value);
+  const pr = b.privacy || {};
+  user.privacy = {
+    visibility: ['public','unlisted','disabled'].includes(pr.visibility) ? pr.visibility : 'public',
+    noIndex: !!pr.noIndex,
+  };
+  const sh = b.share || {};
+  user.share = {
+    title: str(sh.title, 70),
+    description: str(sh.description, 180),
+    imageMode: ['avatar','background','custom'].includes(sh.imageMode) ? sh.imageMode : 'avatar',
+    image: url(sh.image),
+  };
   const des=b.design||{};
   const color=(v,d)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:d;
   user.design={
@@ -360,7 +382,7 @@ const MARKET_VIS = new Set(['private','public']);
 const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
 function privatePresetSnapshot(user) {
   const src = publicView(user);
-  const keys = ['username','displayName','tagline','about','enterText','tags','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
   const out = {};
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
   return out;
@@ -434,7 +456,7 @@ function applyPresetSnapshot(user, snapshot, scope = 'full') {
     const taken = Object.values(db).some(x => x && x.id !== user.id && x.username === s);
     if (s.length >= 2 && !RESERVED.includes(s) && !taken) user.username = s;
   }
-  const keys = ['displayName','tagline','about','enterText','tags','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','links'];
+  const keys = ['displayName','tagline','about','enterText','tags','highlights','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','links'];
   for (const k of keys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
   if (metaFor(user).premium && snapshot.premiumSections !== undefined) user.premiumSections = deepClone(snapshot.premiumSections);
 }
@@ -1345,6 +1367,7 @@ app.get('/api/discord/boost-status', auth, async (req, res) => {
 const EXT = {
   background: ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.webm'],
   music: ['.mp3', '.ogg', '.wav', '.m4a'],
+  share: ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
   premium: ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
 };
 const localUpload = multer({
@@ -1617,10 +1640,55 @@ function shouldCountView(req, user) {
   return now - sessionLast >= VIEW_COOLDOWN_MS && now - fingerprintLast >= VIEW_COOLDOWN_MS;
 }
 const findByName = n => Object.values(db).find(u => u.username === String(n).toLowerCase());
+function youtubeIdFromUrl(raw) {
+  try {
+    const u = new URL(String(raw || ''));
+    if (/youtu\.be$/i.test(u.hostname)) return u.pathname.replace(/^\//,'').split('/')[0] || '';
+    if (/youtube\.com$/i.test(u.hostname) || /youtube-nocookie\.com$/i.test(u.hostname)) {
+      if (u.searchParams.get('v')) return u.searchParams.get('v');
+      const m = u.pathname.match(/\/(?:embed|shorts|live)\/([^/?#]+)/i);
+      return m ? m[1] : '';
+    }
+  } catch {}
+  return '';
+}
+function absolutePublicUrl(v) {
+  const clean = url(v);
+  if (!clean) return '';
+  return clean.startsWith('/') ? `${BASE_URL}${clean}` : clean;
+}
+function shareImageFor(user) {
+  const mode = user.share?.imageMode || 'avatar';
+  if (mode === 'custom' && url(user.share?.image)) return absolutePublicUrl(user.share.image);
+  if (mode === 'background') {
+    const bg = user.background || {};
+    if (bg.type === 'image' && url(bg.url)) return absolutePublicUrl(bg.url);
+    if (bg.type === 'youtube') {
+      const id = youtubeIdFromUrl(bg.url);
+      if (id) return `https://i.ytimg.com/vi/${id}/maxresdefault.jpg`;
+    }
+  }
+  return absolutePublicUrl(user.discord?.avatar) || `${BASE_URL}/caruzo-logo.png`;
+}
+function escHtml(v) { return String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function profilePageHtml(user) {
+  const file = path.join(__dirname, 'public', 'profile.html');
+  let html = fs.readFileSync(file, 'utf8');
+  const title = str(user.share?.title, 70) || `${user.displayName || user.username} · Caruzo`;
+  const description = str(user.share?.description, 180) || str(user.tagline, 160) || `Profil von ${user.displayName || user.username} auf Caruzo.`;
+  const image = shareImageFor(user);
+  const canonical = `${BASE_URL}/${encodeURIComponent(user.username)}`;
+  const accent = /^#[0-9a-f]{6}$/i.test(user.design?.accentColor || '') ? user.design.accentColor : '#8b5cf6';
+  const robots = user.privacy?.visibility === 'unlisted' || user.privacy?.noIndex ? 'noindex,nofollow' : 'index,follow';
+  const metas = `\n<meta name="description" content="${escHtml(description)}">\n<meta name="theme-color" content="${escHtml(accent)}">\n<meta name="robots" content="${robots}">\n<link rel="canonical" href="${escHtml(canonical)}">\n<meta property="og:type" content="profile">\n<meta property="og:title" content="${escHtml(title)}">\n<meta property="og:description" content="${escHtml(description)}">\n<meta property="og:url" content="${escHtml(canonical)}">\n<meta property="og:image" content="${escHtml(image)}">\n<meta name="twitter:card" content="summary_large_image">\n<meta name="twitter:title" content="${escHtml(title)}">\n<meta name="twitter:description" content="${escHtml(description)}">\n<meta name="twitter:image" content="${escHtml(image)}">\n`;
+  html = html.replace(/<title>.*?<\/title>/s, `<title>${escHtml(title)}</title>`).replace('</head>', metas + '</head>');
+  return html;
+}
 app.get('/api/profile/:name', async (req, res) => {
   const user = req.params.name === '__home__' ? findByName(HOME_USER) : findByName(req.params.name);
   if (!user) return res.status(404).json({ error: 'Profil nicht gefunden' });
   if (isBanned(user)) return res.status(403).json({ error: 'Profil gesperrt', banned: true });
+  if (user.privacy?.visibility === 'disabled' && String(req.session?.uid || '') !== String(user.id)) return res.status(404).json({ error: 'Profil nicht verfügbar' });
   const beforeBooster = !!user.discord?.booster;
   const beforeBoostChecked = Number(user.discord?.boosterCheckedAt || 0);
   await syncUserBoostState(user, false);
@@ -1636,7 +1704,12 @@ app.get('/api/profile/:name', async (req, res) => {
 // --- Seiten ---
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
 app.get('/banned', (req,res)=>res.status(403).sendFile(path.join(__dirname,'public','banned.html')));
-app.get('/', (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
+app.get('/', (req, res) => {
+  const home = HOME_USER && findByName(HOME_USER);
+  if (!home) return page('landing.html')(req, res);
+  if (home.privacy?.visibility === 'disabled' && String(req.session?.uid || '') !== String(home.id)) return page('landing.html')(req, res);
+  return res.status(200).type('html').send(profilePageHtml(home));
+});
 app.get('/u/:name', (req, res) => res.redirect(301, '/' + encodeURIComponent(req.params.name)));
 app.get('/dashboard', siteUnlocked, (req, res) => {
   const user=req.session.uid&&db[req.session.uid]?db[req.session.uid]:null;
@@ -1650,7 +1723,8 @@ app.get('/:name', (req, res, next) => {
   const user=findByName(n);
   if(user&&isBanned(user))return res.status(403).sendFile(path.join(__dirname,'public','banned.html'));
   if(!user)return res.status(404).sendFile(path.join(__dirname,'public','404.html'));
-  return res.status(200).sendFile(path.join(__dirname, 'public', 'profile.html'));
+  if(user.privacy?.visibility==='disabled'&&String(req.session?.uid||'')!==String(user.id))return res.status(404).sendFile(path.join(__dirname,'public','404.html'));
+  return res.status(200).type('html').send(profilePageHtml(user));
 });
 app.use((req,res)=>res.status(404).sendFile(path.join(__dirname,'public','404.html')));
 
