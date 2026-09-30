@@ -343,57 +343,128 @@ async function tokenRequest(params) {
 
 /* ------------------------------------------------------------------ */
 /* Discord Presence Gateway                                            */
-/* Uses the bot gateway when configured, with Lanyard as a fallback.   */
-/* The bot must share a server with the user and Presence Intent must  */
-/* be enabled in the Discord Developer Portal.                         */
+/* Live source: Discord Gateway. Lanyard is only a fallback.            */
+/* Requires GUILDS + GUILD_PRESENCES. Targeted user_ids do not need a full member-list fetch. */
 /* ------------------------------------------------------------------ */
 const presenceCache = new Map();
+const presenceGuildForUser = new Map();
+const discordGuildIds = new Set();
+const pendingPresenceRequests = new Map();
 let gatewayReady = false;
-function normalizeGatewayPresence(d) {
+let discordGatewaySocket = null;
+let discordGatewayIssue = '';
+let discordGatewaySeq = null;
+
+function normalizeGatewayPresence(d, source = 'discord-bot') {
   return {
     discord_status: ['online','idle','dnd'].includes(d?.status) ? d.status : 'offline',
     activities: Array.isArray(d?.activities) ? d.activities.map(a => ({
       id: str(a?.id, 80), name: str(a?.name, 120), type: Number(a?.type ?? 0),
-      details: str(a?.details, 180), state: str(a?.state, 180), url: url(a?.url),
-      timestamps: a?.timestamps || null,
+      application_id: str(a?.application_id, 80), details: str(a?.details, 180), state: str(a?.state, 180),
+      url: url(a?.url), timestamps: a?.timestamps || null,
+      assets: a?.assets && typeof a.assets === 'object' ? {
+        large_image: str(a.assets.large_image, 180), large_text: str(a.assets.large_text, 180),
+        small_image: str(a.assets.small_image, 180), small_text: str(a.assets.small_text, 180),
+      } : null,
     })) : [],
-    updated_at: Date.now(), source: 'discord-bot',
+    updated_at: Date.now(), source,
   };
 }
+function gatewaySend(payload) {
+  if (discordGatewaySocket?.readyState !== WebSocket.OPEN) return false;
+  try { discordGatewaySocket.send(JSON.stringify(payload)); return true; } catch { return false; }
+}
+function finishPresenceProbe(nonce, value) {
+  const p = pendingPresenceRequests.get(nonce); if (!p) return;
+  clearTimeout(p.timer); pendingPresenceRequests.delete(nonce); p.resolve(value || null);
+}
+function requestGuildPresence(guildId, userId, timeoutMs = 1200) {
+  return new Promise(resolve => {
+    if (!gatewayReady || !gatewaySend) return resolve(null);
+    const nonce = `crz_${Date.now().toString(36)}_${crypto.randomBytes(5).toString('hex')}`;
+    const timer = setTimeout(() => finishPresenceProbe(nonce, null), timeoutMs);
+    pendingPresenceRequests.set(nonce, { resolve, timer, userId: String(userId), guildId: String(guildId) });
+    const ok = gatewaySend({ op: 8, d: { guild_id: String(guildId), user_ids: [String(userId)], presences: true, nonce } });
+    if (!ok) finishPresenceProbe(nonce, null);
+  });
+}
+async function requestPresenceFromGateway(userId) {
+  const id = String(userId || ''); if (!id || !gatewayReady) return null;
+  const knownGuild = presenceGuildForUser.get(id);
+  const guilds = knownGuild ? [knownGuild] : [...discordGuildIds].slice(0, 60);
+  if (!guilds.length) return null;
+  // Probe known mutual guild first; otherwise small batches to avoid a burst of opcode 8 requests.
+  for (let i = 0; i < guilds.length; i += 6) {
+    const batch = guilds.slice(i, i + 6);
+    const results = await Promise.all(batch.map(gid => requestGuildPresence(gid, id)));
+    const hit = results.find(Boolean);
+    if (hit) return hit;
+  }
+  return null;
+}
 function startDiscordGateway() {
-  if (!DISCORD_BOT_TOKEN) return;
-  let ws = null, seq = null, heartbeat = null, reconnectTimer = null, shuttingDown = false;
-  const intents = (1 << 0) | (1 << 8); // GUILDS + GUILD_PRESENCES
+  if (!DISCORD_BOT_TOKEN) { discordGatewayIssue = 'DISCORD_BOT_TOKEN fehlt'; return; }
+  let heartbeat = null, reconnectTimer = null, shuttingDown = false;
+  // 1 GUILDS + 256 GUILD_PRESENCES. We request specific user_ids via Opcode 8.
+  const intents = (1 << 0) | (1 << 8);
   const scheduleReconnect = (delay = 5000) => {
     if (shuttingDown || reconnectTimer) return;
     reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, delay);
   };
-  const send = payload => { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload)); };
   const connect = () => {
-    clearInterval(heartbeat); heartbeat = null; gatewayReady = false;
-    try { ws = new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json'); } catch { return scheduleReconnect(); }
-    ws.on('message', raw => {
+    clearInterval(heartbeat); heartbeat = null; gatewayReady = false; discordGatewayIssue = 'Verbinde mit Discord …';
+    try { discordGatewaySocket = new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json'); }
+    catch (e) { discordGatewayIssue = e.message; return scheduleReconnect(); }
+    discordGatewaySocket.on('message', raw => {
       let packet; try { packet = JSON.parse(raw.toString()); } catch { return; }
-      if (packet.s != null) seq = packet.s;
+      if (packet.s != null) discordGatewaySeq = packet.s;
       if (packet.op === 10) {
         const every = Number(packet.d?.heartbeat_interval || 45000);
-        const beat = () => send({ op: 1, d: seq });
+        const beat = () => gatewaySend({ op: 1, d: discordGatewaySeq });
         heartbeat = setInterval(beat, every); setTimeout(beat, Math.min(1000, Math.floor(every * .25)));
-        send({ op: 2, d: { token: DISCORD_BOT_TOKEN, intents, properties: { os: 'linux', browser: 'caruzo', device: 'caruzo' } } });
-      } else if (packet.op === 1) send({ op: 1, d: seq });
-      else if (packet.op === 7) { try { ws.close(); } catch {} }
-      else if (packet.op === 9) { try { ws.close(); } catch {} scheduleReconnect(6000); }
-      if (packet.t === 'READY') gatewayReady = true;
-      if (packet.t === 'PRESENCE_UPDATE' && packet.d?.user?.id) presenceCache.set(String(packet.d.user.id), normalizeGatewayPresence(packet.d));
-      if (packet.t === 'GUILD_CREATE' && Array.isArray(packet.d?.presences)) {
-        packet.d.presences.forEach(pr => { if (pr?.user?.id) presenceCache.set(String(pr.user.id), normalizeGatewayPresence(pr)); });
+        gatewaySend({ op: 2, d: { token: DISCORD_BOT_TOKEN, intents, properties: { os: 'linux', browser: 'caruzo', device: 'caruzo' }, large_threshold: 250 } });
+      } else if (packet.op === 1) gatewaySend({ op: 1, d: discordGatewaySeq });
+      else if (packet.op === 7) { try { discordGatewaySocket.close(); } catch {} }
+      else if (packet.op === 9) { discordGatewayIssue = 'Discord Session ungültig – reconnect'; try { discordGatewaySocket.close(); } catch {} scheduleReconnect(6000); }
+
+      if (packet.t === 'READY') { gatewayReady = true; discordGatewayIssue = ''; }
+      if (packet.t === 'GUILD_CREATE' && packet.d?.id) {
+        const gid = String(packet.d.id); discordGuildIds.add(gid);
+        if (Array.isArray(packet.d?.presences)) packet.d.presences.forEach(pr => {
+          const uid = String(pr?.user?.id || ''); if (!uid) return;
+          presenceGuildForUser.set(uid, gid); presenceCache.set(uid, normalizeGatewayPresence(pr));
+        });
+      }
+      if (packet.t === 'GUILD_DELETE' && packet.d?.id) discordGuildIds.delete(String(packet.d.id));
+      if (packet.t === 'PRESENCE_UPDATE' && packet.d?.user?.id) {
+        const uid = String(packet.d.user.id); if (packet.d.guild_id) presenceGuildForUser.set(uid, String(packet.d.guild_id));
+        presenceCache.set(uid, normalizeGatewayPresence(packet.d));
+      }
+      if (packet.t === 'GUILD_MEMBERS_CHUNK') {
+        const nonce = String(packet.d?.nonce || ''); const probe = pendingPresenceRequests.get(nonce);
+        if (probe) {
+          const members = Array.isArray(packet.d?.members) ? packet.d.members : [];
+          const memberFound = members.some(m => String(m?.user?.id || '') === probe.userId);
+          const presences = Array.isArray(packet.d?.presences) ? packet.d.presences : [];
+          const pr = presences.find(x => String(x?.user?.id || '') === probe.userId);
+          if (memberFound) {
+            presenceGuildForUser.set(probe.userId, probe.guildId);
+            const normalized = pr ? normalizeGatewayPresence(pr) : normalizeGatewayPresence({status:'offline',activities:[]});
+            presenceCache.set(probe.userId, normalized); finishPresenceProbe(nonce, normalized);
+          } else if (Number(packet.d?.chunk_index || 0) >= Number(packet.d?.chunk_count || 1) - 1) finishPresenceProbe(nonce, null);
+        }
       }
     });
-    ws.on('close', () => { clearInterval(heartbeat); heartbeat = null; gatewayReady = false; scheduleReconnect(); });
-    ws.on('error', e => console.error('Discord Gateway:', e.message));
+    discordGatewaySocket.on('close', (code, reason) => {
+      clearInterval(heartbeat); heartbeat = null; gatewayReady = false;
+      discordGatewayIssue = code === 4014 ? 'Discord blockiert den Presence Intent (im Developer Portal aktivieren)' : `Gateway getrennt (${code || 'unknown'}) ${String(reason || '')}`.trim();
+      for (const nonce of [...pendingPresenceRequests.keys()]) finishPresenceProbe(nonce, null);
+      scheduleReconnect(code === 4014 ? 30000 : 5000);
+    });
+    discordGatewaySocket.on('error', e => { discordGatewayIssue = e.message; console.error('Discord Gateway:', e.message); });
   };
   connect();
-  process.once('SIGTERM', () => { shuttingDown = true; clearInterval(heartbeat); try { ws?.close(); } catch {} });
+  process.once('SIGTERM', () => { shuttingDown = true; clearInterval(heartbeat); try { discordGatewaySocket?.close(); } catch {} });
 }
 
 /* ------------------------------------------------------------------ */
@@ -464,7 +535,7 @@ app.post('/api/private-login', (req, res, next) => {
   res.json({ ok: true });
 });
 app.post('/api/private-logout', (req, res) => { req.session.siteUnlocked = false; delete req.session.pendingInviteKeyId; delete req.session.ownerBypass; res.json({ ok: true }); });
-app.get('/api/session-info', siteUnlocked, (req, res) => {
+app.get('/api/session-info', (req, res) => {
   const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
   if (!user) return res.json({ authenticated: false, isAdmin: false });
   const view = publicView(user);
@@ -472,7 +543,6 @@ app.get('/api/session-info', siteUnlocked, (req, res) => {
 });
 app.get('/private-login.html', (req, res) => res.redirect(301, '/login'));
 app.get('/dashboard.html', (req, res) => res.redirect(302, '/dashboard'));
-app.use((req, res, next) => req.path === '/landing.html' ? siteUnlocked(req, res, next) : next());
 app.use('/uploads', express.static(UP_DIR, { setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
@@ -647,7 +717,7 @@ function adminUserView(user) {
   };
 }
 function dayKey(ts) { const d = new Date(ts); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
-app.get('/api/admin/overview', adminOnly, (req, res) => {
+app.get('/api/admin/overview', keyManagerOnly, (req, res) => {
   const users = Object.values(db).filter(u => u && u.id);
   const totalViews = users.reduce((n,u)=>n+Number(u.views||0),0);
   const banned = users.filter(u=>metaFor(u).banned).length;
@@ -660,7 +730,7 @@ app.get('/api/admin/overview', adminOnly, (req, res) => {
   const recentUsers = [...users].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,8).map(adminUserView);
   res.json({ stats:{ totalUsers:users.length,totalViews,banned,premium,keys:activeKeys }, signups:days, recentUsers, audit:adminState.audit.slice(0,12) });
 });
-app.get('/api/admin/users', adminOnly, (req, res) => {
+app.get('/api/admin/users', keyManagerOnly, (req, res) => {
   const q=String(req.query.q||'').trim().toLowerCase();
   let users=Object.values(db).filter(u=>u&&u.id);
   if(q) users=users.filter(u=>[u.id,u.username,u.displayName,u.discord?.username,u.discord?.globalName].some(v=>String(v||'').toLowerCase().includes(q)));
@@ -742,33 +812,56 @@ app.get('/api/ban-info', (req,res)=>{
   const m=metaFor(user); res.json({banned:true,reason:m.bannedReason||'Account gesperrt',at:m.bannedAt||0});
 });
 
-// Presence endpoint: live Discord Gateway + Lanyard fallback.
-// We deliberately do not trust a stale offline cache: every request can refresh
-// through Lanyard and the browser also subscribes to Lanyard's realtime socket.
+// Presence endpoint: Discord Gateway with targeted member/presence refresh + Lanyard fallback.
+// A direct OAuth user token cannot expose normal Discord presence; Gateway presence is the authoritative source.
 app.get('/api/presence/:id', async (req, res) => {
   res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
   const id = String(req.params.id || '');
   const user = db[id];
   if (!user || isBanned(user)) return res.status(404).json({ success: false, error: 'User nicht gefunden' });
-  const cached = presenceCache.get(id);
+
+  let cached = presenceCache.get(id) || null;
+  const cacheAge = cached ? Date.now() - Number(cached.updated_at || 0) : Infinity;
+  let gatewayProbe = null;
+  // Refresh aggressively if missing, stale, or offline. The targeted Opcode 8 request is what fixes
+  // users who were not included in the initial GUILD_CREATE presence payload.
+  if (gatewayReady && (!cached || cacheAge > 15000 || cached.discord_status === 'offline')) {
+    try { gatewayProbe = await requestPresenceFromGateway(id); } catch {}
+    if (gatewayProbe) cached = gatewayProbe;
+  }
+
   let lanyard = null;
   try {
-    const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),2200);
-    const r = await fetch(`https://api.lanyard.rest/v1/users/${encodeURIComponent(id)}`, { headers: { 'User-Agent': 'Caruzo/1.0', 'Cache-Control':'no-cache' }, signal:ctrl.signal });
+    const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 1800);
+    const r = await fetch(`https://api.lanyard.rest/v1/users/${encodeURIComponent(id)}`, { headers: { 'User-Agent': 'Caruzo/1.0', 'Cache-Control':'no-cache' }, signal: ctrl.signal });
     clearTimeout(timer);
-    if (r.ok) { const j = await r.json(); if (j?.success && j?.data) lanyard={...j.data,updated_at:Date.now(),source:'lanyard'}; }
+    if (r.ok) { const j = await r.json(); if (j?.success && j?.data) lanyard = { ...j.data, updated_at: Date.now(), source: 'lanyard' }; }
   } catch {}
-  const gatewayFresh = cached && Date.now() - Number(cached.updated_at || 0) < 120000 ? cached : null;
+
+  const gatewayFresh = cached && Date.now() - Number(cached.updated_at || 0) < 90000 ? cached : null;
   let data = gatewayFresh || lanyard;
   if (gatewayFresh && lanyard) {
-    const gwOnline=gatewayFresh.discord_status && gatewayFresh.discord_status!=='offline';
-    const lyOnline=lanyard.discord_status && lanyard.discord_status!=='offline';
-    if (!gwOnline && lyOnline) data=lanyard;
-    else if (gwOnline) data=gatewayFresh;
-    else data=lanyard;
+    const gwOnline = gatewayFresh.discord_status && gatewayFresh.discord_status !== 'offline';
+    const lyOnline = lanyard.discord_status && lanyard.discord_status !== 'offline';
+    // Discord Gateway wins whenever it has a real online state/activity. Lanyard can rescue a stale/offline bot view.
+    if (gwOnline || (gatewayFresh.activities || []).length) data = gatewayFresh;
+    else if (lyOnline || (lanyard.activities || []).length) data = lanyard;
+    else data = gatewayFresh;
   }
-  if (!data) data={discord_status:'offline',activities:[],updated_at:Date.now(),source:gatewayReady?'discord-bot':'unavailable'};
-  res.json({ success: true, data, gatewayReady, available: !!gatewayFresh || !!lanyard });
+  if (!data) data = { discord_status:'offline', activities:[], updated_at:Date.now(), source: gatewayReady ? 'discord-bot-no-mutual-user' : 'unavailable' };
+
+  res.json({
+    success: true, data, gatewayReady,
+    available: !!gatewayFresh || !!lanyard,
+    diagnostics: {
+      gatewayReady,
+      gatewayIssue: discordGatewayIssue || '',
+      guildsSeen: discordGuildIds.size,
+      mutualGuildKnown: !!presenceGuildForUser.get(id),
+      lanyardAvailable: !!lanyard,
+      note: (!presenceGuildForUser.get(id) && !lanyard) ? 'Bot braucht einen gemeinsamen Server mit dem User; Lanyard funktioniert nur für von Lanyard überwachte Nutzer.' : ''
+    }
+  });
 });
 
 // --- Öffentliche API ---
@@ -804,7 +897,7 @@ app.get('/api/profile/:name', async (req, res) => {
 // --- Seiten ---
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
 app.get('/banned', (req,res)=>res.status(403).sendFile(path.join(__dirname,'public','banned.html')));
-app.get('/', siteUnlocked, (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
+app.get('/', (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
 app.get('/u/:name', (req, res) => res.redirect(301, '/' + encodeURIComponent(req.params.name)));
 app.get('/dashboard', siteUnlocked, (req, res) => {
   const user=req.session.uid&&db[req.session.uid]?db[req.session.uid]:null;
@@ -817,7 +910,9 @@ app.get('/:name', (req, res, next) => {
   if (!/^[a-z0-9_.-]{2,24}$/.test(n) || RESERVED.includes(n)) return next();
   const user=findByName(n);
   if(user&&isBanned(user))return res.status(403).sendFile(path.join(__dirname,'public','banned.html'));
-  res.status(user ? 200 : 404).sendFile(path.join(__dirname, 'public', 'profile.html'));
+  if(!user)return res.status(404).sendFile(path.join(__dirname,'public','404.html'));
+  return res.status(200).sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
+app.use((req,res)=>res.status(404).sendFile(path.join(__dirname,'public','404.html')));
 
 hydrateFromSupabase().finally(() => { startDiscordGateway(); app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)); });
