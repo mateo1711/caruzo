@@ -186,6 +186,14 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .page-fx{position:absolute;inset:0;pointer-events:none;z-index:3;opacity:var(--fx-opacity,.18);color:var(--fx-color,#8b5cf6)}.page-fx-grid{background-image:linear-gradient(color-mix(in srgb,var(--fx-color) 24%,transparent) 1px,transparent 1px),linear-gradient(90deg,color-mix(in srgb,var(--fx-color) 24%,transparent) 1px,transparent 1px);background-size:var(--fx-density,44px) var(--fx-density,44px);animation:fxDrift var(--fx-speed,9s) linear infinite}.page-fx-scanlines{background:repeating-linear-gradient(180deg,transparent 0 3px,color-mix(in srgb,var(--fx-color) 22%,transparent) 4px);animation:fxScan var(--fx-speed,9s) linear infinite}.page-fx-rays{background:conic-gradient(from 45deg at 50% -20%,transparent 0 8%,color-mix(in srgb,var(--fx-color) 24%,transparent) 10%,transparent 13% 22%,color-mix(in srgb,var(--fx-secondary) 18%,transparent) 25%,transparent 29% 100%);filter:blur(18px);animation:avatarSpin calc(var(--fx-speed,9s) * 2) linear infinite}.page-fx-stars{background-image:radial-gradient(var(--fx-color) .7px,transparent .9px),radial-gradient(var(--fx-secondary) .6px,transparent .8px);background-size:37px 37px,61px 61px;background-position:0 0,17px 23px;animation:fxDrift calc(var(--fx-speed,9s) * 2) linear infinite}.page-fx-mesh{background:radial-gradient(circle at 20% 25%,color-mix(in srgb,var(--fx-color) 30%,transparent),transparent 28%),radial-gradient(circle at 75% 70%,color-mix(in srgb,var(--fx-secondary) 28%,transparent),transparent 30%);filter:blur(40px);animation:plasmaMove var(--fx-speed,9s) ease-in-out infinite alternate}.page-fx-matrix{background-image:linear-gradient(180deg,color-mix(in srgb,var(--fx-color) 20%,transparent),transparent 20%);background-size:9px 66px;mask-image:repeating-linear-gradient(90deg,#000 0 2px,transparent 2px 8px);animation:fxScan calc(var(--fx-speed,9s) * .7) linear infinite}@keyframes fxDrift{to{background-position:var(--fx-density,44px) var(--fx-density,44px)}}@keyframes fxScan{to{background-position:0 80px}}.page-fx-nebula{background:radial-gradient(circle at 18% 26%,color-mix(in srgb,var(--fx-color) 38%,transparent),transparent 25%),radial-gradient(circle at 82% 68%,color-mix(in srgb,var(--fx-secondary) 34%,transparent),transparent 27%),radial-gradient(circle at 55% 40%,rgba(255,255,255,.08),transparent 18%);filter:blur(34px);animation:plasmaMove calc(var(--fx-speed,9s) * 1.4) ease-in-out infinite alternate}.page-fx-noise{opacity:calc(var(--fx-opacity,.18) * .5);background-image:radial-gradient(rgba(255,255,255,.55) .45px,transparent .6px);background-size:4px 4px;mix-blend-mode:soft-light;animation:noiseShift .35s steps(2) infinite}.page-fx-orbs{background:radial-gradient(circle at 22% 22%,color-mix(in srgb,var(--fx-color) 46%,transparent) 0 5%,transparent 17%),radial-gradient(circle at 78% 64%,color-mix(in srgb,var(--fx-secondary) 42%,transparent) 0 6%,transparent 18%),radial-gradient(circle at 52% 82%,color-mix(in srgb,var(--fx-color) 28%,transparent) 0 4%,transparent 15%);filter:blur(10px);animation:orbDrift calc(var(--fx-speed,9s) * 1.5) ease-in-out infinite alternate}.page-fx-rain{background-image:linear-gradient(180deg,transparent 0 55%,color-mix(in srgb,var(--fx-color) 55%,transparent) 78%,transparent 100%);background-size:2px 64px;mask-image:repeating-linear-gradient(90deg,#000 0 1px,transparent 1px 12px);animation:fxScan calc(var(--fx-speed,9s) * .45) linear infinite}@keyframes noiseShift{50%{transform:translate(2px,-1px)}}@keyframes orbDrift{to{transform:translate3d(4%,-3%,0) scale(1.08)}}
 @media(max-width:720px){.social-compact .grid{grid-template-columns:1fr 1fr}.profile .views{font-size:9px}}
 
+
+
+/* Caruzo platform badges */
+.badges .platform-badge{width:auto;height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:6px;font:700 9px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.platform-badge.premium{color:#eadcff;border-color:color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.12));background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,transparent),rgba(236,72,153,.07));box-shadow:0 0 20px color-mix(in srgb,var(--accent) 18%,transparent)}.platform-badge.admin{color:#9bf2c2;border-color:rgba(57,229,140,.3);background:rgba(57,229,140,.07);box-shadow:0 0 18px rgba(57,229,140,.1)}.platform-badge i{font-style:normal;font-size:11px}
+/* Premium custom sections */
+.premium-custom-list{display:grid;gap:34px}.premium-custom-section{display:grid;gap:13px}.premium-custom-section>h2{margin:0;font:700 27px/1.15 var(--mono);letter-spacing:-.05em;color:var(--text);text-shadow:0 0 24px color-mix(in srgb,var(--accent) 10%,transparent)}.premium-text-card{padding:20px 22px;white-space:pre-wrap;overflow-wrap:anywhere;color:#d7cad0;line-height:1.75;border-radius:var(--card-radius,26px)}.premium-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.premium-gallery a{position:relative;aspect-ratio:1;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;background:rgba(0,0,0,.24);box-shadow:0 18px 50px rgba(0,0,0,.24);transform:translateZ(0);transition:transform .28s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s}.premium-gallery a:after{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.08),transparent 34%);opacity:0;transition:.25s}.premium-gallery a:hover{transform:translateY(-5px) scale(1.015);border-color:color-mix(in srgb,var(--accent) 44%,rgba(255,255,255,.1));box-shadow:0 24px 60px rgba(0,0,0,.35),0 0 30px color-mix(in srgb,var(--accent) 14%,transparent)}.premium-gallery a:hover:after{opacity:1}.premium-gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s cubic-bezier(.2,.7,.2,1),filter .35s}.premium-gallery a:hover img{transform:scale(1.055);filter:saturate(1.08)}
+.spotify-target{position:relative;z-index:1;width:100%;min-height:var(--spotify-height)}
+@media(max-width:760px){.premium-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-custom-section>h2{font-size:22px}}
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -203,6 +211,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
     <div class="card spotify" id="spotify" hidden></div>
   </section>
   <section id="socials"><div class="grid" id="grid"></div></section>
+  <section id="premiumCustom" hidden><div class="premium-custom-list" id="premiumSectionsList"></div></section>
   <section id="about" hidden><div class="card about" id="aboutText"></div></section>
   <div class="status" id="status"></div>
   <div class="views" id="views"></div>
@@ -241,6 +250,8 @@ const STATUS = { online: ['#3ba55d', 'ONLINE'], idle: ['#f0b232', 'IDLE'], dnd: 
 
 const path = location.pathname.length > 1 ? decodeURIComponent(location.pathname.slice(1).split('/')[0]) : '__home__';
 let audio;
+let spotifyPlaying = false;
+let spotifyApiPromise = null;
 
 fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
   document.body.replaceChildren(el('p', { style: 'padding:60px;text-align:center' }, 'Profil nicht gefunden.'));
@@ -300,17 +311,19 @@ function render(u) {
   if (s.showTag && d.serverTag) chips.append(el('span', { class: 'chip', title: 'Server-Tag' }, d.serverTag.badge ? el('img', { src: d.serverTag.badge, alt: '' }) : '', d.serverTag.tag));
 
   const name=el('h1',{},u.displayName); applyNameEffect(name,u); const info = el('div', { class: 'info' }, name, chips);
-  if (s.showBadges && d.badges.length) {
-    info.append(el('div', { class: 'badges' }, d.badges.map(b => {
-      const fb = el('span', { title: b.name }, b.emoji);
-      const src = b.asset || (b.icon ? `https://cdn.discordapp.com/badge-icons/${b.icon}.png` : '');
-      if (!src) return fb;
-      const img = el('img', { src, alt: b.name });
-      const w = el('span', { title: b.name }, img);
-      img.onerror = () => w.replaceChildren(b.emoji);
-      return w;
-    })));
-  }
+  const profileBadges = [];
+  if (s.showBadges && Array.isArray(d.badges)) profileBadges.push(...d.badges.map(b => {
+    const fb = el('span', { title: b.name }, b.emoji);
+    const src = b.asset || (b.icon ? `https://cdn.discordapp.com/badge-icons/${b.icon}.png` : '');
+    if (!src) return fb;
+    const img = el('img', { src, alt: b.name });
+    const w = el('span', { title: b.name }, img);
+    img.onerror = () => w.replaceChildren(b.emoji);
+    return w;
+  }));
+  if (u.platform?.premium && s.showPremiumBadge !== false) profileBadges.push(el('span', { class: 'platform-badge premium', title: 'Caruzo Premium' }, el('i',{},'✦'), 'Premium'));
+  if (u.platform?.admin && s.showAdminBadge !== false) profileBadges.push(el('span', { class: 'platform-badge admin', title: 'Caruzo Admin' }, el('i',{},'◆'), 'Admin'));
+  if (profileBadges.length) info.append(el('div', { class: 'badges' }, profileBadges));
   const tl = el('div', { class: 'tagline', id: 'tagline' });
   info.append(tl);
   if (u.about) info.append(el('div', { class: 'btns' }, el('a', { class: 'btn', href: '#about' }, svg(PATH.user), 'About Me')));
@@ -318,9 +331,8 @@ function render(u) {
   setupProfileHover(p, u);
   typewriter(tl, u.tagline);
 
-  // Spotify — adaptive glass shell. The Spotify iframe itself is cross-origin,
-  // so its internal CSS variables cannot be overwritten from caruzo.lol. We blend
-  // the rendered iframe with our own glass background instead of injecting styles.
+  // Spotify embed via the official IFrame API. This lets Caruzo detect playback
+  // and immediately silence the profile's own music/video sound to avoid overlap.
   const m = String(u.spotify || '').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/);
   if (m) {
     const sp = $('#spotify'), ss = u.spotifyStyle || {}, layout = (ss.layout || 'compact');
@@ -328,8 +340,7 @@ function render(u) {
     sp.dataset.kind = m[1]; sp.dataset.layout = layout;
     sp.style.setProperty('--spotify-blur', (ss.blur ?? 26) + 'px');
     sp.style.setProperty('--spotify-glow', Math.max(0, Math.min(1, (ss.glow ?? 24) / 100)));
-    const embed = `https://open.spotify.com/embed/${m[1]}/${m[2]}?utm_source=generator`;
-    sp.append(el('iframe', { src: embed, loading: 'lazy', allow: 'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture', allowfullscreen: '', title: 'Spotify' }));
+    setupSpotifyEmbed(sp, m[1], m[2], layout);
   }
 
   // Socials
@@ -369,6 +380,9 @@ function render(u) {
     views.querySelector('.viewEye').style.opacity=(vs.eyeOpacity ?? 92)/100; views.querySelector('.viewCount').style.opacity=(vs.countOpacity ?? 88)/100;
     if (!atBottom) p.append(views);
   }
+
+  // Premium custom sections
+  renderPremiumSections(u);
 
   // About
   if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; }
@@ -535,6 +549,58 @@ function typewriter(node, text) {
   })();
 }
 
+function silenceSiteSoundForSpotify(){
+  spotifyPlaying = true;
+  if (audio && !audio.paused) audio.pause();
+  const video=document.querySelector('#bg video');
+  if(video && !video.muted){video.muted=true;video.dataset.spotifyMuted='1'}
+}
+function getSpotifyIframeApi(){
+  if(window.__caruzoSpotifyApi)return Promise.resolve(window.__caruzoSpotifyApi);
+  if(spotifyApiPromise)return spotifyApiPromise;
+  spotifyApiPromise=new Promise((resolve,reject)=>{
+    const previous=window.onSpotifyIframeApiReady;
+    window.onSpotifyIframeApiReady=api=>{window.__caruzoSpotifyApi=api;try{previous?.(api)}catch{}resolve(api)};
+    if(!document.querySelector('script[data-caruzo-spotify-api]')){
+      const sc=document.createElement('script');sc.src='https://open.spotify.com/embed/iframe-api/v1';sc.async=true;sc.dataset.caruzoSpotifyApi='1';sc.onerror=()=>reject(new Error('Spotify API konnte nicht geladen werden'));document.head.append(sc);
+    }
+    setTimeout(()=>{if(!window.__caruzoSpotifyApi)reject(new Error('Spotify API Timeout'))},7000);
+  });
+  return spotifyApiPromise;
+}
+async function setupSpotifyEmbed(shell,kind,id,layout){
+  const height=kind==='track'?(layout==='full'?352:152):(layout==='full'?420:352);
+  const target=el('div',{class:'spotify-target'});shell.append(target);
+  const fallback=()=>{if(target.querySelector('iframe'))return;target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,loading:'lazy',allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',allowfullscreen:'',title:'Spotify'}))};
+  try{
+    const api=await getSpotifyIframeApi();
+    api.createController(target,{uri:`spotify:${kind}:${id}`,width:'100%',height},controller=>{
+      controller.addListener('playback_update',e=>{
+        const playing=e?.data?.isPaused===false;
+        spotifyPlaying=playing;
+        if(playing)silenceSiteSoundForSpotify();
+      });
+    });
+    setTimeout(()=>{if(!target.querySelector('iframe'))fallback()},3500);
+  }catch{fallback()}
+}
+function renderPremiumSections(u){
+  const host=$('#premiumCustom'),list=$('#premiumSectionsList');if(!host||!list)return;
+  const sections=u.platform?.premium&&Array.isArray(u.premiumSections)?u.premiumSections:[];
+  list.replaceChildren();
+  sections.forEach(sec=>{
+    const section=el('div',{class:'premium-custom-section'}),title=el('h2',{},sec.title||'Section');section.append(title);
+    if(sec.type==='gallery'){
+      const images=(Array.isArray(sec.images)?sec.images:[]).filter(Boolean);if(!images.length)return;
+      const gallery=el('div',{class:'premium-gallery'});images.forEach(src=>gallery.append(el('a',{href:src,target:'_blank',rel:'noopener noreferrer'},el('img',{src,alt:'',loading:'lazy'}))));section.append(gallery);
+    }else{
+      if(!sec.text)return;section.append(el('div',{class:'card premium-text-card'},sec.text));
+    }
+    list.append(section);
+  });
+  host.hidden=!list.children.length;
+}
+
 function setupMusic(m) {
   audio = new Audio(m.url); audio.loop = true; const startVolume = Number.isFinite(Number(m.volume)) ? Number(m.volume) : 30; audio.volume = Math.max(0,Math.min(1,startVolume/100));
   $('#player').style.display = 'flex';
@@ -542,8 +608,8 @@ function setupMusic(m) {
   $('#vol').value = m.volume;
   $('#vol').oninput = e => audio.volume = e.target.value / 100;
   const icon = $('#ppIcon');
-  $('#pp').onclick = () => audio.paused ? audio.play() : audio.pause();
-  audio.onplay = () => icon.setAttribute('d', PATH.pause);
+  $('#pp').onclick = () => { if(spotifyPlaying){toast('Spotify läuft · Hintergrundmusik bleibt pausiert');return} audio.paused ? audio.play() : audio.pause(); };
+  audio.onplay = () => { if(spotifyPlaying){audio.pause();return} icon.setAttribute('d', PATH.pause); };
   audio.onpause = () => icon.setAttribute('d', PATH.play);
 }
 
@@ -567,7 +633,7 @@ function renderActivity(data) {
 }
 async function pollStatus(id, showStatus = true, showActivity = false) {
   try {
-    const r = await (await fetch('https://api.lanyard.rest/v1/users/' + id, { cache:'no-store' })).json();
+    const r = await (await fetch('/api/presence/' + encodeURIComponent(id), { cache:'no-store' })).json();
     if (!r.success) return;
     const [color, label] = STATUS[r.data.discord_status] || STATUS.offline;
     document.documentElement.style.setProperty('--st', color);

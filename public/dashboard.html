@@ -56,6 +56,12 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
 @media(max-width:1180px){.categoryGrid{grid-template-columns:1fr 1fr}.workspace{grid-template-columns:1fr}.previewPanel{position:relative;top:auto}.topbar{grid-template-columns:1fr auto}.topnav{display:none}.categoryGrid .catGroup{min-height:0}}
 @media(max-width:720px){.nitroGrid{grid-template-columns:repeat(3,1fr)}.colorPopover{left:12px!important;right:12px!important;top:72px!important;width:auto}.themePalette{align-items:flex-start;flex-direction:column}.shell{width:min(100% - 18px,1640px)}.topbar{top:5px;padding:0 10px}.context,.account span,.unsaved{display:none!important}.actions .btn span{display:none}.categoryGrid{grid-template-columns:1fr}.tileGrid,.catGroup.content .tileGrid,.catGroup.style .tileGrid{grid-template-columns:repeat(2,1fr)}.workspace{gap:10px}.panel{padding:11px}.panelHead{display:block}.panelActions{margin-top:12px}.grid2,.grid3{grid-template-columns:1fr}.socialRow{grid-template-columns:110px 1fr}.presetGrid{grid-template-columns:1fr 1fr}.previewStage{padding:14px;min-height:260px}.pvCard{padding:18px}.pvTop{gap:12px}.pvAvatarWrap{width:56px;height:56px}.pvName{font-size:21px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+
+/* Caruzo platform badges + Premium editor */
+.platformBadgePreview{display:inline-flex;align-items:center;gap:4px;height:18px;padding:0 7px;border:1px solid rgba(255,255,255,.12);border-radius:999px;font:800 7px var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.platformBadgePreview.premium{color:#d9c4ff;border-color:rgba(168,85,247,.32);background:linear-gradient(135deg,rgba(139,92,246,.18),rgba(236,72,153,.08));box-shadow:0 0 16px rgba(139,92,246,.12)}.platformBadgePreview.admin{color:#8df0bd;border-color:rgba(57,229,140,.3);background:rgba(57,229,140,.07);box-shadow:0 0 16px rgba(57,229,140,.1)}
+.switchRow.locked{opacity:.48}.switchRow.locked .switch{filter:grayscale(1)}.premiumTile.locked:after{content:"PREMIUM";position:absolute;right:7px;bottom:5px;color:#6f7080;font:800 6px var(--mono);letter-spacing:.08em}.premiumTile.locked{opacity:.72}
+.premiumPanel{position:relative;overflow:hidden}.premiumHero{display:flex;align-items:center;justify-content:space-between;gap:18px;padding:18px;border:1px solid rgba(var(--accent-rgb),.18);border-radius:12px;background:radial-gradient(500px 180px at 0% 0%,rgba(var(--accent-rgb),.16),transparent 70%),rgba(255,255,255,.018);margin-top:17px}.premiumHero h3{margin:2px 0 4px;font-size:17px}.premiumHero p{margin:0;color:var(--muted);font-size:11px}.premiumStatus{display:flex;align-items:center;gap:7px;padding:7px 10px;border:1px solid rgba(255,255,255,.1);border-radius:999px;font:800 9px var(--mono);letter-spacing:.08em}.premiumStatus.on{color:#d8c2ff;border-color:rgba(var(--accent-rgb),.32);background:rgba(var(--accent-rgb),.08)}.premiumStatus.off{color:#7b7c85}.premiumLock{display:none;position:relative;margin-top:14px;padding:26px;border:1px solid rgba(var(--accent-rgb),.17);border-radius:12px;text-align:center;background:linear-gradient(135deg,rgba(var(--accent-rgb),.07),rgba(255,255,255,.015));overflow:hidden}.premiumLock:before{content:"";position:absolute;inset:-40%;background:radial-gradient(circle,rgba(var(--accent-rgb),.13),transparent 54%);filter:blur(26px)}.premiumLock>*{position:relative;z-index:1}.premiumLock svg{width:24px;height:24px;color:#b794f6}.premiumLock b{display:block;margin:8px 0 4px;font-size:15px}.premiumLock small{color:#777983}.premiumPanel.is-locked .premiumLock{display:block}.premiumPanel.is-locked .premiumEditor{filter:grayscale(.8) opacity(.32);pointer-events:none;user-select:none}.premiumSections{display:grid;gap:10px}.premiumSectionCard{border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.018);padding:12px}.premiumSectionTop{display:grid;grid-template-columns:minmax(0,1fr) 160px auto;gap:8px;align-items:end}.premiumSectionActions{display:flex;gap:5px}.premiumSectionActions button{width:34px;height:34px;border:1px solid var(--line2);border-radius:8px;background:rgba(255,255,255,.025);color:#8d8e96;cursor:pointer}.premiumSectionActions button:hover{color:#fff;background:rgba(255,255,255,.06)}.galleryEditor{margin-top:10px;border-top:1px solid var(--line2);padding-top:10px}.galleryTools{display:flex;gap:8px;align-items:end}.galleryTools .field{flex:1}.galleryThumbs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:7px;margin-top:9px}.galleryThumb{position:relative;aspect-ratio:1;border:1px solid var(--line2);border-radius:9px;overflow:hidden;background:#08080b}.galleryThumb img{width:100%;height:100%;object-fit:cover}.galleryThumb button{position:absolute;right:5px;top:5px;width:25px;height:25px;border:1px solid rgba(255,255,255,.14);border-radius:7px;background:rgba(0,0,0,.72);color:#fff;cursor:pointer}.premiumEmpty{padding:26px;text-align:center;border:1px dashed var(--line);border-radius:10px;color:#6c6d76}.premiumActions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+@media(max-width:720px){.premiumSectionTop{grid-template-columns:1fr}.galleryThumbs{grid-template-columns:repeat(3,1fr)}.galleryTools{align-items:stretch;flex-direction:column}}
 </style>
 <link rel="icon" href="/caruzo-logo.png" type="image/png">
 </head>
@@ -86,6 +92,7 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
         <button class="tile" data-tab="media"><span class="ico"><i data-lucide="image"></i></span>Media<span class="dot"></span></button>
         <button class="tile" data-tab="musik"><span class="ico"><i data-lucide="music-2"></i></span>Music<span class="dot"></span></button>
         <button class="tile" data-tab="socials"><span class="ico"><i data-lucide="share-2"></i></span>Socials<span class="dot"></span></button>
+        <button class="tile premiumTile" data-tab="premium" id="premiumTile"><span class="ico"><i data-lucide="gem"></i></span>Premium<span class="dot"></span></button>
       </div></div>
       <div class="catGroup style"><div class="catTitle">Style</div><div class="tileGrid">
         <button class="tile" data-tab="appearance"><span class="ico"><i data-lucide="layout-template"></i></span>Appearance<span class="dot"></span></button>
@@ -107,7 +114,7 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
           <label class="field"><span>Display name</span><input type="text" data-p="displayName"></label>
         </div></div>
         <div class="section"><div class="sectionTitle"><h3>Profile copy</h3></div><div class="grid2"><label class="field"><span>Tagline</span><input type="text" data-p="tagline" placeholder="your line here"></label><label class="field"><span>About</span><textarea data-p="about" placeholder="Write something about yourself"></textarea></label></div></div>
-        <div class="section"><label class="switchRow"><span class="switchText"><b>username.lol badge</b><small>Zeigt oben auf dem öffentlichen Profil die kleine Username-Leiste wie im Beispiel. Kann komplett ausgeblendet werden.</small></span><span class="switch"><input type="checkbox" data-p="settings.showProfileBrand"><i></i></span></label></div>
+        <div class="section"><label class="switchRow"><span class="switchText"><b>username.lol-Leiste anzeigen</b><small>Blendet die kleine Leiste oben auf deinem Profil ein oder vollständig aus.</small></span><span class="switch"><input type="checkbox" data-p="settings.showProfileBrand"><i></i></span></label></div>
       </section>
 
       <section class="panel" data-panel="views" hidden>
@@ -121,7 +128,7 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
       <section class="panel" data-panel="badges" hidden>
         <div class="panelHead"><div><span class="panelKicker">Badges</span><h2>Discord badges</h2><p>Automatisch erkannte Discord-Badges plus manueller Nitro-Schalter.</p></div><div class="panelActions"><button class="btn" id="sync"><i data-lucide="refresh-cw"></i>Sync Discord</button><button class="btn primary saveBtn"><i data-lucide="save"></i>Save</button></div></div>
         <div class="section"><div class="sectionTitle"><h3>Erkannte Discord-Badges</h3></div><div class="badgeList" id="badgeList"></div></div>
-        <div class="section"><label class="switchRow"><span class="switchText"><b>Badges anzeigen</b><small>Alle verfügbaren Discord-Badges auf dem Profil anzeigen.</small></span><span class="switch"><input type="checkbox" data-p="settings.showBadges"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Discord Nitro manuell</b><small>Aktiviere Nitro manuell. Der Zeitraum kann darunter ausgewählt werden.</small></span><span class="switch"><input type="checkbox" data-p="settings.manualNitro"><i></i></span></label><label class="field" style="margin-top:12px"><span>Badge style</span><select data-p="design.badgeStyle"><option value="icon">Icons only</option><option value="pill">Pills</option><option value="glass">Glass badges</option></select></label></div>
+        <div class="section"><label class="switchRow"><span class="switchText"><b>Badges anzeigen</b><small>Alle verfügbaren Discord-Badges auf dem Profil anzeigen.</small></span><span class="switch"><input type="checkbox" data-p="settings.showBadges"><i></i></span></label><label class="switchRow" id="premiumBadgeRow"><span class="switchText"><b>Premium Badge anzeigen</b><small>Nur für Accounts mit Caruzo Premium. Der Badge kann jederzeit ausgeblendet werden.</small></span><span class="switch"><input type="checkbox" data-p="settings.showPremiumBadge"><i></i></span></label><label class="switchRow" id="adminBadgeRow" hidden><span class="switchText"><b>Admin Badge anzeigen</b><small>Dieser Schalter ist ausschließlich für den Owner-Admin sichtbar.</small></span><span class="switch"><input type="checkbox" data-p="settings.showAdminBadge"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Discord Nitro manuell</b><small>Aktiviere Nitro manuell. Der Zeitraum kann darunter ausgewählt werden.</small></span><span class="switch"><input type="checkbox" data-p="settings.manualNitro"><i></i></span></label><label class="field" style="margin-top:12px"><span>Badge style</span><select data-p="design.badgeStyle"><option value="icon">Icons only</option><option value="pill">Pills</option><option value="glass">Glass badges</option></select></label></div>
         <div class="section"><div class="sectionTitle"><h3>Nitro Badge</h3><span class="miniHint">Auswahl aktiviert Nitro automatisch</span></div><p class="desc">Wähle das passende offizielle Nitro-Altersbadge. Discord liefert die Nitro-Dauer über den normalen Login nicht zuverlässig, daher ist diese Auswahl manuell.</p><div class="nitroGrid" id="nitroGrid"></div><button type="button" class="btn ghost smallBtn" id="clearNitroTier" style="margin-top:10px"><i data-lucide="x"></i>Auswahl zurücksetzen</button></div>
       </section>
 
@@ -143,7 +150,7 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
 
       <section class="panel" data-panel="presence" hidden>
         <div class="panelHead"><div><span class="panelKicker">Presence</span><h2>Discord presence</h2><p>Status, Banner, Decoration und Server-Tag.</p></div><div class="panelActions"><button class="btn" id="botVerify"><i data-lucide="shield-check"></i>Verify ID</button><button class="btn primary saveBtn"><i data-lucide="save"></i>Save</button></div></div>
-        <div class="section"><label class="switchRow"><span class="switchText"><b>Avatar decoration</b><small>Discord-Dekoration um deinen Avatar.</small></span><span class="switch"><input type="checkbox" data-p="settings.showDecoration"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Discord banner</b><small>Banner als Kopfbereich der Profilkarte.</small></span><span class="switch"><input type="checkbox" data-p="settings.showBanner"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Server tag</b><small>Aktiven Discord Server-Tag anzeigen.</small></span><span class="switch"><input type="checkbox" data-p="settings.showTag"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Live status</b><small>Online / Idle / DND über Lanyard.</small></span><span class="switch"><input type="checkbox" data-p="settings.showStatus"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Aktivität / Spiel anzeigen</b><small>Zeigt – wenn verfügbar – dein aktuelles Spiel, Streaming-, Hör- oder Watch-Status über Lanyard.</small></span><span class="switch"><input type="checkbox" data-p="settings.showActivity"><i></i></span></label></div><div class="statusBox" id="botVerifyState"><span class="statusDot"></span>Discord user ID is connected.</div>
+        <div class="section"><label class="switchRow"><span class="switchText"><b>Automatische Avatar-Dekoration</b><small>Zeigt die von Discord geladene Avatar-Decoration an. Kann vollständig deaktiviert werden.</small></span><span class="switch"><input type="checkbox" data-p="settings.showDecoration"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Discord banner</b><small>Banner als Kopfbereich der Profilkarte.</small></span><span class="switch"><input type="checkbox" data-p="settings.showBanner"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Server tag</b><small>Aktiven Discord Server-Tag anzeigen.</small></span><span class="switch"><input type="checkbox" data-p="settings.showTag"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Live status</b><small>Online / Idle / DND über Discord Presence; Lanyard dient nur als Fallback.</small></span><span class="switch"><input type="checkbox" data-p="settings.showStatus"><i></i></span></label><label class="switchRow"><span class="switchText"><b>Aktivität / Spiel anzeigen</b><small>Zeigt dein aktuelles Spiel, Streaming-, Hör- oder Watch-Status über Discord Presence. Lanyard dient als Fallback.</small></span><span class="switch"><input type="checkbox" data-p="settings.showActivity"><i></i></span></label></div><div class="statusBox" id="botVerifyState"><span class="statusDot"></span>Discord user ID is connected.</div>
       </section>
 
       <section class="panel" data-panel="media" hidden>
@@ -173,6 +180,15 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
         </div></div>
         <div class="section"><div class="sectionTitle"><h3>Steam accounts</h3></div><div class="repeater" id="steam"></div></div>
         <div class="section"><div class="sectionTitle"><h3>Custom links</h3></div><div class="repeater" id="custom"></div></div>
+      </section>
+
+      <section class="panel premiumPanel" data-panel="premium" id="premiumPanel" hidden>
+        <div class="panelHead"><div><span class="panelKicker">Premium</span><h2>Custom profile sections</h2><p>Erstelle eigene Bereiche wie Gallery oder Text-Blöcke im Stil deines Profils.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save premium</button></div></div>
+        <div class="premiumHero"><div><span class="panelKicker">Caruzo Premium</span><h3>Eigene Profilbereiche</h3><p>Bis zu 6 Abschnitte und 12 Bilder pro Gallery. Alles übernimmt automatisch Accent, Glass und Hintergrund deines Profils.</p></div><span class="premiumStatus off" id="premiumStatus"><i data-lucide="gem" style="width:13px"></i>FREE</span></div>
+        <div class="premiumLock" id="premiumLock"><i data-lucide="lock-keyhole"></i><b>Premium Feature</b><small>Dieser Editor wird freigeschaltet, sobald ein Admin deinem Account Premium gibt.</small></div>
+        <div class="premiumEditor" id="premiumEditor">
+          <div class="section"><div class="sectionTitle"><h3>Sections</h3><span class="miniHint">Drag-free · sauber sortiert</span></div><p class="desc">Text-Blöcke eignen sich für Infos. Gallery-Blöcke zeigen deine Bilder in einem responsiven Grid wie im Beispiel.</p><div class="premiumSections" id="premiumSections"></div><div class="premiumActions"><button class="btn" type="button" id="addPremiumText"><i data-lucide="text"></i>Text section</button><button class="btn" type="button" id="addPremiumGallery"><i data-lucide="images"></i>Gallery section</button></div></div>
+        </div>
       </section>
 
       <section class="panel" data-panel="appearance" hidden>
@@ -267,7 +283,7 @@ body.admin-mode .editorHead,body.admin-mode .previewArea{display:none!important}
 <div class="toast" id="toast" role="status"></div>
 <script>
 const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
-let me=null,dirty=false,current='profil',canAdmin=false;
+let me=null,dirty=false,current='profil',canAdmin=false,isPremium=false;
 const get=(o,p)=>p.split('.').reduce((a,k)=>a?.[k],o);
 const set=(o,p,v)=>{const ks=p.split('.'),last=ks.pop();ks.reduce((a,k)=>(a[k]??={}),o)[last]=v};
 const toast=m=>{const t=$('#toast');t.textContent=m;t.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>t.classList.remove('show'),2200)};
@@ -277,7 +293,7 @@ function rgb(hex){const m=/^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex||
 function ensure(o,k,v){if(o[k]==null)o[k]=v}
 function defaults(){
   me.settings??={};
-  ['showBanner','showDecoration','showBadges','showTag','showStatus','showProfileBrand'].forEach(k=>ensure(me.settings,k,true));ensure(me.settings,'showActivity',false);
+  ['showBanner','showDecoration','showBadges','showTag','showStatus','showProfileBrand','showPremiumBadge','showAdminBadge'].forEach(k=>ensure(me.settings,k,true));ensure(me.settings,'showActivity',false);
   ensure(me.settings,'manualNitro',false);ensure(me.settings,'nitroTier','');
 
   me.design??={};
@@ -292,7 +308,7 @@ function defaults(){
   me.background??={type:'image',url:'',blur:6,dim:55,effect:'none',videoSound:true,videoVolume:30};ensure(me.background,'videoVolume',30);
   me.spotifyStyle??={blur:26,glow:24,layout:'compact'};ensure(me.spotifyStyle,'blur',26);ensure(me.spotifyStyle,'glow',24);ensure(me.spotifyStyle,'layout','compact');
   me.links??={};me.links.steam??=[];me.links.custom??=[];ensure(me.links,'epic','');ensure(me.links,'valorant','');ensure(me.links,'discordServerName','');ensure(me.links,'discordServer','');
-  me.floating??=[];me.tags??={};
+  me.floating??=[];me.tags??={};me.premiumSections??=[];
 }
 function openTab(name){
   if(name==='admin'&&!canAdmin)name='profil';
@@ -300,7 +316,7 @@ function openTab(name){
   document.body.classList.toggle('admin-mode',name==='admin');
   $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
   $$('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
-  const groups={profil:'profile',views:'profile',badges:'profile',labels:'profile',browser:'profile',entrance:'profile',presence:'profile',media:'media',musik:'media',socials:'socials',appearance:'style',presets:'style',background:'style',placement:'style',effects:'style',discord:'style',admin:'admin'};
+  const groups={profil:'profile',views:'profile',badges:'profile',labels:'profile',browser:'profile',entrance:'profile',presence:'profile',media:'media',musik:'media',socials:'socials',premium:'profile',appearance:'style',presets:'style',background:'style',placement:'style',effects:'style',discord:'style',admin:'admin'};
   $$('.topnav [data-section]').forEach(b=>b.classList.toggle('active',b.dataset.section===groups[name]));
   history.replaceState(null,'','#'+name);
   if(name==='admin'){loadAdminOverview();loadAdminKeys();loadAdminUsers();window.scrollTo({top:0,behavior:'smooth'})}
@@ -369,13 +385,15 @@ function renderNitroGrid(){
 function renderBadges(){
   const box=$('#badgeList');box.replaceChildren();
   const arr=displayBadges();
-  if(!arr.length){box.textContent='Keine öffentlichen Badges erkannt.';return}
+  if(!arr.length&&!isPremium&&!canAdmin){box.textContent='Keine öffentlichen Badges erkannt.';return}
   arr.forEach(x=>{
     const c=document.createElement('span');c.className='badgeChip';
     const src=badgeSrc(x);
     if(src){const i=new Image();i.src=src;i.alt='';i.onerror=()=>i.replaceWith(document.createTextNode(x.emoji||'◆'));c.append(i)}else c.append(document.createTextNode(x.emoji||'◆'));
     c.append(document.createTextNode(x.name||'Badge'));box.append(c);
   });
+  if(isPremium){const c=document.createElement('span');c.className='badgeChip';c.textContent='✦ Caruzo Premium';box.append(c)}
+  if(canAdmin){const c=document.createElement('span');c.className='badgeChip';c.textContent='◆ Caruzo Admin';box.append(c)}
 }
 
 function bind(){
@@ -387,12 +405,13 @@ function bind(){
       set(me,e.dataset.p,val);markDirty();updateOutputs();renderPreview();
       if(e.dataset.p==='username')updateUrl();
       if(e.dataset.p==='settings.manualNitro'){renderBadges();renderNitroGrid()}
+      if(['settings.showPremiumBadge','settings.showAdminBadge','settings.showBadges'].includes(e.dataset.p))renderBadges();
     };
   });
   $$('[data-segment] button').forEach(b=>b.onclick=()=>{set(me,b.parentElement.dataset.segment,b.dataset.value);markDirty();updateOutputs();renderPreview()});
   $('#hAvatar').src=me.discord.avatar;$('#accountName').textContent=me.discord.globalName||me.discord.username;$('#accountProfile').href='/'+encodeURIComponent(me.username);
   $('#discordState').textContent=`${me.discord.globalName||me.discord.username} · ${me.discord.id}`;
-  updateUrl();renderNitroGrid();renderBadges();repeaters();updateOutputs();renderPreview();window.lucide?.createIcons?.();
+  updateUrl();renderNitroGrid();renderBadges();repeaters();renderPremiumSections();applyPremiumAccess();updateOutputs();renderPreview();window.lucide?.createIcons?.();
 }
 function updateUrl(){const h=location.host+'/';$('#hostPrefix').textContent=h;$('#view').href='/'+encodeURIComponent(me.username)}
 
@@ -433,6 +452,8 @@ function renderPreview(){
 
   const badges=$('#pvBadges');badges.replaceChildren();
   displayBadges().slice(0,4).forEach(x=>{const src=badgeSrc(x);if(!src)return;const i=new Image();i.src=src;i.alt='';badges.append(i)});
+  if(isPremium&&me.settings.showPremiumBadge!==false){const b=document.createElement('span');b.className='platformBadgePreview premium';b.textContent='✦ Premium';badges.append(b)}
+  if(canAdmin&&me.settings.showAdminBadge!==false){const b=document.createElement('span');b.className='platformBadgePreview admin';b.textContent='◆ Admin';badges.append(b)}
 }
 
 let previewHoverBound=false;
@@ -459,6 +480,56 @@ function setupPreviewHover(card,d){
   });
   card.addEventListener('pointerleave',()=>{card.style.filter='';reset()});
 }
+
+function applyPremiumAccess(){
+  const panel=$('#premiumPanel'),tile=$('#premiumTile'),status=$('#premiumStatus'),pRow=$('#premiumBadgeRow'),aRow=$('#adminBadgeRow');
+  panel?.classList.toggle('is-locked',!isPremium);tile?.classList.toggle('locked',!isPremium);
+  if(status){status.className='premiumStatus '+(isPremium?'on':'off');status.innerHTML=`<i data-lucide="gem" style="width:13px"></i>${isPremium?'PREMIUM':'FREE'}`}
+  if(pRow){pRow.classList.toggle('locked',!isPremium);const input=pRow.querySelector('input');if(input)input.disabled=!isPremium}
+  if(aRow){aRow.hidden=!canAdmin;const input=aRow.querySelector('input');if(input)input.disabled=!canAdmin}
+  window.lucide?.createIcons?.();
+}
+function premiumSectionId(){return (crypto?.randomUUID?.()||('section-'+Date.now()+'-'+Math.random().toString(16).slice(2)))}
+function addPremiumSection(type){
+  if(!isPremium)return toast('Premium erforderlich');
+  me.premiumSections??=[];if(me.premiumSections.length>=6)return toast('Maximal 6 Premium Sections');
+  me.premiumSections.push({id:premiumSectionId(),title:type==='gallery'?'Gallery':'New section',type:type==='gallery'?'gallery':'text',text:'',images:[]});markDirty();renderPremiumSections();
+}
+async function uploadPremiumImages(sec,files){
+  if(!isPremium||!files?.length)return;sec.images??=[];
+  const left=12-sec.images.length;if(left<=0)return toast('Maximal 12 Bilder pro Gallery');
+  for(const f of [...files].slice(0,left)){
+    const fd=new FormData();fd.append('file',f);try{toast('Gallery Upload …');const r=await api('/api/upload/premium',{method:'POST',body:fd});sec.images.push(r.url)}catch(e){toast(e.message);break}
+  }
+  markDirty();renderPremiumSections();toast('Bilder hinzugefügt · speichern nicht vergessen');
+}
+function renderPremiumSections(){
+  const box=$('#premiumSections');if(!box||!me)return;box.replaceChildren();me.premiumSections??=[];
+  if(!me.premiumSections.length){const empty=document.createElement('div');empty.className='premiumEmpty';empty.textContent='Noch keine eigenen Abschnitte. Erstelle einen Text- oder Gallery-Bereich.';box.append(empty);return}
+  me.premiumSections.forEach((sec,index)=>{
+    sec.images??=[];sec.type=sec.type==='gallery'?'gallery':'text';
+    const card=document.createElement('div');card.className='premiumSectionCard';
+    const top=document.createElement('div');top.className='premiumSectionTop';
+    const title=document.createElement('label');title.className='field';title.innerHTML='<span>Section title</span>';const ti=document.createElement('input');ti.type='text';ti.value=sec.title||'';ti.maxLength=60;ti.oninput=()=>{sec.title=ti.value;markDirty()};title.append(ti);
+    const type=document.createElement('label');type.className='field';type.innerHTML='<span>Type</span>';const sel=document.createElement('select');[['text','Text'],['gallery','Gallery']].forEach(([v,n])=>{const o=document.createElement('option');o.value=v;o.textContent=n;sel.append(o)});sel.value=sec.type;sel.onchange=()=>{sec.type=sel.value;markDirty();renderPremiumSections()};type.append(sel);
+    const acts=document.createElement('div');acts.className='premiumSectionActions';
+    const up=document.createElement('button');up.type='button';up.title='Nach oben';up.textContent='↑';up.disabled=index===0;up.onclick=()=>{[me.premiumSections[index-1],me.premiumSections[index]]=[me.premiumSections[index],me.premiumSections[index-1]];markDirty();renderPremiumSections()};
+    const down=document.createElement('button');down.type='button';down.title='Nach unten';down.textContent='↓';down.disabled=index===me.premiumSections.length-1;down.onclick=()=>{[me.premiumSections[index+1],me.premiumSections[index]]=[me.premiumSections[index],me.premiumSections[index+1]];markDirty();renderPremiumSections()};
+    const del=document.createElement('button');del.type='button';del.title='Entfernen';del.textContent='×';del.onclick=()=>{me.premiumSections.splice(index,1);markDirty();renderPremiumSections()};acts.append(up,down,del);top.append(title,type,acts);card.append(top);
+    if(sec.type==='text'){
+      const field=document.createElement('label');field.className='field';field.style.marginTop='10px';field.innerHTML='<span>Content</span>';const ta=document.createElement('textarea');ta.maxLength=1800;ta.placeholder='Dein eigener Inhalt …';ta.value=sec.text||'';ta.oninput=()=>{sec.text=ta.value;markDirty()};field.append(ta);card.append(field);
+    }else{
+      const ed=document.createElement('div');ed.className='galleryEditor';const tools=document.createElement('div');tools.className='galleryTools';
+      const urlField=document.createElement('label');urlField.className='field';urlField.innerHTML='<span>Image URL</span>';const urlIn=document.createElement('input');urlIn.type='url';urlIn.placeholder='https://…';urlField.append(urlIn);
+      const add=document.createElement('button');add.type='button';add.className='btn';add.textContent='URL hinzufügen';add.onclick=()=>{const v=urlIn.value.trim();if(!/^https?:\/\//i.test(v))return toast('Gültige Bild-URL eingeben');if(sec.images.length>=12)return toast('Maximal 12 Bilder');sec.images.push(v);urlIn.value='';markDirty();renderPremiumSections()};
+      const upload=document.createElement('label');upload.className='btn';upload.style.cursor='pointer';upload.innerHTML='<span>Upload</span>';const file=document.createElement('input');file.type='file';file.accept='image/png,image/jpeg,image/gif,image/webp';file.multiple=true;file.hidden=true;file.onchange=()=>uploadPremiumImages(sec,file.files);upload.append(file);tools.append(urlField,add,upload);ed.append(tools);
+      const thumbs=document.createElement('div');thumbs.className='galleryThumbs';sec.images.forEach((src,i)=>{const w=document.createElement('div');w.className='galleryThumb';const img=new Image();img.src=src;img.alt='';const rm=document.createElement('button');rm.type='button';rm.textContent='×';rm.onclick=()=>{sec.images.splice(i,1);markDirty();renderPremiumSections()};w.append(img,rm);thumbs.append(w)});ed.append(thumbs);card.append(ed);
+    }
+    box.append(card);
+  });
+}
+$('#addPremiumText').onclick=()=>addPremiumSection('text');
+$('#addPremiumGallery').onclick=()=>addPremiumSection('gallery');
 
 function repeaters(){
   simpleRepeater('#tabMessages',me.browser.messages,'Add tab text');
@@ -539,7 +610,7 @@ async function toggleAdminKey(id){try{await api(`/api/admin/keys/${encodeURIComp
 async function replaceAdminKey(id){try{const r=await api(`/api/admin/keys/${encodeURIComponent(id)}/replace`,{method:'POST'});try{await navigator.clipboard.writeText(r.key.key)}catch{}toast('Key ersetzt · neuer Key kopiert');await Promise.all([loadAdminKeys(),loadAdminOverview()])}catch(e){toast(e.message)}}
 function renderAdminUsers(){const body=$('#usersBody');if(!body)return;body.replaceChildren();adminUsers.forEach(u=>{const tr=document.createElement('tr');const c1=document.createElement('td');c1.append(userIdentityCell(u));const c2=document.createElement('td');const id=document.createElement('span');id.className='keyCode';id.textContent=u.id;c2.append(id);const c3=document.createElement('td');c3.textContent=fmtNum(u.views);const c4=document.createElement('td');c4.append(adminStatusPill(u.premium?'PREMIUM':'FREE',u.premium?'good':''));const c5=document.createElement('td');c5.append(adminStatusPill(u.banned?'BANNED':'ACTIVE',u.banned?'bad':'good'));const c6=document.createElement('td');c6.textContent=fmtDate(u.createdAt);const c7=document.createElement('td');c7.className='userActions';const prem=document.createElement('button');prem.className='miniBtn '+(u.premium?'danger':'good');prem.textContent=u.premium?'Premium entfernen':'Premium geben';prem.onclick=()=>setAdminPremium(u.id,!u.premium);c7.append(prem);const ban=document.createElement('button');ban.className='miniBtn '+(u.banned?'good':'danger');ban.textContent=u.banned?'Entbannen':'Bannen';ban.onclick=()=>u.banned?unbanAdminUser(u.id):openBanModal(u);c7.append(ban);tr.append(c1,c2,c3,c4,c5,c6,c7);body.append(tr)});if(!body.children.length){const tr=document.createElement('tr'),td=document.createElement('td');td.colSpan=7;td.className='adminEmpty';td.textContent='Keine User gefunden.';tr.append(td);body.append(tr)}}
 async function loadAdminUsers(){if(!canAdmin)return;try{const q=$('#adminUserSearch')?.value?.trim()||'';const r=await api('/api/admin/users'+(q?'?q='+encodeURIComponent(q):''));adminUsers=r.users||[];renderAdminUsers()}catch(e){toast(e.message)}}
-async function setAdminPremium(id,enabled){try{await api(`/api/admin/users/${encodeURIComponent(id)}/premium`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled})});toast(enabled?'Premium aktiviert':'Premium entfernt');await Promise.all([loadAdminUsers(),loadAdminOverview()])}catch(e){toast(e.message)}}
+async function setAdminPremium(id,enabled){try{await api(`/api/admin/users/${encodeURIComponent(id)}/premium`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({enabled})});if(String(id)===String(me?.id)){isPremium=!!enabled;me.platform??={};me.platform.premium=!!enabled;applyPremiumAccess();renderBadges();renderPreview()}toast(enabled?'Premium aktiviert':'Premium entfernt');await Promise.all([loadAdminUsers(),loadAdminOverview()])}catch(e){toast(e.message)}}
 function openBanModal(u){banTarget=u.id;$('#banModalUser').textContent=`${u.displayName||u.username} · ${u.id}`;$('#banReason').value='';$('#banModal').hidden=false;setTimeout(()=>$('#banReason').focus(),20)}
 function closeBanModal(){banTarget='';$('#banModal').hidden=true}
 async function confirmBan(){if(!banTarget)return;try{await api(`/api/admin/users/${encodeURIComponent(banTarget)}/ban`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({reason:$('#banReason').value.trim()})});closeBanModal();toast('User wurde gebannt');await Promise.all([loadAdminUsers(),loadAdminOverview()])}catch(e){toast(e.message)}}
@@ -578,7 +649,7 @@ const presets={
 $$('[data-preset]').forEach(b=>b.onclick=()=>{Object.assign(me.design,presets[b.dataset.preset]);markDirty();bind();toast('Preset angewendet')});
 $$('[data-reset]').forEach(b=>b.onclick=()=>{if(b.dataset.reset==='views')me.viewsStyle={visible:true,placement:'profile',corner:'top-right',effect:'glow',backgroundOpacity:22,borderOpacity:14,eyeOpacity:92,countOpacity:88};if(b.dataset.reset==='profil'){me.tagline='';me.about='';}markDirty();bind();toast('Defaults geladen · speichern nicht vergessen')});
 
-Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;$('#adminNav').hidden=!canAdmin;defaults();bind();openTab(location.hash.slice(1)||'profil');if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
+Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;isPremium=!!s.premium||!!u.platform?.premium;$('#adminNav').hidden=!canAdmin;defaults();bind();openTab(location.hash.slice(1)||'profil');if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
 window.lucide?.createIcons?.();
 </script>
 </body>
