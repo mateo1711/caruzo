@@ -9,14 +9,22 @@ const WebSocket = require('ws');
 
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
-  BASE_URL: BASE_URL_RAW = 'http://localhost:3000', SESSION_SECRET = 'change-me',
-  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
+  BASE_URL: BASE_URL_RAW = 'http://localhost:3000', SESSION_SECRET = '',
+  HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '',
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
-  ADMIN_DISCORD_IDS = '219224335670312960',
+  DATA_ENCRYPTION_KEY = '',
+  ADMIN_DISCORD_IDS = '',
   DISCORD_BOOST_GUILD_ID = '',
   SPOTIFY_CLIENT_ID = '', SPOTIFY_CLIENT_SECRET = '',
 } = process.env;
 const BASE_URL = String(BASE_URL_RAW || 'http://localhost:3000').trim().replace(/\/+$/, '');
+const IS_PROD = process.env.NODE_ENV === 'production' || /^https:\/\//i.test(BASE_URL);
+const SESSION_SECRET_EFFECTIVE = String(SESSION_SECRET || '').trim() || (!IS_PROD ? crypto.randomBytes(32).toString('hex') : '');
+if (IS_PROD && SESSION_SECRET_EFFECTIVE.length < 32) {
+  console.error('SECURITY: SESSION_SECRET muss in Production mindestens 32 Zeichen lang sein.');
+  process.exit(1);
+}
+if (!SESSION_SECRET && !IS_PROD) console.warn('SECURITY: Kein SESSION_SECRET gesetzt – fuer diese lokale Sitzung wurde ein temporaeres Secret erzeugt.');
 const REDIRECT = `${BASE_URL}/auth/callback`;
 const SPOTIFY_REDIRECT = String(process.env.SPOTIFY_REDIRECT_URI || `${BASE_URL}/auth/spotify/callback`).trim().replace(/\/+$/, '');
 const SPOTIFY_ID = String(SPOTIFY_CLIENT_ID || '').trim();
@@ -29,6 +37,73 @@ const DB_FILE = path.join(DATA_DIR, 'users.json');
 const ADMIN_FILE = path.join(DATA_DIR, 'admin-state.json');
 const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 [DATA_DIR, UP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+const SESSION_DIR = path.join(DATA_DIR, 'sessions');
+const TMP_UPLOAD_DIR = path.join(DATA_DIR, 'upload-tmp');
+[SESSION_DIR, TMP_UPLOAD_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
+
+const AT_REST_SECRET = String(DATA_ENCRYPTION_KEY || SESSION_SECRET_EFFECTIVE);
+const AT_REST_KEY = crypto.createHash('sha256').update(`${AT_REST_SECRET}|caruzo-at-rest-v1`).digest();
+function sealJson(value) {
+  if (value == null) return null;
+  const iv = crypto.randomBytes(12), cipher = crypto.createCipheriv('aes-256-gcm', AT_REST_KEY, iv);
+  const data = Buffer.concat([cipher.update(JSON.stringify(value), 'utf8'), cipher.final()]);
+  return { __caruzoEnc: 1, iv: iv.toString('base64'), tag: cipher.getAuthTag().toString('base64'), data: data.toString('base64') };
+}
+function unsealJson(value) {
+  if (!value || value.__caruzoEnc !== 1) return value;
+  try {
+    const iv = Buffer.from(value.iv, 'base64'), tag = Buffer.from(value.tag, 'base64'), data = Buffer.from(value.data, 'base64');
+    const decipher = crypto.createDecipheriv('aes-256-gcm', AT_REST_KEY, iv); decipher.setAuthTag(tag);
+    return JSON.parse(Buffer.concat([decipher.update(data), decipher.final()]).toString('utf8'));
+  } catch { return null; }
+}
+function hydrateStoredUser(raw) {
+  if (!raw || typeof raw !== 'object') return raw;
+  const u = raw;
+  u.auth = unsealJson(u.auth);
+  u.spotifyAuth = unsealJson(u.spotifyAuth);
+  return u;
+}
+function persistedUser(user) {
+  const c = JSON.parse(JSON.stringify(user));
+  if (c.auth) c.auth = sealJson(c.auth);
+  if (c.spotifyAuth) c.spotifyAuth = sealJson(c.spotifyAuth);
+  return c;
+}
+function hydrateStoredAdminState(raw) {
+  const state = raw && typeof raw === 'object' ? raw : { keys: [], audit: [], changelog: [] };
+  state.keys ||= [];
+  for (const rec of state.keys) {
+    if (!rec.key && rec.keyEnc) rec.key = unsealJson(rec.keyEnc);
+    if (rec.key && typeof rec.key !== 'string') rec.key = '';
+  }
+  return state;
+}
+function persistedAdminState(state) {
+  const c = JSON.parse(JSON.stringify(state));
+  c.keys = (c.keys || []).map(rec => { const out = { ...rec }; if (out.key) { out.keyEnc = sealJson(out.key); delete out.key; } return out; });
+  return c;
+}
+async function atomicWriteJson(file, value) {
+  const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
+  await fs.promises.writeFile(tmp, JSON.stringify(value, null, 2), { mode: 0o600 });
+  await fs.promises.rename(tmp, file);
+}
+let dbWriteTimer = null, adminWriteTimer = null;
+function queueDbWrite() {
+  if (dbWriteTimer) return;
+  dbWriteTimer = setTimeout(async () => { dbWriteTimer = null; try { const snap = Object.fromEntries(Object.entries(db).map(([id,u]) => [id, persistedUser(u)])); await atomicWriteJson(DB_FILE, snap); } catch (e) { console.error('Local DB save:', e.message); } }, 180);
+}
+function queueAdminWrite() {
+  if (adminWriteTimer) return;
+  adminWriteTimer = setTimeout(async () => { adminWriteTimer = null; try { await atomicWriteJson(ADMIN_FILE, persistedAdminState(adminState)); } catch (e) { console.error('Local admin save:', e.message); } }, 180);
+}
+const telemetryTimers = new Map();
+function queueTelemetrySave(user, delay = 1500) {
+  if (!user?.id || telemetryTimers.has(String(user.id))) return;
+  const id = String(user.id);
+  telemetryTimers.set(id, setTimeout(async () => { telemetryTimers.delete(id); try { await saveUser(user); } catch {} }, delay));
+}
 
 const DEFAULT_FAQ = [
   { id: 'faq-profile', question: 'Kann ich mein Profil jederzeit weiter anpassen?', answer: 'Ja. Inhalte, Socials, Farben, Musik, Hintergründe und Effekte lassen sich jederzeit im Dashboard ändern und direkt in der Vorschau prüfen.', published: true, createdAt: Date.now() - 3000, updatedAt: Date.now() - 3000 },
@@ -43,7 +118,8 @@ function ensureAdminContent(){
   })).filter(x => x.question && x.answer);
 }
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
-let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
+for (const id of Object.keys(db)) db[id] = hydrateStoredUser(db[id]);
+let adminState = fs.existsSync(ADMIN_FILE) ? hydrateStoredAdminState(JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'))) : { keys: [], audit: [], changelog: [] };
 adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent();
 function ensureAdminSettings() {
   adminState.settings ||= {};
@@ -67,17 +143,23 @@ const sbHeaders = (extra = {}) => ({
 async function hydrateFromSupabase() {
   if (!SUPABASE_ENABLED) return;
   try {
+    const migrateUsers = []; let migrateAdmin = false;
     const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?select=id,data`, { headers: sbHeaders() });
     if (!r.ok) throw new Error(`Supabase load ${r.status}`);
     const rows = await r.json();
     let profileCount = 0;
     for (const row of rows) {
       if (!row || !row.id || !row.data) continue;
-      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent(); ensureAdminSettings(); continue; }
-      db[String(row.id)] = row.data; profileCount++;
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { migrateAdmin = (row.data?.keys || []).some(k => typeof k?.key === 'string'); adminState = hydrateStoredAdminState(row.data); adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent(); ensureAdminSettings(); continue; }
+      const needsEnc = (!!row.data?.auth && row.data.auth.__caruzoEnc !== 1) || (!!row.data?.spotifyAuth && row.data.spotifyAuth.__caruzoEnc !== 1);
+      db[String(row.id)] = hydrateStoredUser(row.data); if (needsEnc) migrateUsers.push(db[String(row.id)]); profileCount++;
     }
-    fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-    fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminState, null, 2));
+    const snap = Object.fromEntries(Object.entries(db).map(([id,u]) => [id, persistedUser(u)]));
+    await atomicWriteJson(DB_FILE, snap);
+    await atomicWriteJson(ADMIN_FILE, persistedAdminState(adminState));
+    if (migrateAdmin) await saveAdminState();
+    for (let i=0;i<migrateUsers.length;i+=10) await Promise.all(migrateUsers.slice(i,i+10).map(u=>saveUser(u)));
+    if (migrateAdmin || migrateUsers.length) console.log(`Security migration: ${migrateUsers.length} Profil-Secret(s) und ${migrateAdmin?'Admin-Secrets':'keine Admin-Secrets'} verschluesselt.`);
     console.log(`Supabase: ${profileCount} Profil(e) geladen.`);
   } catch (e) {
     console.error('Supabase konnte nicht geladen werden:', e.message);
@@ -85,24 +167,24 @@ async function hydrateFromSupabase() {
 }
 
 async function saveUser(user) {
-  fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
+  queueDbWrite();
   if (!SUPABASE_ENABLED || !user?.id) return;
   const endpoint = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?on_conflict=id`;
   await fetch(endpoint, {
     method: 'POST',
     headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
-    body: JSON.stringify([{ id: String(user.id), data: user }]),
+    body: JSON.stringify([{ id: String(user.id), data: persistedUser(user) }]),
   }).then(r => { if (!r.ok) console.error('Supabase save:', r.status); }).catch(e => console.error('Supabase save:', e.message));
 }
 
 async function saveAdminState() {
-  fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminState, null, 2));
+  queueAdminWrite();
   if (!SUPABASE_ENABLED) return;
   const endpoint = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?on_conflict=id`;
   await fetch(endpoint, {
     method: 'POST',
     headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
-    body: JSON.stringify([{ id: ADMIN_STATE_ROW_ID, data: adminState }]),
+    body: JSON.stringify([{ id: ADMIN_STATE_ROW_ID, data: persistedAdminState(adminState) }]),
   }).then(r => { if (!r.ok) console.error('Supabase admin save:', r.status); }).catch(e => console.error('Supabase admin save:', e.message));
 }
 
@@ -206,7 +288,7 @@ const discordInvite = v => {
     if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
     return v;
   }
-  return url(v);
+  return '';
 };
 const num = (v, min, max, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d; };
 const slug = v => str(v, 24).toLowerCase().replace(/[^a-z0-9_.-]/g, '');
@@ -936,12 +1018,57 @@ async function spotifyPresenceSnapshot(userId) {
 /* App                                                                 */
 /* ------------------------------------------------------------------ */
 const app = express();
+app.disable('x-powered-by');
 app.set('trust proxy', 1);
-app.use(express.json({ limit: '200kb' }));
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader('Referrer-Policy', 'no-referrer');
+  res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+  res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+  res.setHeader('Content-Security-Policy', "object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+  if (BASE_URL.startsWith('https://')) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+  next();
+});
+app.use(express.json({ limit: '200kb', strict: true }));
+
+class FileSessionStore extends session.Store {
+  constructor(dir) { super(); this.dir = dir; setInterval(() => this.cleanup(), 60 * 60 * 1000).unref(); }
+  file(sid) { return path.join(this.dir, crypto.createHash('sha256').update(String(sid)).digest('hex') + '.json'); }
+  get(sid, cb) { fs.promises.readFile(this.file(sid), 'utf8').then(raw => { const rec = JSON.parse(raw); if (rec.expires && rec.expires < Date.now()) { this.destroy(sid, () => {}); return cb(null, null); } cb(null, rec.session || null); }).catch(e => cb(e.code === 'ENOENT' ? null : e, null)); }
+  set(sid, sess, cb = () => {}) { const exp = sess?.cookie?.expires ? new Date(sess.cookie.expires).getTime() : Date.now() + 30*86400000; atomicWriteJson(this.file(sid), { expires: exp, session: sess }).then(() => cb()).catch(cb); }
+  destroy(sid, cb = () => {}) { fs.promises.unlink(this.file(sid)).then(() => cb()).catch(e => cb(e.code === 'ENOENT' ? null : e)); }
+  touch(sid, sess, cb = () => {}) { this.set(sid, sess, cb); }
+  cleanup() { fs.promises.readdir(this.dir).then(async files => { const now = Date.now(); for (const f of files.slice(0, 10000)) { try { const full=path.join(this.dir,f), rec=JSON.parse(await fs.promises.readFile(full,'utf8')); if (!rec.expires || rec.expires < now) await fs.promises.unlink(full); } catch {} } }).catch(()=>{}); }
+}
+const sessionStore = new FileSessionStore(SESSION_DIR);
 app.use(session({
-  secret: SESSION_SECRET, resave: false, saveUninitialized: false,
+  name: 'caruzo.sid', store: sessionStore,
+  secret: SESSION_SECRET_EFFECTIVE, resave: false, saveUninitialized: false, rolling: true,
   cookie: { httpOnly: true, sameSite: 'lax', secure: BASE_URL.startsWith('https'), maxAge: 30 * 24 * 3600 * 1000 },
 }));
+
+const rateBuckets = new Map();
+function rateLimit({ windowMs, max, prefix }) {
+  return (req, res, next) => {
+    const now = Date.now(), key = `${prefix}:${req.ip || req.socket?.remoteAddress || 'unknown'}`;
+    let rec = rateBuckets.get(key); if (!rec || now >= rec.reset) rec = { count:0, reset:now+windowMs };
+    rec.count++; rateBuckets.set(key, rec);
+    if (rateBuckets.size > 12000) for (const [k,v] of rateBuckets) { if (v.reset < now) rateBuckets.delete(k); if (rateBuckets.size <= 10000) break; }
+    res.setHeader('X-RateLimit-Limit', String(max)); res.setHeader('X-RateLimit-Remaining', String(Math.max(0,max-rec.count)));
+    if (rec.count > max) { res.setHeader('Retry-After', String(Math.ceil((rec.reset-now)/1000))); return res.status(429).json({ error:'Zu viele Anfragen. Bitte kurz warten.' }); }
+    next();
+  };
+}
+const sameOriginWrites = (req,res,next) => {
+  if (!['POST','PUT','PATCH','DELETE'].includes(req.method)) return next();
+  const origin = String(req.get('origin') || ''); if (!origin) return next();
+  try { if (new URL(origin).origin !== new URL(BASE_URL).origin) return res.status(403).json({ error:'Ungültige Anfragequelle' }); } catch { return res.status(403).json({ error:'Ungültige Anfragequelle' }); }
+  next();
+};
+app.use(sameOriginWrites);
+app.use('/api/', rateLimit({windowMs:5*60*1000,max:700,prefix:'api'}));
+function regenerateSession(req) { return new Promise((resolve,reject)=>req.session.regenerate(err=>err?reject(err):resolve())); }
 
 // Invite-Gate: neue Accounts benötigen einen einmaligen Invite Key.
 // Das bestehende SITE_PASSWORD bleibt als Owner-/Master-Zugang erhalten.
@@ -961,15 +1088,17 @@ function ownerPasswordMatches(value) {
   const a = Buffer.from(supplied), b = Buffer.from(expected);
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-app.get('/api/invite/check', (req, res) => {
-  const rec = keyRecordByValue(req.query.key);
+app.get('/api/invite/check', (req, res) => res.status(405).json({ error:'POST erforderlich' }));
+app.post('/api/invite/check', rateLimit({windowMs:5*60*1000,max:40,prefix:'invite-check'}), (req, res) => {
+  const rec = keyRecordByValue(req.body?.key);
   if (!rec) return res.json({ valid: false, status: 'invalid' });
   const status = rec.revokedAt ? 'revoked' : rec.redeemedAt ? 'redeemed' : 'valid';
   res.json({ valid: status === 'valid', status });
 });
-app.post('/api/invite-login', async (req, res) => {
+app.post('/api/invite-login', rateLimit({windowMs:15*60*1000,max:12,prefix:'invite-login'}), async (req, res) => {
   const supplied = String(req.body?.key || req.body?.password || '');
   if (ownerPasswordMatches(supplied)) {
+    await regenerateSession(req);
     req.session.siteUnlocked = true;
     req.session.ownerBypass = true;
     delete req.session.pendingInviteKeyId;
@@ -979,16 +1108,18 @@ app.post('/api/invite-login', async (req, res) => {
   if (!rec) return res.status(401).json({ error: 'Invite Key ist ungültig.' });
   if (rec.revokedAt) return res.status(410).json({ error: 'Dieser Invite Key wurde deaktiviert.' });
   if (rec.redeemedAt) return res.status(409).json({ error: 'Dieser Invite Key wurde bereits eingelöst.' });
+  await regenerateSession(req);
   req.session.siteUnlocked = true;
   req.session.ownerBypass = false;
   req.session.pendingInviteKeyId = rec.id;
   res.json({ ok: true });
 });
 // Alte API bleibt als Alias erhalten, damit bestehende Clients nicht brechen.
-app.post('/api/private-login', (req, res, next) => {
+app.post('/api/private-login', rateLimit({windowMs:15*60*1000,max:12,prefix:'private-login'}), async (req, res, next) => {
   req.body = { key: req.body?.password || req.body?.key || '' };
   const supplied = String(req.body.key || '');
   if (ownerPasswordMatches(supplied)) {
+    await regenerateSession(req);
     req.session.siteUnlocked = true; req.session.ownerBypass = true; delete req.session.pendingInviteKeyId;
     return res.json({ ok: true, owner: true });
   }
@@ -996,6 +1127,7 @@ app.post('/api/private-login', (req, res, next) => {
   if (!rec) return res.status(401).json({ error: 'Invite Key ist ungültig.' });
   if (rec.revokedAt) return res.status(410).json({ error: 'Dieser Invite Key wurde deaktiviert.' });
   if (rec.redeemedAt) return res.status(409).json({ error: 'Dieser Invite Key wurde bereits eingelöst.' });
+  await regenerateSession(req);
   req.session.siteUnlocked = true; req.session.pendingInviteKeyId = rec.id; req.session.ownerBypass = false;
   res.json({ ok: true });
 });
@@ -1033,7 +1165,7 @@ const keyManagerOnly = (req, res, next) => {
 };
 
 // --- Discord OAuth ---
-app.get('/auth/discord', (req, res) => {
+app.get('/auth/discord', rateLimit({windowMs:10*60*1000,max:30,prefix:'oauth-discord'}), (req, res) => {
   if (!CID || !SECRET) return res.status(500).send('DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET fehlen in der .env');
   req.session.state = crypto.randomBytes(16).toString('hex');
   req.session.oauthStartedAt = Date.now();
@@ -1072,6 +1204,7 @@ app.get('/auth/callback', async (req, res) => {
       audit('signup', { userId: dc.id });
     } else { metaFor(user); }
     if (isBanned(user)) {
+      await regenerateSession(req);
       req.session.uid = dc.id; req.session.siteUnlocked = false;
       user.adminMeta.lastLoginAt = Date.now(); user.discord = dc; user.auth = { access: tok.access_token, refresh: tok.refresh_token }; await saveUser(user);
       return res.redirect('/banned');
@@ -1080,6 +1213,7 @@ app.get('/auth/callback', async (req, res) => {
     user.auth = { access: tok.access_token, refresh: tok.refresh_token };
     user.adminMeta.lastLoginAt = Date.now();
     await saveUser(user);
+    await regenerateSession(req);
     req.session.uid = dc.id;
     req.session.siteUnlocked = true;
     delete req.session.pendingInviteKeyId; delete req.session.ownerBypass;
@@ -1087,7 +1221,8 @@ app.get('/auth/callback', async (req, res) => {
   } catch (e) { console.error(e); res.status(500).send('Login fehlgeschlagen.'); }
 });
 
-app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/')));
+app.post('/logout', (req, res) => req.session.destroy(() => res.json({ ok:true })));
+app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/'))); // legacy compatibility
 
 // --- Dashboard-API ---
 app.get('/api/me', auth, (req, res) => res.json(publicView(db[req.session.uid])));
@@ -1138,11 +1273,24 @@ function statisticsSummary(user,days=30){
   return {days,totalViews,viewsToday:Number(today.views||0),viewsPeriod,totalReactions,reactionsPeriod,totalSocial,socialPeriod,totalHighlights,highlightPeriod,musicPlays:Number(a.musicPlays||0),musicPeriod,musicSkips:Number(a.musicSkips||0),engagementRate:totalViews?Math.round(((totalReactions+totalSocial+totalHighlights)/totalViews)*1000)/10:0,daily,topSocials:topMap(a.socialClicks),topHighlights:topMap(a.highlightClicks),topReferrers:topMap(a.referrers),devices:topMap(a.devices),topReactions:reactionSummary(user,days).breakdown.slice(0,6)};
 }
 app.get('/api/statistics', auth, (req,res)=>{ const user=db[req.session.uid]; if(!metaFor(user).premium) return res.status(403).json({error:'Premium erforderlich'}); res.json(statisticsSummary(user,req.query.days)); });
-app.post('/api/profile/:name/event', async (req,res)=>{
+function validEventKey(user,type,key){
+  if(type==='music_play') return (user.musicPlayer?.sources||[]).some(x=>String(x?.id||'')===key) || key==='';
+  if(type==='music_skip') return ['-1','1',''].includes(key);
+  if(type==='highlight') return (user.highlights||[]).some(x=>[String(x?.id||''),String(x?.label||'')].includes(key));
+  if(type==='social') {
+    const fixed=new Set(['discord','steam','twitch','tiktok','x','epic','valorant','discordServer','instagram','youtube','github','bluesky','spotifyProfile','spotify','custom']);
+    if(fixed.has(key)) return true;
+    return (user.links?.custom||[]).some((x,i)=>[String(x?.id||''),String(x?.label||''),String(x?.title||''),`custom-${i}`].includes(key));
+  }
+  return false;
+}
+app.post('/api/profile/:name/event', rateLimit({windowMs:60*1000,max:90,prefix:'profile-event'}), async (req,res)=>{
   const user=findByName(req.params.name);if(!user||isBanned(user)||user.privacy?.visibility==='disabled')return res.status(404).json({error:'Profil nicht verfügbar'});
   const type=str(req.body?.type,24),key=str(req.body?.key,48);if(!['social','highlight','music_play','music_skip'].includes(type))return res.status(400).json({error:'Unbekanntes Event'});
-  req.session.profileEvents ||= {};const lock=`${user.id}:${type}:${key}`;const last=Number(req.session.profileEvents[lock]||0);if(Date.now()-last<1200)return res.json({ok:true,ignored:true});req.session.profileEvents[lock]=Date.now();
-  recordProfileEvent(user,type,key);await saveUser(user);res.json({ok:true});
+  if(!validEventKey(user,type,key))return res.status(400).json({error:'Ungültiges Event-Ziel'});
+  req.session.profileEvents ||= {};const lock=`${user.id}:${type}:${key}`;const last=Number(req.session.profileEvents[lock]||0);if(Date.now()-last<1500)return res.json({ok:true,ignored:true});req.session.profileEvents[lock]=Date.now();
+  if(Object.keys(req.session.profileEvents).length>120) for(const [k,t] of Object.entries(req.session.profileEvents)) if(Date.now()-Number(t)>3600000) delete req.session.profileEvents[k];
+  recordProfileEvent(user,type,key);queueTelemetrySave(user);res.json({ok:true});
 });
 
 // --- Profile Reactions ---
@@ -1193,7 +1341,8 @@ app.get('/api/reactions/stats', auth, (req, res) => {
   res.json(reactionSummary(user, req.query.days));
 });
 
-app.post('/api/profile/:name/reaction', async (req, res) => {
+const reactionVisitorLocks = new Map();
+app.post('/api/profile/:name/reaction', rateLimit({windowMs:60*60*1000,max:50,prefix:'reaction'}), async (req, res) => {
   const user = findByName(req.params.name);
   if (!user || isBanned(user) || user.privacy?.visibility === 'disabled') return res.status(404).json({ error:'Profil nicht verfügbar' });
   if (user.reactions?.enabled === false) return res.status(400).json({ error:'Reactions sind deaktiviert' });
@@ -1202,9 +1351,11 @@ app.post('/api/profile/:name/reaction', async (req, res) => {
   if (!item) return res.status(400).json({ error:'Reaction nicht gefunden' });
   req.session.reactionVotes ||= {};
   const lockKey = `${user.id}:${itemId}`;
-  const last = Number(req.session.reactionVotes[lockKey] || 0);
+  const visitorHash = crypto.createHash('sha256').update(`${req.ip||''}|${String(req.get('user-agent')||'').slice(0,180)}|${user.id}|${itemId}`).digest('hex').slice(0,32);
+  const last = Math.max(Number(req.session.reactionVotes[lockKey] || 0), Number(reactionVisitorLocks.get(visitorHash) || 0));
   if (Date.now() - last < 12 * 3600000) return res.status(429).json({ error:'Diese Reaction hast du vor Kurzem bereits verwendet.', cooldown:true });
-  req.session.reactionVotes[lockKey] = Date.now();
+  req.session.reactionVotes[lockKey] = Date.now(); reactionVisitorLocks.set(visitorHash, Date.now());
+  if (reactionVisitorLocks.size > 10000) { const cutoff=Date.now()-12*3600000; for(const [k,t] of reactionVisitorLocks){if(t<cutoff)reactionVisitorLocks.delete(k);if(reactionVisitorLocks.size<=8000)break;} }
   const stats = ensureReactionStats(user);
   stats.total = Number(stats.total || 0) + 1;
   stats.byItem[itemId] = Number(stats.byItem[itemId] || 0) + 1;
@@ -1213,7 +1364,7 @@ app.post('/api/profile/:name/reaction', async (req, res) => {
   stats.daily[key].total = Number(stats.daily[key].total || 0) + 1;
   stats.daily[key].byItem ||= {};
   stats.daily[key].byItem[itemId] = Number(stats.daily[key].byItem[itemId] || 0) + 1;
-  await saveUser(user);
+  queueTelemetrySave(user);
   res.json({ ok:true, count:Number(stats.byItem[itemId] || 0), total:Number(stats.total || 0) });
 });
 
@@ -1550,43 +1701,61 @@ const EXT = {
   share: ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
   premium: ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
 };
+const uploadRate = rateLimit({windowMs:60*60*1000,max:40,prefix:'upload'});
+function detectUploadType(buf, ext){
+  const b=Buffer.from(buf||[]), ascii=(a,z)=>b.subarray(a,z).toString('ascii');
+  if(b.length>=8&&b[0]===0x89&&ascii(1,4)==='PNG')return {ext:'.png',mime:'image/png'};
+  if(b.length>=3&&b[0]===0xff&&b[1]===0xd8&&b[2]===0xff)return {ext:'.jpg',mime:'image/jpeg'};
+  if(b.length>=6&&['GIF87a','GIF89a'].includes(ascii(0,6)))return {ext:'.gif',mime:'image/gif'};
+  if(b.length>=12&&ascii(0,4)==='RIFF'&&ascii(8,12)==='WEBP')return {ext:'.webp',mime:'image/webp'};
+  if(b.length>=12&&ascii(4,8)==='ftyp')return {ext:ext==='.m4a'?'.m4a':'.mp4',mime:ext==='.m4a'?'audio/mp4':'video/mp4'};
+  if(b.length>=4&&b[0]===0x1a&&b[1]===0x45&&b[2]===0xdf&&b[3]===0xa3)return {ext:'.webm',mime:'video/webm'};
+  if(b.length>=4&&ascii(0,4)==='OggS')return {ext:'.ogg',mime:'audio/ogg'};
+  if(b.length>=12&&ascii(0,4)==='RIFF'&&ascii(8,12)==='WAVE')return {ext:'.wav',mime:'audio/wav'};
+  if(b.length>=3&&ascii(0,3)==='ID3')return {ext:'.mp3',mime:'audio/mpeg'};
+  if(b.length>=2&&b[0]===0xff&&(b[1]&0xe0)===0xe0)return {ext:'.mp3',mime:'audio/mpeg'};
+  return null;
+}
+async function inspectUpload(file, kind){
+  const ext=path.extname(file.originalname).toLowerCase();
+  const fh=await fs.promises.open(file.path,'r'); const head=Buffer.alloc(32); const {bytesRead}=await fh.read(head,0,32,0); await fh.close();
+  const detected=detectUploadType(head.subarray(0,bytesRead),ext); if(!detected) throw new Error('Dateiinhalt konnte nicht als erlaubter Medientyp erkannt werden.');
+  const allowed=EXT[kind]||[]; const same=(ext==='.jpeg'&&detected.ext==='.jpg') || ext===detected.ext;
+  if(!allowed.includes(ext)||!same) throw new Error('Dateiendung und Dateiinhalt stimmen nicht überein.');
+  return detected;
+}
 const localUpload = multer({
-  storage: multer.diskStorage({
-    destination: UP_DIR,
-    filename: (r, f, cb) => cb(null, crypto.randomBytes(12).toString('hex') + path.extname(f.originalname).toLowerCase()),
-  }),
-  limits: { fileSize: 80 * 1024 * 1024 },
-  fileFilter: (req, f, cb) => {
-    const ok = (EXT[req.params.kind] || []).includes(path.extname(f.originalname).toLowerCase());
-    cb(ok ? null : new Error('Dateityp nicht erlaubt'), ok);
-  },
+  storage: multer.diskStorage({ destination: UP_DIR, filename: (r,f,cb)=>cb(null,crypto.randomBytes(12).toString('hex')+path.extname(f.originalname).toLowerCase()) }),
+  limits: { fileSize: 80 * 1024 * 1024, files:1, fields:5, parts:8, fieldSize:64*1024 },
+  fileFilter: (req,f,cb)=>{const ok=(EXT[req.params.kind]||[]).includes(path.extname(f.originalname).toLowerCase());cb(ok?null:new Error('Dateityp nicht erlaubt'),ok)}
 });
 const cloudUpload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 80 * 1024 * 1024 },
-  fileFilter: (req, f, cb) => {
-    const ok = (EXT[req.params.kind] || []).includes(path.extname(f.originalname).toLowerCase());
-    cb(ok ? null : new Error('Dateityp nicht erlaubt'), ok);
-  },
+  storage: multer.diskStorage({ destination: TMP_UPLOAD_DIR, filename:(r,f,cb)=>cb(null,crypto.randomBytes(16).toString('hex')+'.tmp') }),
+  limits: { fileSize: 80 * 1024 * 1024, files:1, fields:5, parts:8, fieldSize:64*1024 },
+  fileFilter: (req,f,cb)=>{const ok=(EXT[req.params.kind]||[]).includes(path.extname(f.originalname).toLowerCase());cb(ok?null:new Error('Dateityp nicht erlaubt'),ok)}
 });
-app.post('/api/upload/:kind', auth, (req, res) => {
+app.post('/api/upload/:kind', auth, uploadRate, (req, res) => {
+  if (!EXT[req.params.kind]) return res.status(404).json({ error:'Upload-Typ nicht gefunden' });
   if (req.params.kind === 'premium' && !metaFor(db[req.session.uid]).premium) return res.status(403).json({ error: 'Premium erforderlich' });
   const handler = SUPABASE_ENABLED ? cloudUpload.single('file') : localUpload.single('file');
   handler(req, res, async err => {
     if (err || !req.file) return res.status(400).json({ error: err ? err.message : 'Keine Datei' });
-    if (!SUPABASE_ENABLED) return res.json({ url: '/uploads/' + req.file.filename });
     try {
+      const detected=await inspectUpload(req.file,req.params.kind);
+      if (!SUPABASE_ENABLED) return res.json({ url: '/uploads/' + req.file.filename });
       const ext = path.extname(req.file.originalname).toLowerCase();
       const key = `${req.session.uid}/${req.params.kind}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
       const base = SUPABASE_URL.replace(/\/$/, '');
+      const stream=fs.createReadStream(req.file.path);
       const r = await fetch(`${base}/storage/v1/object/${encodeURIComponent(SUPABASE_BUCKET)}/${key.split('/').map(encodeURIComponent).join('/')}`, {
-        method: 'POST',
-        headers: sbHeaders({ 'Content-Type': req.file.mimetype || 'application/octet-stream', 'x-upsert': 'true' }),
-        body: req.file.buffer,
+        method: 'POST', duplex:'half',
+        headers: sbHeaders({ 'Content-Type': detected.mime, 'x-upsert': 'false' }), body: stream,
       });
       if (!r.ok) throw new Error(`Storage Upload ${r.status}: ${await r.text()}`);
       res.json({ url: `${base}/storage/v1/object/public/${encodeURIComponent(SUPABASE_BUCKET)}/${key.split('/').map(encodeURIComponent).join('/')}` });
-    } catch (e) { console.error(e); res.status(500).json({ error: 'Cloud-Upload fehlgeschlagen. Prüfe Supabase-Bucket und Environment Variablen.' }); }
+    } catch (e) {
+      console.error(e); if (req.file?.path) fs.promises.unlink(req.file.path).catch(()=>{}); if (!res.headersSent) res.status(400).json({ error: e.message || 'Upload fehlgeschlagen.' });
+    } finally { if (SUPABASE_ENABLED && req.file?.path) fs.promises.unlink(req.file.path).catch(()=>{}); }
   });
 });
 
@@ -1801,11 +1970,14 @@ app.get('/api/ban-info', (req,res)=>{
 
 // Presence endpoint: Discord Gateway with targeted member/presence refresh + Lanyard fallback.
 // A direct OAuth user token cannot expose normal Discord presence; Gateway presence is the authoritative source.
-app.get('/api/presence/:id', async (req, res) => {
+const publicPresenceCache = new Map();
+app.get('/api/presence/:id', rateLimit({windowMs:60*1000,max:80,prefix:'presence'}), async (req, res) => {
   res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
   const id = String(req.params.id || '');
   const user = db[id];
   if (!user || isBanned(user)) return res.status(404).json({ success: false, error: 'User nicht gefunden' });
+  const ownerRequest = String(req.session?.uid || '') === String(user.id);
+  const pc=publicPresenceCache.get(id); if(!ownerRequest && pc && Date.now()-pc.at<10000) return res.json(pc.payload);
 
   let cached = presenceCache.get(id) || null;
   const cacheAge = cached ? Date.now() - Number(cached.updated_at || 0) : Infinity;
@@ -1837,18 +2009,18 @@ app.get('/api/presence/:id', async (req, res) => {
   }
   if (!data) data = { discord_status:'offline', activities:[], updated_at:Date.now(), source: gatewayReady ? 'discord-bot-no-mutual-user' : 'unavailable' };
 
-  res.json({
-    success: true, data, gatewayReady,
-    available: !!gatewayFresh || !!lanyard,
-    diagnostics: {
-      gatewayReady,
-      gatewayIssue: discordGatewayIssue || '',
-      guildsSeen: discordGuildIds.size,
-      mutualGuildKnown: !!presenceGuildForUser.get(id),
-      lanyardAvailable: !!lanyard,
-      note: (!presenceGuildForUser.get(id) && !lanyard) ? 'Bot braucht einen gemeinsamen Server mit dem User; Lanyard funktioniert nur für von Lanyard überwachte Nutzer.' : ''
-    }
-  });
+  const safeData = { ...data, activities: Array.isArray(data.activities) ? [...data.activities] : [] };
+  if (!ownerRequest) {
+    if (user.settings?.showStatus === false) safeData.discord_status = 'offline';
+    if (user.settings?.showActivity === false) safeData.activities = safeData.activities.filter(a => Number(a?.type)===2 && String(a?.name||'').toLowerCase()==='spotify' && user.settings?.showSpotifyNowPlaying !== false);
+    if (user.settings?.showSpotifyNowPlaying === false) safeData.activities = safeData.activities.filter(a => !(Number(a?.type)===2 && String(a?.name||'').toLowerCase()==='spotify'));
+  }
+  const payload = ownerRequest ? {
+    success:true,data:safeData,gatewayReady,available:!!gatewayFresh||!!lanyard,
+    diagnostics:{gatewayReady,gatewayIssue:discordGatewayIssue||'',guildsSeen:discordGuildIds.size,mutualGuildKnown:!!presenceGuildForUser.get(id),lanyardAvailable:!!lanyard,note:(!presenceGuildForUser.get(id)&&!lanyard)?'Bot braucht einen gemeinsamen Server mit dem User; Lanyard funktioniert nur für von Lanyard überwachte Nutzer.':''}
+  } : { success:true,data:safeData,available:!!gatewayFresh||!!lanyard };
+  if(!ownerRequest){publicPresenceCache.set(id,{at:Date.now(),payload});if(publicPresenceCache.size>3000){for(const [k,v] of publicPresenceCache){if(Date.now()-v.at>30000)publicPresenceCache.delete(k);if(publicPresenceCache.size<=2500)break;}}}
+  res.json(payload);
 });
 
 // --- Öffentliche API ---
@@ -1865,7 +2037,7 @@ function shouldCountView(req, user) {
   const fingerprintLast = Number(recentViews.get(fp) || 0);
   recentViews.set(fp, now);
   if (recentViews.size > 5000) {
-    for (const [k, t] of recentViews) if (now - t > VIEW_COOLDOWN_MS) recentViews.delete(k);
+    for (const [k, t] of recentViews) { if (now - t > VIEW_COOLDOWN_MS || recentViews.size > 4500) recentViews.delete(k); if (recentViews.size <= 4500) break; }
   }
   return now - sessionLast >= VIEW_COOLDOWN_MS && now - fingerprintLast >= VIEW_COOLDOWN_MS;
 }
@@ -1928,7 +2100,7 @@ app.get('/api/profile/:name', async (req, res) => {
     recordProfileView(user, req);
     shouldSave = true;
   }
-  if (shouldSave) await saveUser(user);
+  if (shouldSave) queueTelemetrySave(user);
   res.json(publicView(user));
 });
 
@@ -1959,4 +2131,4 @@ app.get('/:name', (req, res, next) => {
 });
 app.use((req,res)=>res.status(404).sendFile(path.join(__dirname,'public','404.html')));
 
-hydrateFromSupabase().finally(() => { startDiscordGateway(); app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)); });
+hydrateFromSupabase().finally(() => { queueDbWrite(); queueAdminWrite(); startDiscordGateway(); app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)); });
