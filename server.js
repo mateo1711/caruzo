@@ -11,6 +11,7 @@ const {
   BASE_URL = 'http://localhost:3000', SESSION_SECRET = 'change-me',
   HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
+  ADMIN_DISCORD_IDS = '219224335670312960',
 } = process.env;
 const REDIRECT = `${BASE_URL}/auth/callback`;
 // Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
@@ -18,9 +19,14 @@ const REDIRECT = `${BASE_URL}/auth/callback`;
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
 const UP_DIR = process.env.UPLOAD_DIR || path.join(DATA_DIR, 'uploads');
 const DB_FILE = path.join(DATA_DIR, 'users.json');
+const ADMIN_FILE = path.join(DATA_DIR, 'admin-state.json');
+const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 [DATA_DIR, UP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
+let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [] };
+adminState.keys ||= []; adminState.audit ||= [];
+const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
 const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 const sbHeaders = (extra = {}) => ({
   apikey: SUPABASE_SERVICE_ROLE_KEY,
@@ -34,9 +40,15 @@ async function hydrateFromSupabase() {
     const r = await fetch(`${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?select=id,data`, { headers: sbHeaders() });
     if (!r.ok) throw new Error(`Supabase load ${r.status}`);
     const rows = await r.json();
-    for (const row of rows) if (row && row.id && row.data) db[String(row.id)] = row.data;
+    let profileCount = 0;
+    for (const row of rows) {
+      if (!row || !row.id || !row.data) continue;
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; continue; }
+      db[String(row.id)] = row.data; profileCount++;
+    }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
-    console.log(`Supabase: ${rows.length} Profil(e) geladen.`);
+    fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminState, null, 2));
+    console.log(`Supabase: ${profileCount} Profil(e) geladen.`);
   } catch (e) {
     console.error('Supabase konnte nicht geladen werden:', e.message);
   }
@@ -51,6 +63,37 @@ async function saveUser(user) {
     headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
     body: JSON.stringify([{ id: String(user.id), data: user }]),
   }).then(r => { if (!r.ok) console.error('Supabase save:', r.status); }).catch(e => console.error('Supabase save:', e.message));
+}
+
+async function saveAdminState() {
+  fs.writeFileSync(ADMIN_FILE, JSON.stringify(adminState, null, 2));
+  if (!SUPABASE_ENABLED) return;
+  const endpoint = `${SUPABASE_URL.replace(/\/$/, '')}/rest/v1/profiles?on_conflict=id`;
+  await fetch(endpoint, {
+    method: 'POST',
+    headers: sbHeaders({ 'Content-Type': 'application/json', Prefer: 'resolution=merge-duplicates,return=minimal' }),
+    body: JSON.stringify([{ id: ADMIN_STATE_ROW_ID, data: adminState }]),
+  }).then(r => { if (!r.ok) console.error('Supabase admin save:', r.status); }).catch(e => console.error('Supabase admin save:', e.message));
+}
+
+function isAdminId(id) { return ADMIN_IDS.has(String(id || '')); }
+function metaFor(user) {
+  user.adminMeta ||= { premium: false, banned: false, bannedReason: '', bannedAt: 0, premiumAt: 0, inviteKeyId: '', lastLoginAt: 0 };
+  return user.adminMeta;
+}
+function isBanned(user) { return !!user && !!metaFor(user).banned; }
+function audit(type, details = {}) {
+  adminState.audit.unshift({ id: crypto.randomUUID(), type, at: Date.now(), ...details });
+  adminState.audit = adminState.audit.slice(0, 250);
+}
+function normalizeInviteKey(v) { return String(v || '').trim().toUpperCase().replace(/\s+/g, ''); }
+function keyRecordByValue(v) { const k = normalizeInviteKey(v); return adminState.keys.find(x => x.key === k); }
+function makeInviteKey() {
+  const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+  const bytes = crypto.randomBytes(12);
+  let raw = '';
+  for (let i = 0; i < 12; i++) raw += alphabet[bytes[i] % alphabet.length];
+  return `CRZ-${raw.slice(0,4)}-${raw.slice(4,8)}-${raw.slice(8,12)}`;
 }
 
 /* ------------------------------------------------------------------ */
@@ -134,7 +177,7 @@ const discordInvite = v => {
 };
 const num = (v, min, max, d) => { v = Number(v); return Number.isFinite(v) ? Math.min(max, Math.max(min, v)) : d; };
 const slug = v => str(v, 24).toLowerCase().replace(/[^a-z0-9_.-]/g, '');
-const RESERVED = ['api', 'auth', 'u', 'uploads', 'dashboard', 'logout', 'login', 'admin', 'static', 'landing', 'profile', 'favicon.ico', 'robots.txt', 'health'];
+const RESERVED = ['api', 'auth', 'u', 'uploads', 'dashboard', 'logout', 'login', 'admin', 'static', 'landing', 'profile', 'favicon.ico', 'robots.txt', 'health', 'banned'];
 
 function defaults(dc) {
   return {
@@ -238,7 +281,7 @@ function applyUpdate(user, b) {
 }
 
 function publicView(u) {
-  const { auth, ...rest } = u; // Tokens niemals ausliefern
+  const { auth, adminMeta, ...rest } = u; // Tokens und interne Moderationsdaten niemals ausliefern
   const d = { ...rest.discord };
   const manualNitro = !!rest.settings?.manualNitro;
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
@@ -277,27 +320,68 @@ app.use(session({
   cookie: { httpOnly: true, sameSite: 'lax', secure: BASE_URL.startsWith('https'), maxAge: 30 * 24 * 3600 * 1000 },
 }));
 
-// Private Hauptseite: Passwort wird nur auf dem Server geprüft.
-const siteUnlocked = (req, res, next) => req.session.siteUnlocked ? next() : res.redirect('/login');
-app.get('/login', (req, res) => req.session.siteUnlocked ? res.redirect('/') : res.sendFile(path.join(__dirname, 'public', 'private-login.html')));
+// Invite-Gate: neue Accounts benötigen einen einmaligen Invite Key.
+// Das bestehende SITE_PASSWORD bleibt als Owner-/Master-Zugang erhalten.
+const siteUnlocked = (req, res, next) => {
+  const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
+  if (user && isBanned(user)) return res.redirect('/banned');
+  if (req.session.siteUnlocked || user) return next();
+  return res.redirect('/login');
+};
+app.get('/login', (req, res) => (req.session.siteUnlocked || (req.session.uid && db[req.session.uid])) ? res.redirect('/') : res.sendFile(path.join(__dirname, 'public', 'private-login.html')));
 app.get('/private-login', (req, res) => res.redirect(301, '/login'));
-app.post('/api/private-login', (req, res) => {
-  const supplied = String(req.body?.password || '');
+
+function ownerPasswordMatches(value) {
+  const supplied = String(value || '');
   const expected = String(SITE_PASSWORD || '');
-  if (!expected) return res.status(503).json({ error: 'SITE_PASSWORD ist nicht konfiguriert' });
-  const a = Buffer.from(supplied);
-  const b = Buffer.from(expected);
-  const ok = a.length === b.length && crypto.timingSafeEqual(a, b);
-  if (!ok) return res.status(401).json({ error: 'Falsches Passwort' });
+  if (!expected) return false;
+  const a = Buffer.from(supplied), b = Buffer.from(expected);
+  return a.length === b.length && crypto.timingSafeEqual(a, b);
+}
+app.get('/api/invite/check', (req, res) => {
+  const rec = keyRecordByValue(req.query.key);
+  if (!rec) return res.json({ valid: false, status: 'invalid' });
+  const status = rec.revokedAt ? 'revoked' : rec.redeemedAt ? 'redeemed' : 'valid';
+  res.json({ valid: status === 'valid', status });
+});
+app.post('/api/invite-login', async (req, res) => {
+  const supplied = String(req.body?.key || req.body?.password || '');
+  if (ownerPasswordMatches(supplied)) {
+    req.session.siteUnlocked = true;
+    req.session.ownerBypass = true;
+    delete req.session.pendingInviteKeyId;
+    return res.json({ ok: true, owner: true });
+  }
+  const rec = keyRecordByValue(supplied);
+  if (!rec) return res.status(401).json({ error: 'Invite Key ist ungültig.' });
+  if (rec.revokedAt) return res.status(410).json({ error: 'Dieser Invite Key wurde deaktiviert.' });
+  if (rec.redeemedAt) return res.status(409).json({ error: 'Dieser Invite Key wurde bereits eingelöst.' });
   req.session.siteUnlocked = true;
+  req.session.ownerBypass = false;
+  req.session.pendingInviteKeyId = rec.id;
   res.json({ ok: true });
 });
-app.post('/api/private-logout', (req, res) => { req.session.siteUnlocked = false; res.json({ ok: true }); });
+// Alte API bleibt als Alias erhalten, damit bestehende Clients nicht brechen.
+app.post('/api/private-login', (req, res, next) => {
+  req.body = { key: req.body?.password || req.body?.key || '' };
+  const supplied = String(req.body.key || '');
+  if (ownerPasswordMatches(supplied)) {
+    req.session.siteUnlocked = true; req.session.ownerBypass = true; delete req.session.pendingInviteKeyId;
+    return res.json({ ok: true, owner: true });
+  }
+  const rec = keyRecordByValue(supplied);
+  if (!rec) return res.status(401).json({ error: 'Invite Key ist ungültig.' });
+  if (rec.revokedAt) return res.status(410).json({ error: 'Dieser Invite Key wurde deaktiviert.' });
+  if (rec.redeemedAt) return res.status(409).json({ error: 'Dieser Invite Key wurde bereits eingelöst.' });
+  req.session.siteUnlocked = true; req.session.pendingInviteKeyId = rec.id; req.session.ownerBypass = false;
+  res.json({ ok: true });
+});
+app.post('/api/private-logout', (req, res) => { req.session.siteUnlocked = false; delete req.session.pendingInviteKeyId; delete req.session.ownerBypass; res.json({ ok: true }); });
 app.get('/api/session-info', siteUnlocked, (req, res) => {
   const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
-  if (!user) return res.json({ authenticated: false });
+  if (!user) return res.json({ authenticated: false, isAdmin: false });
   const view = publicView(user);
-  res.json({ authenticated: true, user: { username: view.username, name: view.displayName || view.discord?.globalName || view.discord?.username || view.username, avatar: view.discord?.avatar || '' } });
+  res.json({ authenticated: true, isAdmin: isAdminId(user.id), premium: !!metaFor(user).premium, user: { id: user.id, username: view.username, name: view.displayName || view.discord?.globalName || view.discord?.username || view.username, avatar: view.discord?.avatar || '' } });
 });
 app.get('/private-login.html', (req, res) => res.redirect(301, '/login'));
 app.get('/dashboard.html', (req, res) => res.redirect(302, '/dashboard'));
@@ -305,12 +389,25 @@ app.use((req, res, next) => req.path === '/landing.html' ? siteUnlocked(req, res
 app.use('/uploads', express.static(UP_DIR, { setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
-const auth = (req, res, next) => (req.session.uid && db[req.session.uid] ? next() : res.status(401).json({ error: 'Nicht eingeloggt' }));
+const auth = (req, res, next) => {
+  const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (isBanned(user)) return res.status(403).json({ error: 'Account gesperrt', banned: true });
+  next();
+};
+const adminOnly = (req, res, next) => {
+  const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (isBanned(user)) return res.status(403).json({ error: 'Account gesperrt', banned: true });
+  if (!isAdminId(user.id)) return res.status(403).json({ error: 'Keine Admin-Berechtigung' });
+  next();
+};
 
 // --- Discord OAuth ---
-app.get('/auth/discord', siteUnlocked, (req, res) => {
+app.get('/auth/discord', (req, res) => {
   if (!CID || !SECRET) return res.status(500).send('DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET fehlen in der .env');
   req.session.state = crypto.randomBytes(16).toString('hex');
+  req.session.oauthStartedAt = Date.now();
   const q = new URLSearchParams({ client_id: CID, redirect_uri: REDIRECT, response_type: 'code', scope: 'identify', state: req.session.state });
   res.redirect(`https://discord.com/oauth2/authorize?${q}`);
 });
@@ -325,11 +422,38 @@ app.get('/auth/callback', async (req, res) => {
     const me = await discordMe(tok.access_token);
     if (!me) return res.status(400).send('Discord-Profil konnte nicht geladen werden.');
     const dc = mapDiscord(me);
-    const user = db[dc.id] || (db[dc.id] = defaults(dc));
+    let user = db[dc.id];
+    const isNew = !user;
+    if (isNew) {
+      let invite = null;
+      if (req.session.pendingInviteKeyId) invite = adminState.keys.find(x => x.id === req.session.pendingInviteKeyId);
+      const ownerBypass = !!req.session.ownerBypass || isAdminId(dc.id);
+      if (!ownerBypass && (!invite || invite.revokedAt || invite.redeemedAt)) {
+        req.session.siteUnlocked = false;
+        return res.redirect('/login?error=invite-required');
+      }
+      user = db[dc.id] = defaults(dc);
+      metaFor(user);
+      if (invite && !ownerBypass) {
+        invite.redeemedAt = Date.now(); invite.redeemedBy = dc.id; invite.redeemedUsername = dc.globalName || dc.username;
+        user.adminMeta.inviteKeyId = invite.id;
+        audit('key_redeemed', { keyId: invite.id, userId: dc.id });
+        await saveAdminState();
+      }
+      audit('signup', { userId: dc.id });
+    } else { metaFor(user); }
+    if (isBanned(user)) {
+      req.session.uid = dc.id; req.session.siteUnlocked = false;
+      user.adminMeta.lastLoginAt = Date.now(); user.discord = dc; user.auth = { access: tok.access_token, refresh: tok.refresh_token }; await saveUser(user);
+      return res.redirect('/banned');
+    }
     user.discord = dc;
     user.auth = { access: tok.access_token, refresh: tok.refresh_token };
+    user.adminMeta.lastLoginAt = Date.now();
     await saveUser(user);
     req.session.uid = dc.id;
+    req.session.siteUnlocked = true;
+    delete req.session.pendingInviteKeyId; delete req.session.ownerBypass;
     res.redirect('/dashboard');
   } catch (e) { console.error(e); res.status(500).send('Login fehlgeschlagen.'); }
 });
@@ -415,6 +539,81 @@ app.post('/api/upload/:kind', auth, (req, res) => {
   });
 });
 
+
+// --- Admin Panel ----------------------------------------------------
+function adminUserView(user) {
+  const m = metaFor(user);
+  return {
+    id: String(user.id), username: user.username || '', displayName: user.displayName || user.discord?.globalName || user.discord?.username || '',
+    avatar: user.discord?.avatar || '', views: Number(user.views || 0), createdAt: Number(user.createdAt || 0), lastLoginAt: Number(m.lastLoginAt || 0),
+    banned: !!m.banned, bannedReason: m.bannedReason || '', bannedAt: Number(m.bannedAt || 0), premium: !!m.premium, premiumAt: Number(m.premiumAt || 0),
+    inviteKeyId: m.inviteKeyId || ''
+  };
+}
+function dayKey(ts) { const d = new Date(ts); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
+app.get('/api/admin/overview', adminOnly, (req, res) => {
+  const users = Object.values(db).filter(u => u && u.id);
+  const totalViews = users.reduce((n,u)=>n+Number(u.views||0),0);
+  const banned = users.filter(u=>metaFor(u).banned).length;
+  const premium = users.filter(u=>metaFor(u).premium).length;
+  const activeKeys = adminState.keys.filter(k=>!k.revokedAt&&!k.redeemedAt).length;
+  const now = Date.now(), days=[];
+  for(let i=13;i>=0;i--){ const t=now-i*86400000; const key=dayKey(t); days.push({ key, label:new Date(t).toLocaleDateString('de-CH',{day:'2-digit',month:'2-digit'}), value:0 }); }
+  const map=new Map(days.map(d=>[d.key,d]));
+  users.forEach(u=>{ const d=map.get(dayKey(Number(u.createdAt||0))); if(d)d.value++; });
+  const recentUsers = [...users].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,8).map(adminUserView);
+  res.json({ stats:{ totalUsers:users.length,totalViews,banned,premium,keys:activeKeys }, signups:days, recentUsers, audit:adminState.audit.slice(0,12) });
+});
+app.get('/api/admin/users', adminOnly, (req, res) => {
+  const q=String(req.query.q||'').trim().toLowerCase();
+  let users=Object.values(db).filter(u=>u&&u.id);
+  if(q) users=users.filter(u=>[u.id,u.username,u.displayName,u.discord?.username,u.discord?.globalName].some(v=>String(v||'').toLowerCase().includes(q)));
+  users.sort((a,b)=>Number(metaFor(b).lastLoginAt||b.createdAt||0)-Number(metaFor(a).lastLoginAt||a.createdAt||0));
+  res.json({ users:users.slice(0,100).map(adminUserView) });
+});
+app.post('/api/admin/users/:id/ban', adminOnly, async (req,res)=>{
+  const user=db[String(req.params.id)]; if(!user)return res.status(404).json({error:'User nicht gefunden'});
+  if(isAdminId(user.id))return res.status(400).json({error:'Der Owner-Admin kann nicht gebannt werden.'});
+  const m=metaFor(user); m.banned=true; m.bannedReason=str(req.body?.reason,180)||'Von der Administration gesperrt.'; m.bannedAt=Date.now();
+  audit('user_banned',{userId:user.id,by:req.session.uid}); await Promise.all([saveUser(user),saveAdminState()]); res.json({ok:true,user:adminUserView(user)});
+});
+app.post('/api/admin/users/:id/unban', adminOnly, async (req,res)=>{
+  const user=db[String(req.params.id)]; if(!user)return res.status(404).json({error:'User nicht gefunden'});
+  const m=metaFor(user); m.banned=false; m.bannedReason=''; m.bannedAt=0;
+  audit('user_unbanned',{userId:user.id,by:req.session.uid}); await Promise.all([saveUser(user),saveAdminState()]); res.json({ok:true,user:adminUserView(user)});
+});
+app.post('/api/admin/users/:id/premium', adminOnly, async (req,res)=>{
+  const user=db[String(req.params.id)]; if(!user)return res.status(404).json({error:'User nicht gefunden'});
+  const m=metaFor(user); m.premium=!!req.body?.enabled; m.premiumAt=m.premium?Date.now():0;
+  audit(m.premium?'premium_granted':'premium_removed',{userId:user.id,by:req.session.uid}); await Promise.all([saveUser(user),saveAdminState()]); res.json({ok:true,user:adminUserView(user)});
+});
+app.get('/api/admin/keys', adminOnly, (req,res)=>{
+  const keys=[...adminState.keys].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+  res.json({keys});
+});
+app.post('/api/admin/keys', adminOnly, async (req,res)=>{
+  let key; do{key=makeInviteKey()}while(adminState.keys.some(x=>x.key===key));
+  const rec={id:crypto.randomUUID(),key,label:str(req.body?.label,60)||'Invite',createdAt:Date.now(),createdBy:req.session.uid,redeemedAt:0,redeemedBy:'',redeemedUsername:'',revokedAt:0};
+  adminState.keys.unshift(rec); audit('key_created',{keyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
+});
+app.post('/api/admin/keys/:id/revoke', adminOnly, async (req,res)=>{
+  const rec=adminState.keys.find(x=>x.id===req.params.id); if(!rec)return res.status(404).json({error:'Key nicht gefunden'});
+  if(rec.redeemedAt)return res.status(400).json({error:'Eingelöste Keys können nicht deaktiviert werden.'});
+  rec.revokedAt=rec.revokedAt?0:Date.now(); audit(rec.revokedAt?'key_revoked':'key_reactivated',{keyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
+});
+app.post('/api/admin/keys/:id/replace', adminOnly, async (req,res)=>{
+  const old=adminState.keys.find(x=>x.id===req.params.id); if(!old)return res.status(404).json({error:'Key nicht gefunden'});
+  if(!old.redeemedAt)old.revokedAt=Date.now();
+  let key; do{key=makeInviteKey()}while(adminState.keys.some(x=>x.key===key));
+  const rec={id:crypto.randomUUID(),key,label:(old.label||'Invite')+' · replacement',createdAt:Date.now(),createdBy:req.session.uid,replaces:old.id,redeemedAt:0,redeemedBy:'',redeemedUsername:'',revokedAt:0};
+  adminState.keys.unshift(rec); audit('key_replaced',{keyId:old.id,newKeyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
+});
+app.get('/api/ban-info', (req,res)=>{
+  const user=req.session.uid&&db[req.session.uid]?db[req.session.uid]:null;
+  if(!user||!isBanned(user))return res.json({banned:false});
+  const m=metaFor(user); res.json({banned:true,reason:m.bannedReason||'Account gesperrt',at:m.bannedAt||0});
+});
+
 // --- Öffentliche API ---
 const VIEW_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const recentViews = new Map();
@@ -437,6 +636,7 @@ const findByName = n => Object.values(db).find(u => u.username === String(n).toL
 app.get('/api/profile/:name', async (req, res) => {
   const user = req.params.name === '__home__' ? findByName(HOME_USER) : findByName(req.params.name);
   if (!user) return res.status(404).json({ error: 'Profil nicht gefunden' });
+  if (isBanned(user)) return res.status(403).json({ error: 'Profil gesperrt', banned: true });
   if (shouldCountView(req, user)) {
     user.views = (user.views || 0) + 1;
     await saveUser(user);
@@ -446,14 +646,21 @@ app.get('/api/profile/:name', async (req, res) => {
 
 // --- Seiten ---
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
+app.get('/banned', (req,res)=>res.status(403).sendFile(path.join(__dirname,'public','banned.html')));
 app.get('/', siteUnlocked, (req, res) => (HOME_USER && findByName(HOME_USER) ? page('profile.html')(req, res) : page('landing.html')(req, res)));
 app.get('/u/:name', (req, res) => res.redirect(301, '/' + encodeURIComponent(req.params.name)));
-app.get('/dashboard', siteUnlocked, (req, res) => (req.session.uid && db[req.session.uid] ? page('dashboard.html')(req, res) : res.redirect('/auth/discord')));
+app.get('/dashboard', siteUnlocked, (req, res) => {
+  const user=req.session.uid&&db[req.session.uid]?db[req.session.uid]:null;
+  if(user&&isBanned(user))return res.redirect('/banned');
+  return user?page('dashboard.html')(req,res):res.redirect('/auth/discord');
+});
 // Profil unter /name – muss ganz am Ende stehen, damit alle anderen Routen Vorrang haben
 app.get('/:name', (req, res, next) => {
   const n = req.params.name.toLowerCase();
   if (!/^[a-z0-9_.-]{2,24}$/.test(n) || RESERVED.includes(n)) return next();
-  res.status(findByName(n) ? 200 : 404).sendFile(path.join(__dirname, 'public', 'profile.html'));
+  const user=findByName(n);
+  if(user&&isBanned(user))return res.status(403).sendFile(path.join(__dirname,'public','banned.html'));
+  res.status(user ? 200 : 404).sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
 hydrateFromSupabase().finally(() => app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)));
