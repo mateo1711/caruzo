@@ -32,7 +32,7 @@ const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
 let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
-adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= [];
+adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= [];
 function ensureAdminSettings() {
   adminState.settings ||= {};
   adminState.settings.backgrounds ||= {};
@@ -59,7 +59,7 @@ async function hydrateFromSupabase() {
     let profileCount = 0;
     for (const row of rows) {
       if (!row || !row.id || !row.data) continue;
-      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; ensureAdminSettings(); continue; }
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminSettings(); continue; }
       db[String(row.id)] = row.data; profileCount++;
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
@@ -348,6 +348,83 @@ function publicView(u) {
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
   const spotifyAccount = rest.spotifyAccount?.connected ? { connected: true, displayName: str(rest.spotifyAccount.displayName, 80), url: url(rest.spotifyAccount.url), image: url(rest.spotifyAccount.image) } : null;
   return { ...rest, spotifyAccount, premiumSections, platform, discord: d };
+}
+
+/* ------------------------------------------------------------------ */
+/* Preset marketplace                                                  */
+/* ------------------------------------------------------------------ */
+const MARKET_MAX_PER_USER = 30;
+const MARKET_VIS = new Set(['private','public']);
+const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
+function privatePresetSnapshot(user) {
+  const src = publicView(user);
+  const keys = ['username','displayName','tagline','about','enterText','tags','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+  const out = {};
+  for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
+  return out;
+}
+function publicPresetSnapshot(userOrSnapshot) {
+  const src = userOrSnapshot?.id ? publicView(userOrSnapshot) : (userOrSnapshot || {});
+  const bg = src.background || {};
+  const cur = src.cursor || {};
+  return {
+    design: deepClone(src.design || {}),
+    viewsStyle: deepClone(src.viewsStyle || {}),
+    pageFx: deepClone(src.pageFx || {}),
+    cursor: { effect: str(cur.effect, 32), image: str(cur.image, 32), svg: '' },
+    background: {
+      type: 'image', url: '', blur: num(bg.blur,0,30,6), dim: num(bg.dim,0,90,55),
+      effect: str(bg.effect, 32) || 'none', videoSound: false, videoVolume: num(bg.videoVolume,0,100,30), videoStart: 0,
+    },
+    spotifyStyle: deepClone(src.spotifyStyle || {}),
+  };
+}
+function marketplaceMeta(rec, viewerId = '') {
+  const owner = db[String(rec.ownerId || '')];
+  const snap = rec.snapshot || {};
+  const design = snap.design || {};
+  return {
+    id: rec.id,
+    name: rec.name,
+    description: rec.description || '',
+    visibility: rec.visibility,
+    scope: rec.scope || (rec.visibility === 'public' ? 'style' : 'full'),
+    createdAt: rec.createdAt,
+    updatedAt: rec.updatedAt || rec.createdAt,
+    savedCount: Number(rec.savedCount || 0),
+    loadCount: Number(rec.loadCount || 0),
+    mine: String(rec.ownerId || '') === String(viewerId || ''),
+    author: rec.visibility === 'public' ? {
+      username: owner?.username || rec.authorUsername || 'user',
+      displayName: owner?.displayName || rec.authorDisplayName || 'Caruzo User',
+      avatar: owner?.discord?.avatar || rec.authorAvatar || '',
+    } : undefined,
+    preview: {
+      accentColor: /^#[0-9a-f]{6}$/i.test(design.accentColor || '') ? design.accentColor : '#8b5cf6',
+      frameColor: /^#[0-9a-f]{6}$/i.test(design.avatarFrameColor || '') ? design.avatarFrameColor : '#8b5cf6',
+      cardStyle: str(design.cardStyle, 24) || 'glass',
+      nameEffect: str(design.nameEffect, 24) || 'standard',
+      pageFx: str(snap.pageFx?.type, 24) || 'none',
+      backgroundEffect: str(snap.background?.effect, 24) || 'none',
+    },
+  };
+}
+function presetOwned(rec, uid) { return !!rec && String(rec.ownerId || '') === String(uid || ''); }
+function applyPresetSnapshot(user, snapshot, scope = 'full') {
+  if (!snapshot || typeof snapshot !== 'object') return;
+  const styleKeys = ['design','viewsStyle','pageFx','cursor','background','spotifyStyle'];
+  if (scope === 'style') {
+    for (const k of styleKeys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
+    return;
+  }
+  if (snapshot.username !== undefined) {
+    const s = slug(snapshot.username);
+    const taken = Object.values(db).some(x => x && x.id !== user.id && x.username === s);
+    if (s.length >= 2 && !RESERVED.includes(s) && !taken) user.username = s;
+  }
+  const keys = ['displayName','tagline','about','enterText','tags','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','links'];
+  for (const k of keys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
+  if (metaFor(user).premium && snapshot.premiumSections !== undefined) user.premiumSections = deepClone(snapshot.premiumSections);
 }
 
 async function discordMe(token) {
@@ -924,6 +1001,133 @@ app.post('/api/me', auth, async (req, res) => {
   if (err) return res.status(400).json({ error: err });
   await saveUser(user);
   res.json(publicView(user));
+});
+
+// --- Preset Marketplace ---
+app.get('/api/marketplace', auth, (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const scope = String(req.query.scope || 'public');
+  const q = str(req.query.q, 80).trim().toLowerCase();
+  let items = adminState.marketplace.filter(x => x && x.id);
+  if (scope === 'mine') items = items.filter(x => presetOwned(x, uid));
+  else items = items.filter(x => x.visibility === 'public');
+  if (q) items = items.filter(x => `${x.name || ''} ${x.description || ''} ${x.authorUsername || ''} ${x.authorDisplayName || ''}`.toLowerCase().includes(q));
+  items.sort((a,b) => Number(b.updatedAt || b.createdAt || 0) - Number(a.updatedAt || a.createdAt || 0));
+  res.json({ items: items.slice(0, 200).map(x => marketplaceMeta(x, uid)) });
+});
+
+app.post('/api/marketplace', auth, async (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const user = db[uid];
+  const owned = adminState.marketplace.filter(x => presetOwned(x, uid));
+  if (owned.length >= MARKET_MAX_PER_USER) return res.status(400).json({ error: `Maximal ${MARKET_MAX_PER_USER} eigene Presets.` });
+  const visibility = MARKET_VIS.has(String(req.body?.visibility || '')) ? String(req.body.visibility) : 'private';
+  const name = str(req.body?.name, 48).trim();
+  if (name.length < 2) return res.status(400).json({ error: 'Preset-Name: mindestens 2 Zeichen.' });
+  const description = str(req.body?.description, 180).trim();
+  const snapshot = visibility === 'public' ? publicPresetSnapshot(user) : privatePresetSnapshot(user);
+  const rec = {
+    id: crypto.randomUUID(), ownerId: uid, name, description, visibility,
+    scope: visibility === 'public' ? 'style' : 'full', snapshot,
+    authorUsername: user.username, authorDisplayName: user.displayName, authorAvatar: user.discord?.avatar || '',
+    savedCount: 0, loadCount: 0, createdAt: Date.now(), updatedAt: Date.now(),
+  };
+  adminState.marketplace.unshift(rec);
+  audit('market_preset_created', { presetId: rec.id, visibility, by: uid });
+  await saveAdminState();
+  res.json({ ok: true, item: marketplaceMeta(rec, uid) });
+});
+
+app.patch('/api/marketplace/:id', auth, async (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const rec = adminState.marketplace.find(x => x.id === req.params.id);
+  if (!rec) return res.status(404).json({ error: 'Preset nicht gefunden.' });
+  if (!presetOwned(rec, uid)) return res.status(403).json({ error: 'Nur der Besitzer kann dieses Preset ändern.' });
+  if (req.body?.name !== undefined) {
+    const name = str(req.body.name, 48).trim();
+    if (name.length < 2) return res.status(400).json({ error: 'Preset-Name: mindestens 2 Zeichen.' });
+    rec.name = name;
+  }
+  if (req.body?.description !== undefined) rec.description = str(req.body.description, 180).trim();
+  if (req.body?.visibility !== undefined) {
+    const vis = String(req.body.visibility);
+    if (!MARKET_VIS.has(vis)) return res.status(400).json({ error: 'Ungültige Sichtbarkeit.' });
+    if (vis !== rec.visibility) {
+      if (vis === 'public') {
+        rec.snapshot = publicPresetSnapshot(rec.snapshot);
+        rec.scope = 'style';
+      }
+      rec.visibility = vis;
+    }
+  }
+  rec.updatedAt = Date.now();
+  audit('market_preset_updated', { presetId: rec.id, visibility: rec.visibility, by: uid });
+  await saveAdminState();
+  res.json({ ok: true, item: marketplaceMeta(rec, uid) });
+});
+
+app.post('/api/marketplace/:id/update-from-profile', auth, async (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const rec = adminState.marketplace.find(x => x.id === req.params.id);
+  if (!rec) return res.status(404).json({ error: 'Preset nicht gefunden.' });
+  if (!presetOwned(rec, uid)) return res.status(403).json({ error: 'Nur der Besitzer kann dieses Preset aktualisieren.' });
+  const user = db[uid];
+  rec.snapshot = rec.visibility === 'public' ? publicPresetSnapshot(user) : privatePresetSnapshot(user);
+  rec.scope = rec.visibility === 'public' ? 'style' : 'full';
+  rec.updatedAt = Date.now();
+  audit('market_preset_resnapshotted', { presetId: rec.id, visibility: rec.visibility, by: uid });
+  await saveAdminState();
+  res.json({ ok: true, item: marketplaceMeta(rec, uid) });
+});
+
+app.post('/api/marketplace/:id/apply', auth, async (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const rec = adminState.marketplace.find(x => x.id === req.params.id);
+  if (!rec || (rec.visibility !== 'public' && !presetOwned(rec, uid))) return res.status(404).json({ error: 'Preset nicht gefunden.' });
+  const user = db[uid];
+  applyPresetSnapshot(user, rec.snapshot, rec.scope || (rec.visibility === 'public' ? 'style' : 'full'));
+  if (rec.visibility === 'public') rec.loadCount = Number(rec.loadCount || 0) + 1;
+  rec.updatedAt ||= rec.createdAt;
+  await Promise.all([saveUser(user), rec.visibility === 'public' ? saveAdminState() : Promise.resolve()]);
+  res.json({ ok: true, user: publicView(user), item: marketplaceMeta(rec, uid) });
+});
+
+app.post('/api/marketplace/:id/save', auth, async (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const source = adminState.marketplace.find(x => x.id === req.params.id && x.visibility === 'public');
+  if (!source) return res.status(404).json({ error: 'Öffentliches Preset nicht gefunden.' });
+  const owned = adminState.marketplace.filter(x => presetOwned(x, uid));
+  if (owned.length >= MARKET_MAX_PER_USER) return res.status(400).json({ error: `Maximal ${MARKET_MAX_PER_USER} eigene Presets.` });
+  const user = db[uid];
+  const rec = {
+    id: crypto.randomUUID(), ownerId: uid, name: str(source.name,48) || 'Gespeichertes Preset',
+    description: str(source.description,180), visibility: 'private', scope: 'style', snapshot: deepClone(source.snapshot),
+    sourcePresetId: source.id, authorUsername: user.username, authorDisplayName: user.displayName, authorAvatar: user.discord?.avatar || '',
+    savedCount: 0, loadCount: 0, createdAt: Date.now(), updatedAt: Date.now(),
+  };
+  source.savedCount = Number(source.savedCount || 0) + 1;
+  adminState.marketplace.unshift(rec);
+  audit('market_preset_saved', { presetId: source.id, copyId: rec.id, by: uid });
+  await saveAdminState();
+  res.json({ ok: true, item: marketplaceMeta(rec, uid) });
+});
+
+app.delete('/api/marketplace/:id', auth, async (req, res) => {
+  adminState.marketplace ||= [];
+  const uid = String(req.session.uid || '');
+  const i = adminState.marketplace.findIndex(x => x.id === req.params.id);
+  if (i < 0) return res.status(404).json({ error: 'Preset nicht gefunden.' });
+  if (!presetOwned(adminState.marketplace[i], uid)) return res.status(403).json({ error: 'Nur der Besitzer kann dieses Preset löschen.' });
+  const [rec] = adminState.marketplace.splice(i, 1);
+  audit('market_preset_deleted', { presetId: rec.id, by: uid });
+  await saveAdminState();
+  res.json({ ok: true });
 });
 
 
