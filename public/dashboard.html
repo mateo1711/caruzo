@@ -1276,7 +1276,7 @@ async function refreshSpotifyAccount(){
 }
 async function refreshPresenceDiagnostic(){
   if(!me?.discord?.id)return;const box=$('#presenceLiveState');if(!box)return;
-  try{const r=await api('/api/presence/'+encodeURIComponent(me.discord.id)+'?t='+Date.now());const st=String(r.data?.discord_status||'offline').toLowerCase();const names={online:'ONLINE',idle:'ABWESEND',dnd:'BESCHÄFTIGT',offline:'OFFLINE'};const source=r.data?.source==='discord-bot'?'Discord Gateway':String(r.data?.source||'').startsWith('lanyard')?'Lanyard Live':'Keine Live-Quelle';const act=(r.data?.activities||[]).find(a=>a&&a.type!==4&&String(a.name||'').toLowerCase()!=='spotify');const issue=r.diagnostics?.gatewayIssue||r.diagnostics?.note||'';box.innerHTML=`<span class="statusDot" style="background:${st==='online'?'#23a55a':st==='idle'?'#f0b232':st==='dnd'?'#f23f43':'#80848e'}"></span><span><b>${names[st]||'OFFLINE'}</b> · ${source}${act?' · '+act.name:''}${issue?' · '+issue:''}</span>`}catch{box.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Presence aktuell nicht erreichbar</span>'}
+  try{const r=await api('/api/presence/'+encodeURIComponent(me.discord.id)+'?t='+Date.now());const st=String(r.data?.discord_status||'offline').toLowerCase();const names={online:'ONLINE',idle:'ABWESEND',dnd:'BESCHÄFTIGT',offline:'OFFLINE'};const source=r.data?.source==='discord-bot'?'Discord Gateway':String(r.data?.source||'').startsWith('lanyard')?'Lanyard Live':'Keine Live-Quelle';const act=(r.data?.activities||[]).find(a=>a&&a.type!==4&&String(a.name||'').toLowerCase()!=='spotify');const issue=r.diagnostics?.gatewayIssue||r.diagnostics?.note||'';box.innerHTML=`<span class="statusDot" style="background:${st==='online'?'#23a55a':st==='idle'?'#f0b232':st==='dnd'?'#f23f43':'#80848e'}"></span><span><b>${escapeHtml(names[st]||'OFFLINE')}</b> · ${escapeHtml(source)}${act?' · '+escapeHtml(String(act.name||'')):''}${issue?' · '+escapeHtml(String(issue)):''}</span>`}catch{box.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Presence aktuell nicht erreichbar</span>'}
 }
 async function refreshBoostStatus(){
   if(!me?.discord?.id)return;
@@ -1291,7 +1291,7 @@ async function refreshBoostStatus(){
 }
 async function syncDiscord(){try{const f=await api('/api/sync',{method:'POST'});me.discord=f.discord;bind();toast('Discord aktualisiert')}catch(e){toast(e.message)}}
 $('#sync').onclick=syncDiscord;$('#sync2').onclick=syncDiscord;
-$('#botVerify').onclick=async()=>{try{const r=await api('/api/bot-verify',{method:'POST'});$('#botVerifyState').innerHTML=`<span class="statusDot"></span>Verified: ${r.username} · ${r.id}`;toast('Discord ID verifiziert')}catch(e){toast(e.message)}};
+$('#botVerify').onclick=async()=>{try{const r=await api('/api/bot-verify',{method:'POST'}),box=$('#botVerifyState');box.replaceChildren();const dot=document.createElement('span');dot.className='statusDot';box.append(dot,document.createTextNode(`Verified: ${String(r.username||'')} · ${String(r.id||'')}`));toast('Discord ID verifiziert')}catch(e){toast(e.message)}};
 $('#clearNitroTier').onclick=()=>{me.settings.nitroTier='';markDirty();renderNitroGrid();renderBadges();renderPreview()};
 
 $$('[data-upload]').forEach(inp=>inp.onchange=async()=>{
