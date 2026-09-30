@@ -5,6 +5,7 @@ const multer = require('multer');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
+const WebSocket = require('ws');
 
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
@@ -200,13 +201,14 @@ function defaults(dc) {
     pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showProfileBrand: true, manualNitro: false, nitroTier: '' },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30 },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
     spotify: '',
     spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
     floating: [],
+    premiumSections: [],
     links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', custom: [] },
     views: 0,
     createdAt: Date.now(),
@@ -253,8 +255,11 @@ function applyUpdate(user, b) {
   const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
-  user.settings = Object.fromEntries(['showBanner', 'showDecoration', 'showBadges', 'showTag', 'showStatus', 'showActivity', 'showProfileBrand', 'manualNitro'].map(k => [k, !!s[k]]));
-  user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : '';
+  const prevSettings = user.settings || {};
+  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, manualNitro:false };
+  user.settings = {};
+  for (const [k, def] of Object.entries(settingDefaults)) user.settings[k] = s[k] !== undefined ? !!s[k] : (prevSettings[k] !== undefined ? !!prevSettings[k] : def);
+  user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : (prevSettings.nitroTier || '');
   const bg = b.background || {};
   user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30) };
   const m = b.music || {};
@@ -264,6 +269,18 @@ function applyUpdate(user, b) {
   const sp = b.spotifyStyle || {};
   user.spotifyStyle = { blur: num(sp.blur, 0, 50, 26), glow: num(sp.glow, 0, 100, 24), layout: ['compact','full'].includes(sp.layout) ? sp.layout : 'compact' };
   user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
+  if (metaFor(user).premium) {
+    user.premiumSections = (Array.isArray(b.premiumSections) ? b.premiumSections : []).slice(0, 6).map((x, index) => {
+      const type = x?.type === 'gallery' ? 'gallery' : 'text';
+      return {
+        id: str(x?.id, 48) || `section-${index + 1}`,
+        title: str(x?.title, 60) || (type === 'gallery' ? 'Gallery' : 'Section'),
+        type,
+        text: str(x?.text, 1800),
+        images: (Array.isArray(x?.images) ? x.images : []).slice(0, 12).map(url).filter(Boolean),
+      };
+    });
+  } else if (!Array.isArray(user.premiumSections)) user.premiumSections = [];
   const l = b.links || {};
   user.links = {
     steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: url(x.url) })).filter(x => x.url),
@@ -293,7 +310,9 @@ function publicView(u) {
       ? { key: 'nitro', name: `Discord Nitro · ${tier.label}`, asset: tier.asset, emoji: '💎', tier: tier.key }
       : NITRO);
   }
-  return { ...rest, discord: d };
+  const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id) };
+  const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
+  return { ...rest, premiumSections, platform, discord: d };
 }
 
 async function discordMe(token) {
@@ -307,6 +326,62 @@ async function tokenRequest(params) {
     body: new URLSearchParams({ client_id: CID, client_secret: SECRET, ...params }),
   });
   return r.ok ? r.json() : null;
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Discord Presence Gateway                                            */
+/* Uses the bot gateway when configured, with Lanyard as a fallback.   */
+/* The bot must share a server with the user and Presence Intent must  */
+/* be enabled in the Discord Developer Portal.                         */
+/* ------------------------------------------------------------------ */
+const presenceCache = new Map();
+let gatewayReady = false;
+function normalizeGatewayPresence(d) {
+  return {
+    discord_status: ['online','idle','dnd'].includes(d?.status) ? d.status : 'offline',
+    activities: Array.isArray(d?.activities) ? d.activities.map(a => ({
+      id: str(a?.id, 80), name: str(a?.name, 120), type: Number(a?.type ?? 0),
+      details: str(a?.details, 180), state: str(a?.state, 180), url: url(a?.url),
+      timestamps: a?.timestamps || null,
+    })) : [],
+    updated_at: Date.now(), source: 'discord-bot',
+  };
+}
+function startDiscordGateway() {
+  if (!DISCORD_BOT_TOKEN) return;
+  let ws = null, seq = null, heartbeat = null, reconnectTimer = null, shuttingDown = false;
+  const intents = (1 << 0) | (1 << 8); // GUILDS + GUILD_PRESENCES
+  const scheduleReconnect = (delay = 5000) => {
+    if (shuttingDown || reconnectTimer) return;
+    reconnectTimer = setTimeout(() => { reconnectTimer = null; connect(); }, delay);
+  };
+  const send = payload => { if (ws?.readyState === WebSocket.OPEN) ws.send(JSON.stringify(payload)); };
+  const connect = () => {
+    clearInterval(heartbeat); heartbeat = null; gatewayReady = false;
+    try { ws = new WebSocket('wss://gateway.discord.gg/?v=10&encoding=json'); } catch { return scheduleReconnect(); }
+    ws.on('message', raw => {
+      let packet; try { packet = JSON.parse(raw.toString()); } catch { return; }
+      if (packet.s != null) seq = packet.s;
+      if (packet.op === 10) {
+        const every = Number(packet.d?.heartbeat_interval || 45000);
+        const beat = () => send({ op: 1, d: seq });
+        heartbeat = setInterval(beat, every); setTimeout(beat, Math.min(1000, Math.floor(every * .25)));
+        send({ op: 2, d: { token: DISCORD_BOT_TOKEN, intents, properties: { os: 'linux', browser: 'caruzo', device: 'caruzo' } } });
+      } else if (packet.op === 1) send({ op: 1, d: seq });
+      else if (packet.op === 7) { try { ws.close(); } catch {} }
+      else if (packet.op === 9) { try { ws.close(); } catch {} scheduleReconnect(6000); }
+      if (packet.t === 'READY') gatewayReady = true;
+      if (packet.t === 'PRESENCE_UPDATE' && packet.d?.user?.id) presenceCache.set(String(packet.d.user.id), normalizeGatewayPresence(packet.d));
+      if (packet.t === 'GUILD_CREATE' && Array.isArray(packet.d?.presences)) {
+        packet.d.presences.forEach(pr => { if (pr?.user?.id) presenceCache.set(String(pr.user.id), normalizeGatewayPresence(pr)); });
+      }
+    });
+    ws.on('close', () => { clearInterval(heartbeat); heartbeat = null; gatewayReady = false; scheduleReconnect(); });
+    ws.on('error', e => console.error('Discord Gateway:', e.message));
+  };
+  connect();
+  process.once('SIGTERM', () => { shuttingDown = true; clearInterval(heartbeat); try { ws?.close(); } catch {} });
 }
 
 /* ------------------------------------------------------------------ */
@@ -499,6 +574,7 @@ app.post('/api/sync', auth, async (req, res) => {
 const EXT = {
   background: ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.mp4', '.webm'],
   music: ['.mp3', '.ogg', '.wav', '.m4a'],
+  premium: ['.png', '.jpg', '.jpeg', '.gif', '.webp'],
 };
 const localUpload = multer({
   storage: multer.diskStorage({
@@ -520,6 +596,7 @@ const cloudUpload = multer({
   },
 });
 app.post('/api/upload/:kind', auth, (req, res) => {
+  if (req.params.kind === 'premium' && !metaFor(db[req.session.uid]).premium) return res.status(403).json({ error: 'Premium erforderlich' });
   const handler = SUPABASE_ENABLED ? cloudUpload.single('file') : localUpload.single('file');
   handler(req, res, async err => {
     if (err || !req.file) return res.status(400).json({ error: err ? err.message : 'Keine Datei' });
@@ -614,6 +691,23 @@ app.get('/api/ban-info', (req,res)=>{
   const m=metaFor(user); res.json({banned:true,reason:m.bannedReason||'Account gesperrt',at:m.bannedAt||0});
 });
 
+// Presence endpoint: prefers Discord Bot Gateway, falls back to Lanyard.
+app.get('/api/presence/:id', async (req, res) => {
+  const id = String(req.params.id || '');
+  const user = db[id];
+  if (!user || isBanned(user)) return res.status(404).json({ success: false, error: 'User nicht gefunden' });
+  const cached = presenceCache.get(id);
+  if (cached && Date.now() - Number(cached.updated_at || 0) < 10 * 60 * 1000) return res.json({ success: true, data: cached, gatewayReady });
+  try {
+    const r = await fetch(`https://api.lanyard.rest/v1/users/${encodeURIComponent(id)}`, { headers: { 'User-Agent': 'Caruzo/1.0' } });
+    if (r.ok) {
+      const j = await r.json();
+      if (j?.success && j?.data) return res.json({ success: true, data: { ...j.data, source: 'lanyard' }, gatewayReady });
+    }
+  } catch {}
+  return res.json({ success: true, data: { discord_status: 'offline', activities: [], source: gatewayReady ? 'discord-bot' : 'unavailable' }, gatewayReady });
+});
+
 // --- Öffentliche API ---
 const VIEW_COOLDOWN_MS = 6 * 60 * 60 * 1000;
 const recentViews = new Map();
@@ -663,4 +757,4 @@ app.get('/:name', (req, res, next) => {
   res.status(user ? 200 : 404).sendFile(path.join(__dirname, 'public', 'profile.html'));
 });
 
-hydrateFromSupabase().finally(() => app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)));
+hydrateFromSupabase().finally(() => { startDiscordGateway(); app.listen(PORT, '0.0.0.0', () => console.log(`Läuft auf ${BASE_URL} (Port ${PORT})`)); });
