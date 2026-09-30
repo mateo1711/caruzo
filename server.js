@@ -9,14 +9,15 @@ const WebSocket = require('ws');
 
 const {
   DISCORD_CLIENT_ID: CID, DISCORD_CLIENT_SECRET: SECRET,
-  BASE_URL = 'http://localhost:3000', SESSION_SECRET = 'change-me',
+  BASE_URL: BASE_URL_RAW = 'http://localhost:3000', SESSION_SECRET = 'change-me',
   HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
   ADMIN_DISCORD_IDS = '219224335670312960',
   SPOTIFY_CLIENT_ID = '', SPOTIFY_CLIENT_SECRET = '',
 } = process.env;
+const BASE_URL = String(BASE_URL_RAW || 'http://localhost:3000').trim().replace(/\/+$/, '');
 const REDIRECT = `${BASE_URL}/auth/callback`;
-const SPOTIFY_REDIRECT = `${BASE_URL}/auth/spotify/callback`;
+const SPOTIFY_REDIRECT = String(process.env.SPOTIFY_REDIRECT_URI || `${BASE_URL}/auth/spotify/callback`).trim();
 // Set DATA_DIR=/var/data and UPLOAD_DIR=/var/data/uploads on Render with a Persistent Disk.
 // This keeps profiles and uploaded media across deploys.
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, 'data');
@@ -353,7 +354,7 @@ async function tokenRequest(params) {
 const spotifyNowCache = new Map();
 function spotifyConfigured() { return !!(SPOTIFY_CLIENT_ID && SPOTIFY_CLIENT_SECRET); }
 async function spotifyTokenRequest(params) {
-  if (!spotifyConfigured()) return null;
+  if (!spotifyConfigured()) return { ok: false, status: 0, error: 'spotify_not_configured' };
   try {
     const r = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
@@ -363,9 +364,19 @@ async function spotifyTokenRequest(params) {
       },
       body: new URLSearchParams(params),
     });
-    if (!r.ok) { console.error('Spotify token:', r.status, await r.text()); return null; }
-    return await r.json();
-  } catch (e) { console.error('Spotify token:', e.message); return null; }
+    let data = null;
+    let raw = '';
+    try { data = await r.json(); } catch { try { raw = await r.text(); } catch {} }
+    if (!r.ok) {
+      const detail = String(data?.error_description || data?.error || raw || `HTTP ${r.status}`).slice(0, 300);
+      console.error('Spotify token:', r.status, detail);
+      return { ok: false, status: r.status, error: detail };
+    }
+    return { ok: true, status: r.status, data };
+  } catch (e) {
+    console.error('Spotify token:', e.message);
+    return { ok: false, status: 0, error: e.message || 'network_error' };
+  }
 }
 async function spotifyApi(token, endpoint) {
   try {
@@ -380,7 +391,8 @@ async function ensureSpotifyAccess(user) {
   if (!a?.access) return '';
   if (Number(a.expiresAt || 0) > Date.now() + 60000) return a.access;
   if (!a.refresh) return '';
-  const tok = await spotifyTokenRequest({ grant_type: 'refresh_token', refresh_token: a.refresh });
+  const tr = await spotifyTokenRequest({ grant_type: 'refresh_token', refresh_token: a.refresh });
+  const tok = tr?.ok ? tr.data : null;
   if (!tok?.access_token) return '';
   user.spotifyAuth = {
     access: tok.access_token,
@@ -742,49 +754,105 @@ app.post('/api/me', auth, async (req, res) => {
 
 
 // --- Spotify OAuth ---
+function spotifyStateSign(payload) {
+  const body = Buffer.from(JSON.stringify(payload)).toString('base64url');
+  const sig = crypto.createHmac('sha256', String(SESSION_SECRET)).update(body).digest('base64url');
+  return `${body}.${sig}`;
+}
+function spotifyStateVerify(value) {
+  try {
+    const [body, sig] = String(value || '').split('.');
+    if (!body || !sig) return null;
+    const expected = crypto.createHmac('sha256', String(SESSION_SECRET)).update(body).digest('base64url');
+    const a = Buffer.from(sig), b = Buffer.from(expected);
+    if (a.length !== b.length || !crypto.timingSafeEqual(a, b)) return null;
+    const data = JSON.parse(Buffer.from(body, 'base64url').toString('utf8'));
+    if (!data?.uid || !data?.at || Date.now() - Number(data.at) > 15 * 60 * 1000) return null;
+    return data;
+  } catch { return null; }
+}
+function spotifyDashboardRedirect(status, detail = '') {
+  const q = new URLSearchParams({ spotify: status });
+  if (detail) q.set('detail', String(detail).slice(0, 220));
+  return `/dashboard?${q.toString()}#media`;
+}
 app.get('/auth/spotify', auth, (req, res) => {
-  if (!spotifyConfigured()) return res.status(500).send('SPOTIFY_CLIENT_ID / SPOTIFY_CLIENT_SECRET fehlen in Render Environment.');
-  req.session.spotifyState = crypto.randomBytes(18).toString('hex');
+  if (!spotifyConfigured()) return res.redirect(spotifyDashboardRedirect('not-configured'));
+  const uid = String(req.session.uid || '');
+  if (!uid || !db[uid]) return res.redirect('/login');
+  const state = spotifyStateSign({ uid, at: Date.now(), nonce: crypto.randomBytes(12).toString('hex') });
+  req.session.spotifyState = state;
   const q = new URLSearchParams({
     client_id: SPOTIFY_CLIENT_ID,
     response_type: 'code',
     redirect_uri: SPOTIFY_REDIRECT,
-    state: req.session.spotifyState,
-    scope: 'user-read-private user-read-currently-playing',
+    state,
+    scope: 'user-read-private user-read-currently-playing user-read-playback-state',
+    show_dialog: 'true',
   });
-  res.redirect(`https://accounts.spotify.com/authorize?${q}`);
+  // Session explizit speichern, bevor der Browser Caruzo verlässt. Das verhindert
+  // verlorene Sessions bei externen OAuth-Redirects auf Reverse-Proxy-Hosts.
+  req.session.save(err => {
+    if (err) console.error('Spotify session save:', err.message);
+    res.redirect(`https://accounts.spotify.com/authorize?${q}`);
+  });
 });
 
 app.get('/auth/spotify/callback', async (req, res) => {
   try {
-    const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
+    const { code, state, error, error_description: errorDescription } = req.query;
+    if (error) return res.redirect(spotifyDashboardRedirect('denied', errorDescription || error));
+
+    // State ist HMAC-signiert und enthält die Discord-User-ID. Dadurch bleibt der
+    // Callback auch stabil, falls die Browser-Session beim externen Redirect neu
+    // aufgebaut wurde (z. B. www/non-www oder Proxy-Cookie-Wechsel).
+    const verified = spotifyStateVerify(state);
+    if (!verified) return res.redirect(spotifyDashboardRedirect('state-error', 'OAuth state konnte nicht validiert werden.'));
+    const uid = String(verified.uid);
+    const user = db[uid];
     if (!user) return res.redirect('/login');
-    const { code, state, error } = req.query;
-    if (error) return res.redirect('/dashboard?spotify=denied');
-    if (!code || !state || state !== req.session.spotifyState) return res.status(400).send('Ungültige Spotify-Verknüpfung (state).');
+    if (!code) return res.redirect(spotifyDashboardRedirect('error', 'Spotify hat keinen Authorization Code zurückgegeben.'));
+
+    // Session nach erfolgreicher State-Prüfung wieder an den User binden.
+    req.session.uid = uid;
+    req.session.siteUnlocked = true;
     delete req.session.spotifyState;
-    const tok = await spotifyTokenRequest({ grant_type: 'authorization_code', code, redirect_uri: SPOTIFY_REDIRECT });
-    if (!tok?.access_token) return res.redirect('/dashboard?spotify=error');
+
+    const tr = await spotifyTokenRequest({ grant_type: 'authorization_code', code, redirect_uri: SPOTIFY_REDIRECT });
+    const tok = tr?.ok ? tr.data : null;
+    if (!tok?.access_token) return res.redirect(spotifyDashboardRedirect('token-error', tr?.error || `Token HTTP ${tr?.status || 0}`));
+
     const meResp = await spotifyApi(tok.access_token, '/me');
-    if (!meResp.ok || !meResp.data) return res.redirect('/dashboard?spotify=profile-error');
+    if (!meResp.ok || !meResp.data) {
+      const detail = meResp.data?.error?.message || `Spotify Profil HTTP ${meResp.status || 0}`;
+      return res.redirect(spotifyDashboardRedirect('profile-error', detail));
+    }
+
     user.spotifyAuth = {
       access: tok.access_token,
-      refresh: tok.refresh_token || '',
+      refresh: tok.refresh_token || user.spotifyAuth?.refresh || '',
       expiresAt: Date.now() + Number(tok.expires_in || 3600) * 1000,
       scope: tok.scope || '',
     };
     user.spotifyAccount = spotifyAccountView(meResp.data);
     spotifyNowCache.delete(String(user.id));
     await saveUser(user);
-    return res.redirect('/dashboard?spotify=connected');
-  } catch (e) { console.error('Spotify callback:', e); return res.redirect('/dashboard?spotify=error'); }
+
+    return req.session.save(err => {
+      if (err) console.error('Spotify callback session save:', err.message);
+      res.redirect(spotifyDashboardRedirect('connected'));
+    });
+  } catch (e) {
+    console.error('Spotify callback:', e);
+    return res.redirect(spotifyDashboardRedirect('error', e?.message || 'Unbekannter Callback-Fehler'));
+  }
 });
 
 app.get('/api/spotify/status', auth, async (req, res) => {
   const user = db[req.session.uid];
   const connected = !!(user.spotifyAuth?.access && user.spotifyAccount?.connected);
   const now = connected ? await getSpotifyNowForUser(user) : { active: false, connected: false };
-  res.json({ connected, configured: spotifyConfigured(), account: user.spotifyAccount || null, now });
+  res.json({ connected, configured: spotifyConfigured(), redirectUri: SPOTIFY_REDIRECT, account: user.spotifyAccount || null, now });
 });
 app.post('/api/spotify/disconnect', auth, async (req, res) => {
   const user = db[req.session.uid];
