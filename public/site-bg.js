@@ -98,7 +98,7 @@
     if (document.getElementById('caruzoBgCss')) return;
     var s = document.createElement('style'); s.id = 'caruzoBgCss';
     s.textContent = '#caruzoBg{position:fixed;inset:0;width:100%;height:100%;z-index:-6;pointer-events:none;opacity:0;transition:opacity .8s ease}' +
-      '#caruzoBg.on{opacity:1}body.has-bg:before{opacity:.22}body.has-bg .ambient{display:none}';
+      '#caruzoBg.on{opacity:1}html body.has-bg{background:transparent!important}body.has-bg:before{opacity:.22}body.has-bg .ambient{display:none}';
     document.head.appendChild(s);
   }
   function sh(g, t, src) { var o = g.createShader(t); g.shaderSource(o, src); g.compileShader(o); return o; }
@@ -107,7 +107,7 @@
     css();
     var cv = document.createElement('canvas'); cv.id = 'caruzoBg'; cv.setAttribute('aria-hidden', 'true');
     var g = cv.getContext('webgl', { antialias: false, alpha: false, powerPreference: 'low-power' });
-    if (!g) return false;
+    if (!g) { console.warn('CaruzoBG: WebGL nicht verfügbar'); return false; }
     var pr = g.createProgram(); g.attachShader(pr, sh(g, g.VERTEX_SHADER, VS)); g.attachShader(pr, sh(g, g.FRAGMENT_SHADER, FS)); g.linkProgram(pr);
     if (!g.getProgramParameter(pr, g.LINK_STATUS)) { console.warn('CaruzoBG shader:', g.getProgramInfoLog(pr)); return false; }
     g.useProgram(pr);
