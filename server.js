@@ -219,7 +219,7 @@ function defaults(dc) {
     spotifyAuth: null,
     floating: [],
     premiumSections: [],
-    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', custom: [] },
+    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', spotifyProfile: '', custom: [] },
     views: 0,
     createdAt: Date.now(),
   };
@@ -310,7 +310,7 @@ function applyUpdate(user, b) {
     valorant: str(l.valorant, 64).trim(),
     discordServerName: str(l.discordServerName, 48).trim(),
     discordServer: discordInvite(l.discordServer),
-    instagram: url(l.instagram), youtube: url(l.youtube), github: url(l.github), bluesky: url(l.bluesky),
+    instagram: url(l.instagram), youtube: url(l.youtube), github: url(l.github), bluesky: url(l.bluesky), spotifyProfile: url(l.spotifyProfile),
     custom: (Array.isArray(l.custom) ? l.custom : []).slice(0, 12).map(x => ({ label: str(x.label, 30), url: url(x.url) })).filter(x => x.url),
   };
   return null;
@@ -504,7 +504,7 @@ function normalizeGatewayPresence(d, source = 'discord-bot') {
     activities: Array.isArray(d?.activities) ? d.activities.map(a => ({
       id: str(a?.id, 80), name: str(a?.name, 120), type: Number(a?.type ?? 0),
       application_id: str(a?.application_id, 80), details: str(a?.details, 180), state: str(a?.state, 180),
-      url: url(a?.url), timestamps: a?.timestamps || null,
+      sync_id: str(a?.sync_id, 120), url: url(a?.url), timestamps: a?.timestamps || null,
       assets: a?.assets && typeof a.assets === 'object' ? {
         large_image: str(a.assets.large_image, 180), large_text: str(a.assets.large_text, 180),
         small_image: str(a.assets.small_image, 180), small_text: str(a.assets.small_text, 180),
@@ -608,6 +608,88 @@ function startDiscordGateway() {
   };
   connect();
   process.once('SIGTERM', () => { shuttingDown = true; clearInterval(heartbeat); try { discordGatewaySocket?.close(); } catch {} });
+}
+
+
+/* ------------------------------------------------------------------ */
+/* Spotify Now Playing via Discord Presence                            */
+/* No Spotify Developer API / Premium subscription is required.        */
+/* ------------------------------------------------------------------ */
+function discordSpotifyImage(asset) {
+  const v = String(asset || '');
+  if (!v) return '';
+  if (/^https?:\/\//i.test(v)) return url(v);
+  if (v.startsWith('spotify:')) {
+    const id = v.slice('spotify:'.length).replace(/[^A-Za-z0-9]/g, '');
+    return id ? `https://i.scdn.co/image/${id}` : '';
+  }
+  return '';
+}
+function splitSpotifyArtists(value) {
+  const s = String(value || '').replace(/^by\s+/i, '').trim();
+  if (!s) return [];
+  return s.split(/\s*[;,]\s*/).map(x => str(x, 100)).filter(Boolean).slice(0, 6);
+}
+function spotifyNowFromDiscordPresence(data) {
+  if (!data) return { active: false, connected: true, source: 'discord' };
+
+  // Lanyard exposes a normalized Spotify object when Discord reports Spotify activity.
+  const ly = data.spotify;
+  if (ly && (data.listening_to_spotify || ly.song || ly.track_id)) {
+    const start = Number(ly.timestamps?.start || 0);
+    const end = Number(ly.timestamps?.end || 0);
+    return {
+      active: true, connected: true, isPlaying: true, source: 'discord-lanyard',
+      name: str(ly.song, 180), artists: splitSpotifyArtists(ly.artist), album: str(ly.album, 180),
+      image: url(ly.album_art_url || ''),
+      url: ly.track_id ? `https://open.spotify.com/track/${encodeURIComponent(String(ly.track_id))}` : '',
+      progressMs: start ? Math.max(0, Date.now() - start) : 0,
+      durationMs: start && end > start ? end - start : 0,
+      fetchedAt: Date.now(),
+    };
+  }
+
+  // Native Discord Gateway activity. Spotify is activity type 2 (Listening).
+  const a = (Array.isArray(data.activities) ? data.activities : []).find(x =>
+    x && Number(x.type) === 2 && String(x.name || '').toLowerCase() === 'spotify'
+  );
+  if (!a) return { active: false, connected: true, source: data.source || 'discord' };
+  const start = Number(a.timestamps?.start || 0);
+  const end = Number(a.timestamps?.end || 0);
+  const trackId = String(a.sync_id || '').replace(/[^A-Za-z0-9]/g, '');
+  return {
+    active: true, connected: true, isPlaying: true, source: 'discord-gateway',
+    name: str(a.details || 'Spotify', 180), artists: splitSpotifyArtists(a.state),
+    album: str(a.assets?.large_text || '', 180), image: discordSpotifyImage(a.assets?.large_image),
+    url: trackId ? `https://open.spotify.com/track/${trackId}` : '',
+    progressMs: start ? Math.max(0, Date.now() - start) : 0,
+    durationMs: start && end > start ? end - start : 0,
+    fetchedAt: Date.now(),
+  };
+}
+async function spotifyPresenceSnapshot(userId) {
+  const id = String(userId || '');
+  if (!id) return null;
+  let cached = presenceCache.get(id) || null;
+  const age = cached ? Date.now() - Number(cached.updated_at || 0) : Infinity;
+  if (gatewayReady && (!cached || age > 12000 || !(cached.activities || []).some(a => Number(a?.type) === 2 && String(a?.name || '').toLowerCase() === 'spotify'))) {
+    try { const hit = await requestPresenceFromGateway(id); if (hit) cached = hit; } catch {}
+  }
+  const gatewayFresh = cached && Date.now() - Number(cached.updated_at || 0) < 90000 ? cached : null;
+  // If Gateway already has Spotify, use it immediately.
+  if (gatewayFresh && (gatewayFresh.activities || []).some(a => Number(a?.type) === 2 && String(a?.name || '').toLowerCase() === 'spotify')) return gatewayFresh;
+  // Lanyard can expose Discord's Spotify object and is a useful fallback.
+  try {
+    const ctrl = new AbortController(); const timer = setTimeout(() => ctrl.abort(), 1800);
+    const r = await fetch(`https://api.lanyard.rest/v1/users/${encodeURIComponent(id)}`, { headers: { 'User-Agent':'Caruzo/1.0', 'Cache-Control':'no-cache' }, signal: ctrl.signal });
+    clearTimeout(timer);
+    if (r.ok) { const j = await r.json(); if (j?.success && j?.data) {
+      const ly = { ...j.data, updated_at: Date.now(), source: 'lanyard' };
+      if (ly.spotify || ly.listening_to_spotify) return ly;
+      if (!gatewayFresh) return ly;
+    }}
+  } catch {}
+  return gatewayFresh;
 }
 
 /* ------------------------------------------------------------------ */
@@ -904,18 +986,18 @@ app.get('/auth/spotify/callback', async (req, res) => {
 
 app.get('/api/spotify/status', auth, async (req, res) => {
   const user = db[req.session.uid];
-  const connected = !!(user.spotifyAuth?.access && user.spotifyAccount?.connected);
-  const now = connected ? await getSpotifyNowForUser(user) : { active: false, connected: false };
+  const presence = await spotifyPresenceSnapshot(user.discord?.id || user.id);
+  const now = spotifyNowFromDiscordPresence(presence);
   res.setHeader('Cache-Control', 'no-store');
   res.json({
-    connected,
-    configured: spotifyConfigured(),
-    authMode: 'pkce',
-    redirectUri: SPOTIFY_REDIRECT,
-    clientIdSet: !!SPOTIFY_ID,
-    account: user.spotifyAccount || null,
-    diagnostic: user.spotifyDiag || null,
+    connected: true,
+    configured: true,
+    authMode: 'discord-presence',
+    account: null,
+    diagnostic: null,
     now,
+    source: now.source || presence?.source || 'discord',
+    message: 'Spotify Now Playing wird automatisch aus deiner Discord-Aktivität gelesen.'
   });
 });
 app.post('/api/spotify/disconnect', auth, async (req, res) => {
@@ -928,10 +1010,10 @@ app.post('/api/spotify/disconnect', auth, async (req, res) => {
 app.get('/api/spotify/now/:name', async (req, res) => {
   const user = findByName(req.params.name === '__home__' ? HOME_USER : req.params.name);
   if (!user || isBanned(user)) return res.status(404).json({ active: false });
-  if (user.settings?.showSpotifyNowPlaying === false || !user.spotifyAccount?.connected) return res.json({ active: false, connected: !!user.spotifyAccount?.connected });
-  const now = await getSpotifyNowForUser(user);
   res.set('Cache-Control', 'no-store');
-  res.json(now);
+  if (user.settings?.showSpotifyNowPlaying === false) return res.json({ active: false, connected: true, source: 'discord' });
+  const presence = await spotifyPresenceSnapshot(user.discord?.id || user.id);
+  res.json(spotifyNowFromDiscordPresence(presence));
 });
 
 // Bot Verify: validates that the Discord user ID exists via a bot token.
