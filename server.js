@@ -38,7 +38,8 @@ function ensureAdminSettings() {
   adminState.settings.backgrounds ||= {};
   for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|1[0-7])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none';
   adminState.settings.scrollAnimations ||= {};
-  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
+  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
+  if (!['none','neon-dot','halo-ring','precision','diamond','spark','pixel','orbit','minimal-arrow'].includes(String(adminState.settings.landingCursor || ''))) adminState.settings.landingCursor = 'none';
 }
 ensureAdminSettings();
 const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
@@ -1253,6 +1254,7 @@ app.get('/api/site-settings', (req, res) => {
   res.json({
     backgrounds: { ...adminState.settings.backgrounds },
     scrollAnimations: { ...adminState.settings.scrollAnimations },
+    landingCursor: adminState.settings.landingCursor || 'none',
   });
 });
 app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
@@ -1269,12 +1271,22 @@ app.post('/api/admin/scroll-animation', adminOnly, async (req, res) => {
   const page = String(req.body?.page || 'landing');
   const animation = String(req.body?.animation || 'none');
   if (page !== 'landing') return res.status(400).json({ error: 'Scroll Animation ist nur für die Hauptseite verfügbar' });
-  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards'].includes(animation)) return res.status(400).json({ error: 'Ungültige Scroll Animation' });
+  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew'].includes(animation)) return res.status(400).json({ error: 'Ungültige Scroll Animation' });
   ensureAdminSettings();
   adminState.settings.scrollAnimations[page] = animation;
   audit('scroll_animation_changed', { page, animation, by: req.session.uid });
   await saveAdminState();
   res.json({ ok:true, scrollAnimations:{ ...adminState.settings.scrollAnimations } });
+});
+app.post('/api/admin/landing-cursor', adminOnly, async (req, res) => {
+  const cursor = String(req.body?.cursor || 'none');
+  const allowed = ['none','neon-dot','halo-ring','precision','diamond','spark','pixel','orbit','minimal-arrow'];
+  if (!allowed.includes(cursor)) return res.status(400).json({ error: 'Ungültiger Cursor' });
+  ensureAdminSettings();
+  adminState.settings.landingCursor = cursor;
+  audit('landing_cursor_changed', { cursor, by: req.session.uid });
+  await saveAdminState();
+  res.json({ ok:true, landingCursor:cursor });
 });
 // --- Changelog ------------------------------------------------------
 app.get('/api/changelog', (req,res)=>{
