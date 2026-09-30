@@ -205,6 +205,18 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .premium-tabbed{overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 36%,rgba(255,255,255,.1));border-radius:18px;background:color-mix(in srgb,var(--card) 94%,var(--accent) 6%);box-shadow:0 20px 60px rgba(0,0,0,.24)}.premium-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(8,6,7,.38)}.premium-tab{flex:none;display:flex;align-items:center;gap:7px;min-height:42px;padding:0 16px;border:0;border-right:1px solid rgba(255,255,255,.055);background:transparent;color:#91858b;font:700 10px var(--mono);cursor:pointer;transition:.2s}.premium-tab:before{content:'●';font-size:7px;color:var(--accent);opacity:.7}.premium-tab.on{color:#fff;background:color-mix(in srgb,var(--accent) 8%,transparent);box-shadow:inset 0 -2px 0 var(--accent)}.premium-tab-panel{padding:0}.premium-tab-copy{padding:18px 20px;color:#d8ccd1;white-space:pre-wrap;line-height:1.7}.premium-info-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.premium-info-cell{min-height:70px;padding:14px 18px;border-right:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.05)}.premium-info-cell:last-child{border-right:0}.premium-info-cell small{display:block;color:#7c7478;font:700 8px var(--mono);letter-spacing:.18em;text-transform:uppercase;margin-bottom:7px}.premium-info-cell b{display:block;color:#f4edf0;font:650 12px var(--mono);overflow-wrap:anywhere}
 @media(max-width:760px){.premium-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-info-cell:nth-child(2n){border-right:0}}
 @media(max-width:760px){.premium-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-custom-section>h2{font-size:22px}}
+
+/* Profile reactions */
+.reaction-wrap{--reaction-accent:var(--accent);display:flex;align-items:center;gap:10px;flex-wrap:wrap;position:relative;z-index:8}.reaction-wrap.profile-bottom{margin:16px 22px 18px;padding-top:14px;border-top:1px solid rgba(255,255,255,.065)}.reaction-wrap.section-placement{width:min(var(--profile-width),calc(100vw - 34px));margin:0 auto;padding:13px 15px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:rgba(9,9,13,.48);backdrop-filter:blur(18px);box-shadow:0 14px 42px rgba(0,0,0,.22)}.reaction-wrap.floating{position:fixed;top:50%;z-index:45;transform:translateY(-50%);display:grid;gap:7px;padding:9px;border:1px solid rgba(255,255,255,.09);border-radius:16px;background:rgba(7,7,10,.7);backdrop-filter:blur(18px);box-shadow:0 18px 50px rgba(0,0,0,.35)}.reaction-wrap.floating-left{left:14px}.reaction-wrap.floating-right{right:14px}.reaction-label{color:#7f8088;font:800 8px var(--mono);letter-spacing:.13em;text-transform:uppercase;margin-right:2px}.reaction-wrap.floating .reaction-label{writing-mode:vertical-rl;transform:rotate(180deg);margin:0 auto 2px}.reaction-buttons{display:flex;align-items:center;gap:7px;flex-wrap:wrap}.reaction-wrap.floating .reaction-buttons{display:grid}.reaction-btn{position:relative;min-width:45px;height:38px;padding:0 10px;border:1px solid rgba(255,255,255,.1);border-radius:999px;background:rgba(255,255,255,.035);color:#fff;display:inline-flex;align-items:center;justify-content:center;gap:6px;cursor:pointer;transition:transform .16s,border-color .16s,background .16s,box-shadow .16s;overflow:visible}.reaction-btn:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.1));background:color-mix(in srgb,var(--accent) 8%,rgba(255,255,255,.03));box-shadow:0 8px 24px color-mix(in srgb,var(--accent) 12%,transparent)}.reaction-btn .emoji{font-size:19px;line-height:1}.reaction-btn .count{font:800 8px var(--mono);color:#92939b}.reaction-btn.reacted{border-color:color-mix(in srgb,var(--accent) 45%,transparent);background:color-mix(in srgb,var(--accent) 10%,rgba(255,255,255,.03))}.reaction-fx{position:absolute;inset:0;pointer-events:none;overflow:visible}.reaction-particle{position:absolute;left:50%;top:50%;font-size:15px;pointer-events:none;animation:reactionParticle .8s ease-out forwards}@keyframes reactionParticle{0%{opacity:0;transform:translate(-50%,-45%) scale(.7)}20%{opacity:1}100%{opacity:0;transform:translate(calc(-50% + var(--x)),calc(-50% + var(--y))) scale(1.25) rotate(var(--r))}}
+.reaction-anim-pop{animation:reactionPop .42s cubic-bezier(.2,.9,.2,1)}@keyframes reactionPop{0%{transform:scale(1)}40%{transform:scale(1.32)}100%{transform:scale(1)}}
+.reaction-anim-bounce{animation:reactionBounce .58s cubic-bezier(.2,.8,.3,1)}@keyframes reactionBounce{0%,100%{transform:translateY(0)}35%{transform:translateY(-10px) scale(1.1)}65%{transform:translateY(2px)}}
+.reaction-anim-float .emoji{animation:reactionFloat .72s ease-out}@keyframes reactionFloat{0%{transform:translateY(0);opacity:1}55%{transform:translateY(-15px) scale(1.18)}100%{transform:translateY(0);opacity:1}}
+.reaction-anim-ripple:after{content:"";position:absolute;inset:3px;border-radius:999px;border:2px solid color-mix(in srgb,var(--accent) 70%,white 5%);animation:reactionRipple .65s ease-out forwards}@keyframes reactionRipple{from{opacity:.8;transform:scale(.55)}to{opacity:0;transform:scale(1.75)}}
+.reaction-anim-shake{animation:reactionShake .4s ease}@keyframes reactionShake{0%,100%{transform:translateX(0)}20%{transform:translateX(-5px) rotate(-5deg)}40%{transform:translateX(5px) rotate(5deg)}60%{transform:translateX(-3px) rotate(-3deg)}80%{transform:translateX(3px) rotate(3deg)}}
+.reaction-anim-glow{animation:reactionGlow .65s ease}@keyframes reactionGlow{0%,100%{box-shadow:0 0 0 transparent}45%{box-shadow:0 0 18px color-mix(in srgb,var(--accent) 65%,transparent),0 0 42px color-mix(in srgb,var(--accent) 30%,transparent);transform:scale(1.08)}}
+.reaction-anim-burst{animation:reactionPop .42s cubic-bezier(.2,.9,.2,1)}.reaction-anim-confetti{animation:reactionPop .42s cubic-bezier(.2,.9,.2,1)}
+@media(max-width:760px){.reaction-wrap.floating{top:auto;bottom:16px;left:50%!important;right:auto!important;transform:translateX(-50%);display:flex;max-width:calc(100vw - 24px);overflow-x:auto}.reaction-wrap.floating .reaction-label{writing-mode:initial;transform:none;margin:0 2px 0 0}.reaction-wrap.floating .reaction-buttons{display:flex;flex-wrap:nowrap}.reaction-wrap.profile-bottom{margin-left:15px;margin-right:15px}.reaction-wrap.section-placement{width:min(var(--profile-width),calc(100vw - 20px))}}
+
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -222,7 +234,10 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
     <div class="card spotify-now" id="spotifyNow" hidden></div>
     <div class="card spotify" id="spotify" hidden></div>
   </section>
+  <div id="reactionBeforeHighlights"></div>
   <section id="highlights" hidden><div class="highlight-grid" id="highlightGrid"></div></section>
+  <div id="reactionAfterHighlights"></div>
+  <div id="reactionBeforeSocials"></div>
   <section id="socials"><div class="grid" id="grid"></div></section>
   <section id="premiumCustom" hidden><div class="premium-custom-list" id="premiumSectionsList"></div></section>
   <section id="about" hidden><div class="card about" id="aboutText"></div></section>
@@ -298,6 +313,51 @@ function commandBackgroundYouTube(){
 fetch('/api/profile/' + encodeURIComponent(path)).then(r => r.ok ? r.json() : Promise.reject()).then(render).catch(() => {
   document.body.replaceChildren(el('p', { style: 'padding:60px;text-align:center' }, 'Profil nicht gefunden.'));
 });
+
+
+function reactionPlacementTarget(position, profileCard){
+  if(position==='profile-bottom') return profileCard;
+  if(position==='before-highlights') return $('#reactionBeforeHighlights');
+  if(position==='after-highlights') return $('#reactionAfterHighlights');
+  if(position==='before-socials') return $('#reactionBeforeSocials');
+  return document.body;
+}
+function reactionBurst(button,emoji,kind){
+  const fx=el('span',{class:'reaction-fx'});button.append(fx);
+  const pieces=kind==='confetti'?10:kind==='burst'?7:0;
+  for(let i=0;i<pieces;i++){
+    const p=el('span',{class:'reaction-particle'},kind==='confetti'?['✦','•','◆','+'][i%4]:emoji);
+    const ang=(Math.PI*2*i/Math.max(1,pieces))+(Math.random()*.45-.22),dist=kind==='confetti'?38+Math.random()*26:28+Math.random()*20;
+    p.style.setProperty('--x',`${Math.cos(ang)*dist}px`);p.style.setProperty('--y',`${Math.sin(ang)*dist}px`);p.style.setProperty('--r',`${Math.round(Math.random()*100-50)}deg`);fx.append(p);
+  }
+  setTimeout(()=>fx.remove(),900);
+}
+function playReactionAnimation(button,emoji,kind='pop'){
+  button.classList.remove(...[...button.classList].filter(x=>x.startsWith('reaction-anim-')));
+  void button.offsetWidth;button.classList.add('reaction-anim-'+kind);
+  if(kind==='burst'||kind==='confetti')reactionBurst(button,emoji,kind);
+  setTimeout(()=>button.classList.remove('reaction-anim-'+kind),900);
+}
+function renderProfileReactions(u,profileCard){
+  const cfg=u.reactions||{};if(cfg.enabled===false)return;const items=(Array.isArray(cfg.items)?cfg.items:[]).slice(0,8);if(!items.length)return;
+  const position=cfg.position||'profile-bottom';
+  const wrap=el('div',{class:'reaction-wrap '+(position==='profile-bottom'?'profile-bottom':position.startsWith('floating')?'floating '+position:'section-placement')});
+  const label=el('span',{class:'reaction-label'},cfg.title||'React');const buttons=el('div',{class:'reaction-buttons'});wrap.append(label,buttons);
+  items.forEach(item=>{
+    const count=el('span',{class:'count'},Number(item.count||0).toLocaleString('de-CH'));if(cfg.showCounts===false)count.hidden=true;
+    const b=el('button',{class:'reaction-btn',type:'button',title:item.label||'Reaction','aria-label':item.label||'Reaction'},el('span',{class:'emoji'},item.emoji||'✨'),count);
+    b.onclick=async()=>{
+      if(b.dataset.busy)return;b.dataset.busy='1';playReactionAnimation(b,item.emoji||'✨',cfg.animation||'pop');
+      try{
+        const r=await fetch('/api/profile/'+encodeURIComponent(u.username)+'/reaction',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({id:item.id})});
+        const data=await r.json().catch(()=>({}));
+        if(!r.ok){if(r.status===429){b.classList.add('reacted');toast(data.error||'Schon reagiert')}else toast(data.error||'Reaction fehlgeschlagen');return}
+        b.classList.add('reacted');item.count=Number(data.count||item.count||0);count.textContent=Number(item.count).toLocaleString('de-CH');
+      }catch{toast('Reaction konnte nicht gesendet werden')}finally{setTimeout(()=>delete b.dataset.busy,450)}
+    };buttons.append(b);
+  });
+  const target=reactionPlacementTarget(position,profileCard);target?.append(wrap);
+}
 
 function render(u) {
   const d = u.discord, s = u.settings, des = u.design || {}, vs = u.viewsStyle || {}, pf = u.pageFx || {};
@@ -399,6 +459,7 @@ function render(u) {
   p.append(el('div', { class: 'inner' }, avatar, info));
   setupProfileHover(p, u);
   typewriter(tl, u.tagline);
+  renderProfileReactions(u, p);
 
   // Highlights
   const highlightSection=$('#highlights'),highlightGrid=$('#highlightGrid');
