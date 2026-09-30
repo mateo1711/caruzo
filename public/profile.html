@@ -189,10 +189,13 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 
 
 /* Caruzo platform badges */
-.badges .platform-badge{width:auto;height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:6px;font:700 9px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.platform-badge.premium{color:#eadcff;border-color:color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.12));background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,transparent),rgba(236,72,153,.07));box-shadow:0 0 20px color-mix(in srgb,var(--accent) 18%,transparent)}.platform-badge.admin{color:#9bf2c2;border-color:rgba(57,229,140,.3);background:rgba(57,229,140,.07);box-shadow:0 0 18px rgba(57,229,140,.1)}.platform-badge i{font-style:normal;font-size:11px}
+.badges .platform-badge{width:auto;height:24px;padding:0 9px;border-radius:999px;border:1px solid rgba(255,255,255,.12);display:inline-flex;align-items:center;gap:6px;font:700 9px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;white-space:nowrap}.platform-badge.premium{color:#eadcff;border-color:color-mix(in srgb,var(--accent) 45%,rgba(255,255,255,.12));background:linear-gradient(135deg,color-mix(in srgb,var(--accent) 18%,transparent),rgba(236,72,153,.07));box-shadow:0 0 20px color-mix(in srgb,var(--accent) 18%,transparent)}.platform-badge.admin{color:#9bf2c2;border-color:rgba(57,229,140,.3);background:rgba(57,229,140,.07);box-shadow:0 0 18px rgba(57,229,140,.1)}.platform-badge.moderator{color:#9ed7ff;border-color:rgba(56,189,248,.3);background:rgba(56,189,248,.07);box-shadow:0 0 18px rgba(56,189,248,.1)}.platform-badge i{font-style:normal;font-size:11px}
 /* Premium custom sections */
 .premium-custom-list{display:grid;gap:34px}.premium-custom-section{display:grid;gap:13px}.premium-custom-section>h2{margin:0;font:700 27px/1.15 var(--mono);letter-spacing:-.05em;color:var(--text);text-shadow:0 0 24px color-mix(in srgb,var(--accent) 10%,transparent)}.premium-text-card{padding:20px 22px;white-space:pre-wrap;overflow-wrap:anywhere;color:#d7cad0;line-height:1.75;border-radius:var(--card-radius,26px)}.premium-gallery{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}.premium-gallery a{position:relative;aspect-ratio:1;border:1px solid rgba(255,255,255,.1);border-radius:18px;overflow:hidden;background:rgba(0,0,0,.24);box-shadow:0 18px 50px rgba(0,0,0,.24);transform:translateZ(0);transition:transform .28s cubic-bezier(.2,.7,.2,1),border-color .25s,box-shadow .25s}.premium-gallery a:after{content:"";position:absolute;inset:0;background:linear-gradient(145deg,rgba(255,255,255,.08),transparent 34%);opacity:0;transition:.25s}.premium-gallery a:hover{transform:translateY(-5px) scale(1.015);border-color:color-mix(in srgb,var(--accent) 44%,rgba(255,255,255,.1));box-shadow:0 24px 60px rgba(0,0,0,.35),0 0 30px color-mix(in srgb,var(--accent) 14%,transparent)}.premium-gallery a:hover:after{opacity:1}.premium-gallery img{width:100%;height:100%;object-fit:cover;display:block;transition:transform .45s cubic-bezier(.2,.7,.2,1),filter .35s}.premium-gallery a:hover img{transform:scale(1.055);filter:saturate(1.08)}
 .spotify-target{position:relative;z-index:1;width:100%;min-height:var(--spotify-height)}
+
+.premium-tabbed{overflow:hidden;border:1px solid color-mix(in srgb,var(--accent) 36%,rgba(255,255,255,.1));border-radius:18px;background:color-mix(in srgb,var(--card) 94%,var(--accent) 6%);box-shadow:0 20px 60px rgba(0,0,0,.24)}.premium-tabs{display:flex;gap:0;overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.08);background:rgba(8,6,7,.38)}.premium-tab{flex:none;display:flex;align-items:center;gap:7px;min-height:42px;padding:0 16px;border:0;border-right:1px solid rgba(255,255,255,.055);background:transparent;color:#91858b;font:700 10px var(--mono);cursor:pointer;transition:.2s}.premium-tab:before{content:'●';font-size:7px;color:var(--accent);opacity:.7}.premium-tab.on{color:#fff;background:color-mix(in srgb,var(--accent) 8%,transparent);box-shadow:inset 0 -2px 0 var(--accent)}.premium-tab-panel{padding:0}.premium-tab-copy{padding:18px 20px;color:#d8ccd1;white-space:pre-wrap;line-height:1.7}.premium-info-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}.premium-info-cell{min-height:70px;padding:14px 18px;border-right:1px solid rgba(255,255,255,.07);border-bottom:1px solid rgba(255,255,255,.05)}.premium-info-cell:last-child{border-right:0}.premium-info-cell small{display:block;color:#7c7478;font:700 8px var(--mono);letter-spacing:.18em;text-transform:uppercase;margin-bottom:7px}.premium-info-cell b{display:block;color:#f4edf0;font:650 12px var(--mono);overflow-wrap:anywhere}
+@media(max-width:760px){.premium-info-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-info-cell:nth-child(2n){border-right:0}}
 @media(max-width:760px){.premium-gallery{grid-template-columns:repeat(2,minmax(0,1fr))}.premium-custom-section>h2{font-size:22px}}
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
@@ -246,7 +249,7 @@ const PATH = {
 };
 const toast = m => { const t = $('#toast'); t.textContent = m; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 1800); };
 const host = u => { try { return new URL(u).hostname.replace(/^www\./, ''); } catch { return u; } };
-const STATUS = { online: ['#3ba55d', 'ONLINE'], idle: ['#f0b232', 'IDLE'], dnd: ['#ed4245', 'DND'], offline: ['#747f8d', 'OFFLINE'] };
+const STATUS = { online: ['#23a55a', 'ONLINE'], idle: ['#f0b232', 'ABWESEND'], dnd: ['#f23f43', 'BESCHÄFTIGT'], offline: ['#80848e', 'OFFLINE'] };
 
 const path = location.pathname.length > 1 ? decodeURIComponent(location.pathname.slice(1).split('/')[0]) : '__home__';
 let audio;
@@ -323,6 +326,7 @@ function render(u) {
   }));
   if (u.platform?.premium && s.showPremiumBadge !== false) profileBadges.push(el('span', { class: 'platform-badge premium', title: 'Caruzo Premium' }, el('i',{},'✦'), 'Premium'));
   if (u.platform?.admin && s.showAdminBadge !== false) profileBadges.push(el('span', { class: 'platform-badge admin', title: 'Caruzo Admin' }, el('i',{},'◆'), 'Admin'));
+  if (u.platform?.moderator && s.showModeratorBadge !== false) profileBadges.push(el('span', { class: 'platform-badge moderator', title: 'Caruzo Moderator' }, el('i',{},'◇'), 'Moderator'));
   if (profileBadges.length) info.append(el('div', { class: 'badges' }, profileBadges));
   const tl = el('div', { class: 'tagline', id: 'tagline' });
   info.append(tl);
@@ -396,7 +400,7 @@ function render(u) {
   if (video) { video.muted = !useVideoSound; video.volume = Math.max(0,Math.min(1,Number(u.background.videoVolume ?? 30)/100)); }
 
   // Status via Lanyard
-  if (s.showStatus || s.showActivity) { pollStatus(d.id, !!s.showStatus, !!s.showActivity); setInterval(() => pollStatus(d.id, !!s.showStatus, !!s.showActivity), 30000); }
+  if (s.showStatus || s.showActivity) startPresenceSync(d.id, !!s.showStatus, !!s.showActivity);
 
   setupCursor(u.cursor || {});
 
@@ -594,12 +598,17 @@ function renderPremiumSections(u){
       const images=(Array.isArray(sec.images)?sec.images:[]).filter(Boolean);if(!images.length)return;
       const gallery=el('div',{class:'premium-gallery'});images.forEach(src=>gallery.append(el('a',{href:src,target:'_blank',rel:'noopener noreferrer'},el('img',{src,alt:'',loading:'lazy'}))));section.append(gallery);
     }else{
-      if(!sec.text)return;section.append(el('div',{class:'card premium-text-card'},sec.text));
+      const tabs=Array.isArray(sec.tabs)&&sec.tabs.length?sec.tabs:[{label:'About Me',text:sec.text||'',fields:[]}];
+      if(!tabs.some(t=>t.text||(Array.isArray(t.fields)&&t.fields.some(f=>f.label||f.value))))return;
+      const box=el('div',{class:'premium-tabbed'}),nav=el('div',{class:'premium-tabs'}),panel=el('div',{class:'premium-tab-panel'});
+      const show=i=>{[...nav.children].forEach((b,n)=>b.classList.toggle('on',n===i));const tab=tabs[i]||tabs[0];panel.replaceChildren();const fields=(Array.isArray(tab.fields)?tab.fields:[]).filter(f=>f.label||f.value).slice(0,4);if(fields.length){const grid=el('div',{class:'premium-info-grid'});fields.forEach(f=>grid.append(el('div',{class:'premium-info-cell'},el('small',{},f.label||'INFO'),el('b',{},f.value||'—'))));panel.append(grid)}if(tab.text)panel.append(el('div',{class:'premium-tab-copy'},tab.text));};
+      tabs.forEach((tab,i)=>{const b=el('button',{class:'premium-tab'+(i===0?' on':''),type:'button'},tab.label||`Tab ${i+1}`);b.onclick=()=>show(i);nav.append(b)});box.append(nav,panel);show(0);section.append(box);
     }
     list.append(section);
   });
   host.hidden=!list.children.length;
 }
+
 
 function setupMusic(m) {
   audio = new Audio(m.url); audio.loop = true; const startVolume = Number.isFinite(Number(m.volume)) ? Number(m.volume) : 30; audio.volume = Math.max(0,Math.min(1,startVolume/100));
@@ -631,19 +640,29 @@ function renderActivity(data) {
   );
   box.hidden = false;
 }
-async function pollStatus(id, showStatus = true, showActivity = false) {
-  try {
-    const r = await (await fetch('/api/presence/' + encodeURIComponent(id), { cache:'no-store' })).json();
-    if (!r.success) return;
-    const [color, label] = STATUS[r.data.discord_status] || STATUS.offline;
-    document.documentElement.style.setProperty('--st', color);
-    document.querySelector('.avatar')?.style.setProperty('--st', color);
-    const st = $('#status');
-    if (showStatus) { st.style.display = 'inline-flex'; st.textContent = label; }
-    else st.style.display = 'none';
-    if (showActivity) renderActivity(r.data); else { const box=$('#activity'); if(box) box.hidden=true; }
-  } catch {}
+function applyPresence(data,showStatus=true,showActivity=false){
+  const status=String(data?.discord_status||'offline').toLowerCase();
+  const [color,label]=STATUS[status]||STATUS.offline;
+  document.documentElement.style.setProperty('--st',color);document.querySelector('.avatar')?.style.setProperty('--st',color);
+  const st=$('#status');if(showStatus){st.style.display='inline-flex';st.textContent=label;st.dataset.state=status}else st.style.display='none';
+  if(showActivity)renderActivity(data);else{const box=$('#activity');if(box){box.hidden=true;box.replaceChildren()}}
 }
+async function pollStatus(id,showStatus=true,showActivity=false){
+  try{const resp=await fetch('/api/presence/'+encodeURIComponent(id)+'?t='+Date.now(),{cache:'no-store',headers:{'Cache-Control':'no-cache'}});const r=await resp.json();if(r.success)applyPresence(r.data,showStatus,showActivity)}catch{}
+}
+function startLanyardPresenceSocket(id,showStatus,showActivity){
+  let ws=null,hb=null,retry=null,closed=false;
+  const connect=()=>{if(closed)return;try{ws=new WebSocket('wss://api.lanyard.rest/socket')}catch{return schedule()}
+    ws.onmessage=e=>{let m;try{m=JSON.parse(e.data)}catch{return}if(m.op===1){clearInterval(hb);const every=Number(m.d?.heartbeat_interval||30000);hb=setInterval(()=>{if(ws?.readyState===1)ws.send(JSON.stringify({op:3}))},every);ws.send(JSON.stringify({op:2,d:{subscribe_to_id:String(id)}}));return}if((m.t==='INIT_STATE'||m.t==='PRESENCE_UPDATE')&&m.d)applyPresence({...m.d,source:'lanyard-live'},showStatus,showActivity)};
+    ws.onclose=()=>{clearInterval(hb);hb=null;schedule()};ws.onerror=()=>{try{ws.close()}catch{}};
+  };
+  const schedule=()=>{if(closed||retry)return;retry=setTimeout(()=>{retry=null;connect()},5000)};connect();
+  addEventListener('beforeunload',()=>{closed=true;clearInterval(hb);clearTimeout(retry);try{ws?.close()}catch{}},{once:true});
+}
+function startPresenceSync(id,showStatus=true,showActivity=false){
+  applyPresence({discord_status:'offline',activities:[]},showStatus,showActivity);pollStatus(id,showStatus,showActivity);setInterval(()=>pollStatus(id,showStatus,showActivity),8000);startLanyardPresenceSocket(id,showStatus,showActivity);
+}
+
 </script>
 </body>
 </html>
