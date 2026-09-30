@@ -25,8 +25,8 @@ const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 [DATA_DIR, UP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
-let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [] };
-adminState.keys ||= []; adminState.audit ||= [];
+let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
+adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= [];
 const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
 const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 const sbHeaders = (extra = {}) => ({
@@ -44,7 +44,7 @@ async function hydrateFromSupabase() {
     let profileCount = 0;
     for (const row of rows) {
       if (!row || !row.id || !row.data) continue;
-      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; continue; }
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; continue; }
       db[String(row.id)] = row.data; profileCount++;
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
@@ -79,9 +79,12 @@ async function saveAdminState() {
 
 function isAdminId(id) { return ADMIN_IDS.has(String(id || '')); }
 function metaFor(user) {
-  user.adminMeta ||= { premium: false, banned: false, bannedReason: '', bannedAt: 0, premiumAt: 0, inviteKeyId: '', lastLoginAt: 0 };
+  user.adminMeta ||= { premium: false, banned: false, bannedReason: '', bannedAt: 0, premiumAt: 0, moderator: false, moderatorAt: 0, inviteKeyId: '', lastLoginAt: 0 };
+  if (user.adminMeta.moderator == null) user.adminMeta.moderator = false;
+  if (user.adminMeta.moderatorAt == null) user.adminMeta.moderatorAt = 0;
   return user.adminMeta;
 }
+function isModerator(user) { return !!user && !!metaFor(user).moderator && !isAdminId(user.id); }
 function isBanned(user) { return !!user && !!metaFor(user).banned; }
 function audit(type, details = {}) {
   adminState.audit.unshift({ id: crypto.randomUUID(), type, at: Date.now(), ...details });
@@ -201,7 +204,7 @@ function defaults(dc) {
     pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, manualNitro: false, nitroTier: '' },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30 },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
@@ -256,7 +259,7 @@ function applyUpdate(user, b) {
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
   const prevSettings = user.settings || {};
-  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, manualNitro:false };
+  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, showModeratorBadge:true, manualNitro:false };
   user.settings = {};
   for (const [k, def] of Object.entries(settingDefaults)) user.settings[k] = s[k] !== undefined ? !!s[k] : (prevSettings[k] !== undefined ? !!prevSettings[k] : def);
   user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : (prevSettings.nitroTier || '');
@@ -272,11 +275,20 @@ function applyUpdate(user, b) {
   if (metaFor(user).premium) {
     user.premiumSections = (Array.isArray(b.premiumSections) ? b.premiumSections : []).slice(0, 6).map((x, index) => {
       const type = x?.type === 'gallery' ? 'gallery' : 'text';
+      const legacyText = str(x?.text, 1800);
+      let tabs = (Array.isArray(x?.tabs) ? x.tabs : []).slice(0, 5).map((tab, ti) => ({
+        id: str(tab?.id, 48) || `tab-${index + 1}-${ti + 1}`,
+        label: str(tab?.label, 28) || `Tab ${ti + 1}`,
+        text: str(tab?.text, 1200),
+        fields: (Array.isArray(tab?.fields) ? tab.fields : []).slice(0, 4).map(f => ({ label: str(f?.label, 24), value: str(f?.value, 140) })).filter(f => f.label || f.value),
+      }));
+      if (type === 'text' && !tabs.length) tabs = [{ id: `tab-${index + 1}-1`, label: 'About Me', text: legacyText, fields: [] }];
       return {
         id: str(x?.id, 48) || `section-${index + 1}`,
         title: str(x?.title, 60) || (type === 'gallery' ? 'Gallery' : 'Section'),
         type,
-        text: str(x?.text, 1800),
+        text: legacyText,
+        tabs,
         images: (Array.isArray(x?.images) ? x.images : []).slice(0, 12).map(url).filter(Boolean),
       };
     });
@@ -310,7 +322,7 @@ function publicView(u) {
       ? { key: 'nitro', name: `Discord Nitro · ${tier.label}`, asset: tier.asset, emoji: '💎', tier: tier.key }
       : NITRO);
   }
-  const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id) };
+  const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
   return { ...rest, premiumSections, platform, discord: d };
 }
@@ -456,7 +468,7 @@ app.get('/api/session-info', siteUnlocked, (req, res) => {
   const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
   if (!user) return res.json({ authenticated: false, isAdmin: false });
   const view = publicView(user);
-  res.json({ authenticated: true, isAdmin: isAdminId(user.id), premium: !!metaFor(user).premium, user: { id: user.id, username: view.username, name: view.displayName || view.discord?.globalName || view.discord?.username || view.username, avatar: view.discord?.avatar || '' } });
+  res.json({ authenticated: true, isAdmin: isAdminId(user.id), isModerator: isModerator(user), premium: !!metaFor(user).premium, user: { id: user.id, username: view.username, name: view.displayName || view.discord?.globalName || view.discord?.username || view.username, avatar: view.discord?.avatar || '' } });
 });
 app.get('/private-login.html', (req, res) => res.redirect(301, '/login'));
 app.get('/dashboard.html', (req, res) => res.redirect(302, '/dashboard'));
@@ -475,6 +487,13 @@ const adminOnly = (req, res, next) => {
   if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
   if (isBanned(user)) return res.status(403).json({ error: 'Account gesperrt', banned: true });
   if (!isAdminId(user.id)) return res.status(403).json({ error: 'Keine Admin-Berechtigung' });
+  next();
+};
+const keyManagerOnly = (req, res, next) => {
+  const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
+  if (!user) return res.status(401).json({ error: 'Nicht eingeloggt' });
+  if (isBanned(user)) return res.status(403).json({ error: 'Account gesperrt', banned: true });
+  if (!isAdminId(user.id) && !isModerator(user)) return res.status(403).json({ error: 'Keine Moderator-Berechtigung' });
   next();
 };
 
@@ -624,7 +643,7 @@ function adminUserView(user) {
     id: String(user.id), username: user.username || '', displayName: user.displayName || user.discord?.globalName || user.discord?.username || '',
     avatar: user.discord?.avatar || '', views: Number(user.views || 0), createdAt: Number(user.createdAt || 0), lastLoginAt: Number(m.lastLoginAt || 0),
     banned: !!m.banned, bannedReason: m.bannedReason || '', bannedAt: Number(m.bannedAt || 0), premium: !!m.premium, premiumAt: Number(m.premiumAt || 0),
-    inviteKeyId: m.inviteKeyId || ''
+    moderator: isModerator(user), moderatorAt: Number(m.moderatorAt || 0), admin: isAdminId(user.id), inviteKeyId: m.inviteKeyId || ''
   };
 }
 function dayKey(ts) { const d = new Date(ts); return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`; }
@@ -664,11 +683,18 @@ app.post('/api/admin/users/:id/premium', adminOnly, async (req,res)=>{
   const m=metaFor(user); m.premium=!!req.body?.enabled; m.premiumAt=m.premium?Date.now():0;
   audit(m.premium?'premium_granted':'premium_removed',{userId:user.id,by:req.session.uid}); await Promise.all([saveUser(user),saveAdminState()]); res.json({ok:true,user:adminUserView(user)});
 });
-app.get('/api/admin/keys', adminOnly, (req,res)=>{
-  const keys=[...adminState.keys].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
-  res.json({keys});
+app.post('/api/admin/users/:id/moderator', adminOnly, async (req,res)=>{
+  const user=db[String(req.params.id)]; if(!user)return res.status(404).json({error:'User nicht gefunden'});
+  if(isAdminId(user.id))return res.status(400).json({error:'Der Owner-Admin benötigt keine Moderator-Rolle.'});
+  const m=metaFor(user); m.moderator=!!req.body?.enabled; m.moderatorAt=m.moderator?Date.now():0;
+  audit(m.moderator?'moderator_granted':'moderator_removed',{userId:user.id,by:req.session.uid}); await Promise.all([saveUser(user),saveAdminState()]); res.json({ok:true,user:adminUserView(user)});
 });
-app.post('/api/admin/keys', adminOnly, async (req,res)=>{
+app.get('/api/admin/keys', keyManagerOnly, (req,res)=>{
+  const owner=isAdminId(req.session.uid);
+  const keys=[...adminState.keys].filter(k=>owner||String(k.createdBy||'')===String(req.session.uid)).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0));
+  res.json({keys,canManage:owner});
+});
+app.post('/api/admin/keys', keyManagerOnly, async (req,res)=>{
   let key; do{key=makeInviteKey()}while(adminState.keys.some(x=>x.key===key));
   const rec={id:crypto.randomUUID(),key,label:str(req.body?.label,60)||'Invite',createdAt:Date.now(),createdBy:req.session.uid,redeemedAt:0,redeemedBy:'',redeemedUsername:'',revokedAt:0};
   adminState.keys.unshift(rec); audit('key_created',{keyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
@@ -685,27 +711,64 @@ app.post('/api/admin/keys/:id/replace', adminOnly, async (req,res)=>{
   const rec={id:crypto.randomUUID(),key,label:(old.label||'Invite')+' · replacement',createdAt:Date.now(),createdBy:req.session.uid,replaces:old.id,redeemedAt:0,redeemedBy:'',redeemedUsername:'',revokedAt:0};
   adminState.keys.unshift(rec); audit('key_replaced',{keyId:old.id,newKeyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
 });
+// --- Changelog ------------------------------------------------------
+app.get('/api/changelog', (req,res)=>{
+  const limit=Math.max(1,Math.min(10,Number(req.query.limit||3)));
+  const items=[...adminState.changelog].filter(x=>x&&x.published!==false).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,limit);
+  res.json({items});
+});
+app.get('/api/admin/changelog', adminOnly, (req,res)=>{
+  res.json({items:[...adminState.changelog].sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0))});
+});
+app.post('/api/admin/changelog', adminOnly, async (req,res)=>{
+  const type=['update','new','fix','maintenance'].includes(req.body?.type)?req.body.type:'update';
+  const title=str(req.body?.title,80).trim(); const body=str(req.body?.body,1200).trim();
+  if(!title||!body)return res.status(400).json({error:'Titel und Text sind erforderlich'});
+  const rec={id:crypto.randomUUID(),type,version:str(req.body?.version,24).trim(),title,body,published:req.body?.published!==false,createdAt:Date.now(),createdBy:req.session.uid};
+  adminState.changelog.unshift(rec); adminState.changelog=adminState.changelog.slice(0,100); audit('changelog_created',{changelogId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,item:rec});
+});
+app.post('/api/admin/changelog/:id/toggle', adminOnly, async (req,res)=>{
+  const rec=adminState.changelog.find(x=>x.id===req.params.id);if(!rec)return res.status(404).json({error:'Eintrag nicht gefunden'});
+  rec.published=!rec.published; audit('changelog_toggled',{changelogId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,item:rec});
+});
+app.delete('/api/admin/changelog/:id', adminOnly, async (req,res)=>{
+  const i=adminState.changelog.findIndex(x=>x.id===req.params.id);if(i<0)return res.status(404).json({error:'Eintrag nicht gefunden'});
+  const [rec]=adminState.changelog.splice(i,1); audit('changelog_deleted',{changelogId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true});
+});
+
 app.get('/api/ban-info', (req,res)=>{
   const user=req.session.uid&&db[req.session.uid]?db[req.session.uid]:null;
   if(!user||!isBanned(user))return res.json({banned:false});
   const m=metaFor(user); res.json({banned:true,reason:m.bannedReason||'Account gesperrt',at:m.bannedAt||0});
 });
 
-// Presence endpoint: prefers Discord Bot Gateway, falls back to Lanyard.
+// Presence endpoint: live Discord Gateway + Lanyard fallback.
+// We deliberately do not trust a stale offline cache: every request can refresh
+// through Lanyard and the browser also subscribes to Lanyard's realtime socket.
 app.get('/api/presence/:id', async (req, res) => {
+  res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
   const id = String(req.params.id || '');
   const user = db[id];
   if (!user || isBanned(user)) return res.status(404).json({ success: false, error: 'User nicht gefunden' });
   const cached = presenceCache.get(id);
-  if (cached && Date.now() - Number(cached.updated_at || 0) < 10 * 60 * 1000) return res.json({ success: true, data: cached, gatewayReady });
+  let lanyard = null;
   try {
-    const r = await fetch(`https://api.lanyard.rest/v1/users/${encodeURIComponent(id)}`, { headers: { 'User-Agent': 'Caruzo/1.0' } });
-    if (r.ok) {
-      const j = await r.json();
-      if (j?.success && j?.data) return res.json({ success: true, data: { ...j.data, source: 'lanyard' }, gatewayReady });
-    }
+    const ctrl=new AbortController(); const timer=setTimeout(()=>ctrl.abort(),2200);
+    const r = await fetch(`https://api.lanyard.rest/v1/users/${encodeURIComponent(id)}`, { headers: { 'User-Agent': 'Caruzo/1.0', 'Cache-Control':'no-cache' }, signal:ctrl.signal });
+    clearTimeout(timer);
+    if (r.ok) { const j = await r.json(); if (j?.success && j?.data) lanyard={...j.data,updated_at:Date.now(),source:'lanyard'}; }
   } catch {}
-  return res.json({ success: true, data: { discord_status: 'offline', activities: [], source: gatewayReady ? 'discord-bot' : 'unavailable' }, gatewayReady });
+  const gatewayFresh = cached && Date.now() - Number(cached.updated_at || 0) < 120000 ? cached : null;
+  let data = gatewayFresh || lanyard;
+  if (gatewayFresh && lanyard) {
+    const gwOnline=gatewayFresh.discord_status && gatewayFresh.discord_status!=='offline';
+    const lyOnline=lanyard.discord_status && lanyard.discord_status!=='offline';
+    if (!gwOnline && lyOnline) data=lanyard;
+    else if (gwOnline) data=gatewayFresh;
+    else data=lanyard;
+  }
+  if (!data) data={discord_status:'offline',activities:[],updated_at:Date.now(),source:gatewayReady?'discord-bot':'unavailable'};
+  res.json({ success: true, data, gatewayReady, available: !!gatewayFresh || !!lanyard });
 });
 
 // --- Öffentliche API ---
