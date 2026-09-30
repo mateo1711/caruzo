@@ -30,9 +30,21 @@ const ADMIN_FILE = path.join(DATA_DIR, 'admin-state.json');
 const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 [DATA_DIR, UP_DIR].forEach(d => fs.mkdirSync(d, { recursive: true }));
 
+const DEFAULT_FAQ = [
+  { id: 'faq-profile', question: 'Kann ich mein Profil jederzeit weiter anpassen?', answer: 'Ja. Inhalte, Socials, Farben, Musik, Hintergründe und Effekte lassen sich jederzeit im Dashboard ändern und direkt in der Vorschau prüfen.', published: true, createdAt: Date.now() - 3000, updatedAt: Date.now() - 3000 },
+  { id: 'faq-discord', question: 'Was wird von Discord übernommen?', answer: 'Je nach verfügbarer Discord-Information unter anderem Avatar, Banner, Dekoration und öffentliche Badges.', published: true, createdAt: Date.now() - 2000, updatedAt: Date.now() - 2000 },
+  { id: 'faq-media', question: 'Kann ich Musik, Video und Socials verwenden?', answer: 'Ja. Diese Funktionen bleiben wie bisher im Dashboard verfügbar.', published: true, createdAt: Date.now() - 1000, updatedAt: Date.now() - 1000 },
+];
+function ensureAdminContent(){
+  if (!Array.isArray(adminState.faq)) adminState.faq = DEFAULT_FAQ.map(x => ({...x}));
+  adminState.faq = adminState.faq.slice(0, 30).map((x, i) => ({
+    id: String(x?.id || crypto.randomUUID()), question: String(x?.question || '').slice(0, 160), answer: String(x?.answer || '').slice(0, 1600),
+    published: x?.published !== false, createdAt: Number(x?.createdAt || Date.now() + i), updatedAt: Number(x?.updatedAt || x?.createdAt || Date.now() + i)
+  })).filter(x => x.question && x.answer);
+}
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
 let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
-adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= [];
+adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent();
 function ensureAdminSettings() {
   adminState.settings ||= {};
   adminState.settings.backgrounds ||= {};
@@ -61,7 +73,7 @@ async function hydrateFromSupabase() {
     let profileCount = 0;
     for (const row of rows) {
       if (!row || !row.id || !row.data) continue;
-      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminSettings(); continue; }
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent(); ensureAdminSettings(); continue; }
       db[String(row.id)] = row.data; profileCount++;
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
@@ -228,7 +240,7 @@ function defaults(dc) {
     pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, showBoostBadge: true, manualNitro: false, nitroTier: '' },
+    settings: { showBanner: false, bannerHeight: 120, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, showBoostBadge: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
     music: { url: '', title: '', volume: 40 },
     musicPlayer: { enabled:false, title:'My Playlist', style:'glass-wave', position:'below-profile', accent:'#8b5cf6', secondary:'#22d3ee', volume:65, showCover:true, sources:[] },
@@ -329,6 +341,7 @@ function applyUpdate(user, b) {
   user.settings = {};
   for (const [k, def] of Object.entries(settingDefaults)) user.settings[k] = s[k] !== undefined ? !!s[k] : (prevSettings[k] !== undefined ? !!prevSettings[k] : def);
   user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : (prevSettings.nitroTier || '');
+  user.settings.bannerHeight = num(s.bannerHeight !== undefined ? s.bannerHeight : prevSettings.bannerHeight, 72, 260, 120);
   const bg = b.background || {};
   user.background = { type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30), videoStart: num(bg.videoStart, 0, 21600, 0) };
   const m = b.music || {};
@@ -1705,6 +1718,46 @@ app.post('/api/admin/landing-cursor', adminOnly, async (req, res) => {
   await saveAdminState();
   res.json({ ok:true, landingCursor:cursor });
 });
+// --- FAQ ------------------------------------------------------------
+app.get('/api/faq', (req, res) => {
+  ensureAdminContent();
+  const items = adminState.faq.filter(x => x && x.published !== false).slice(0, 20);
+  res.set('Cache-Control','no-store');
+  res.json({ items });
+});
+app.get('/api/admin/faq', keyManagerOnly, (req, res) => {
+  ensureAdminContent();
+  res.set('Cache-Control','no-store');
+  res.json({ items: adminState.faq, canEdit: isAdminId(req.session.uid) });
+});
+app.post('/api/admin/faq', adminOnly, async (req, res) => {
+  ensureAdminContent();
+  const question = str(req.body?.question, 160).trim(), answer = str(req.body?.answer, 1600).trim();
+  if (!question || !answer) return res.status(400).json({ error: 'Frage und Antwort sind erforderlich' });
+  const rec = { id: crypto.randomUUID(), question, answer, published: req.body?.published !== false, createdAt: Date.now(), updatedAt: Date.now() };
+  adminState.faq.push(rec); adminState.faq = adminState.faq.slice(0, 30);
+  audit('faq_created', { faqId: rec.id, by: req.session.uid }); await saveAdminState(); res.json({ ok:true, item:rec });
+});
+app.patch('/api/admin/faq/:id', adminOnly, async (req, res) => {
+  ensureAdminContent();
+  const rec = adminState.faq.find(x => x.id === req.params.id); if (!rec) return res.status(404).json({ error:'FAQ nicht gefunden' });
+  if (req.body?.question !== undefined) rec.question = str(req.body.question,160).trim();
+  if (req.body?.answer !== undefined) rec.answer = str(req.body.answer,1600).trim();
+  if (req.body?.published !== undefined) rec.published = !!req.body.published;
+  if (!rec.question || !rec.answer) return res.status(400).json({ error:'Frage und Antwort sind erforderlich' });
+  rec.updatedAt = Date.now(); audit('faq_updated',{faqId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,item:rec});
+});
+app.post('/api/admin/faq/reorder', adminOnly, async (req, res) => {
+  ensureAdminContent(); const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : [];
+  const map = new Map(adminState.faq.map(x => [String(x.id), x])); const next = ids.map(id => map.get(id)).filter(Boolean);
+  adminState.faq.forEach(x => { if (!ids.includes(String(x.id))) next.push(x); }); adminState.faq = next.slice(0,30);
+  audit('faq_reordered',{by:req.session.uid}); await saveAdminState(); res.json({ok:true,items:adminState.faq});
+});
+app.delete('/api/admin/faq/:id', adminOnly, async (req, res) => {
+  ensureAdminContent(); const i = adminState.faq.findIndex(x => x.id === req.params.id); if (i < 0) return res.status(404).json({ error:'FAQ nicht gefunden' });
+  const [rec] = adminState.faq.splice(i,1); audit('faq_deleted',{faqId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true});
+});
+
 // --- Changelog ------------------------------------------------------
 app.get('/api/changelog', (req,res)=>{
   const limit=Math.max(1,Math.min(5,Number(req.query.limit||5)));
@@ -1720,6 +1773,16 @@ app.post('/api/admin/changelog', adminOnly, async (req,res)=>{
   if(!title||!body)return res.status(400).json({error:'Titel und Text sind erforderlich'});
   const rec={id:crypto.randomUUID(),type,version:str(req.body?.version,24).trim(),title,body,published:req.body?.published!==false,createdAt:Date.now(),createdBy:req.session.uid};
   adminState.changelog.unshift(rec); adminState.changelog=adminState.changelog.slice(0,100); audit('changelog_created',{changelogId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,item:rec});
+});
+app.patch('/api/admin/changelog/:id', adminOnly, async (req,res)=>{
+  const rec=adminState.changelog.find(x=>x.id===req.params.id);if(!rec)return res.status(404).json({error:'Eintrag nicht gefunden'});
+  if(req.body?.type!==undefined) rec.type=['update','new','fix','maintenance'].includes(req.body.type)?req.body.type:rec.type;
+  if(req.body?.version!==undefined) rec.version=str(req.body.version,24).trim();
+  if(req.body?.title!==undefined) rec.title=str(req.body.title,80).trim();
+  if(req.body?.body!==undefined) rec.body=str(req.body.body,1200).trim();
+  if(req.body?.published!==undefined) rec.published=!!req.body.published;
+  if(!rec.title||!rec.body)return res.status(400).json({error:'Titel und Text sind erforderlich'});
+  rec.updatedAt=Date.now(); audit('changelog_updated',{changelogId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,item:rec});
 });
 app.post('/api/admin/changelog/:id/toggle', adminOnly, async (req,res)=>{
   const rec=adminState.changelog.find(x=>x.id===req.params.id);if(!rec)return res.status(404).json({error:'Eintrag nicht gefunden'});
