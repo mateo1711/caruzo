@@ -266,13 +266,13 @@ function applyUpdate(user, b) {
     socialLayout:['grid','list','compact'].includes(des.socialLayout)?des.socialLayout:'grid',
     socialEffect:['none','lift','glow','shine','tilt','magnetic','neon','border-flow'].includes(des.socialEffect)?des.socialEffect:'lift',
     badgeStyle:['icon','pill','glass'].includes(des.badgeStyle)?des.badgeStyle:'icon',
-    profileHover:['none','tilt','soft-follow','magnetic','spotlight','depth','prism'].includes(des.profileHover)?des.profileHover:'tilt',
+    profileHover:['none','tilt','soft-follow','magnetic','spotlight','depth','prism','float-zoom','elastic','glow-track','micro-parallax','snap-tilt'].includes(des.profileHover)?des.profileHover:'tilt',
     hoverIntensity:num(des.hoverIntensity,0,100,55),
     hoverGlow:num(des.hoverGlow,0,100,35),
   };
   const vs=b.viewsStyle||{}; user.viewsStyle={visible:vs.visible!==false,placement:['profile','page-bottom'].includes(vs.placement)?vs.placement:'profile',corner:['top-left','top-right','bottom-left','bottom-right'].includes(vs.corner)?vs.corner:'top-right',effect:['none','glow','pulse','scan','blur'].includes(vs.effect)?vs.effect:'glow',backgroundOpacity:num(vs.backgroundOpacity,0,100,22),borderOpacity:num(vs.borderOpacity,0,100,14),eyeOpacity:num(vs.eyeOpacity,0,100,92),countOpacity:num(vs.countOpacity,0,100,88)};
   const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','snow','particles','constellation','rays','scanlines','stars','mesh','nebula','noise','orbs','rain'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
-  const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
+  const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix','comet','ripple','bubbles','cyber','twinkle'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star','diamond','triangle','beam','neon'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
   const prevSettings = user.settings || {};
@@ -1290,7 +1290,7 @@ app.post('/api/admin/landing-cursor', adminOnly, async (req, res) => {
 });
 // --- Changelog ------------------------------------------------------
 app.get('/api/changelog', (req,res)=>{
-  const limit=Math.max(1,Math.min(10,Number(req.query.limit||3)));
+  const limit=Math.max(1,Math.min(5,Number(req.query.limit||5)));
   const items=[...adminState.changelog].filter(x=>x&&x.published!==false).sort((a,b)=>Number(b.createdAt||0)-Number(a.createdAt||0)).slice(0,limit);
   res.json({items});
 });
