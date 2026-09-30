@@ -8,6 +8,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@600;800&display=swap" rel="stylesheet">
+<script src="/site-bg.js"></script>
 <style>
 :root{--accent:#8b5cf6;--bg:#050507;--text:#f7f7fa;--muted:#878892;--line:rgba(255,255,255,.105)}*{box-sizing:border-box}html{color-scheme:dark}body{margin:0;min-height:100svh;display:grid;place-items:center;overflow:hidden;background:#050507;color:var(--text);font:14px/1.45 'Inter',system-ui,sans-serif}
 body:before{content:"";position:fixed;inset:0;background:radial-gradient(700px 500px at 15% 10%,rgba(255,126,65,.16),transparent 68%),radial-gradient(680px 520px at 82% 18%,rgba(139,92,246,.23),transparent 65%),radial-gradient(680px 500px at 65% 95%,rgba(236,72,153,.17),transparent 67%),#050507}
@@ -20,6 +21,7 @@ body:after{content:"";position:fixed;inset:0;opacity:.22;background-image:linear
 .field{position:relative}.field input{width:100%;height:50px;border:1px solid rgba(255,255,255,.085);border-radius:12px;background:rgba(0,0,0,.27);color:#fff;padding:0 46px 0 14px;font:600 14px 'JetBrains Mono',monospace;outline:0;transition:.2s}.field input:focus{border-color:rgba(139,92,246,.62);box-shadow:0 0 0 4px rgba(139,92,246,.095),0 0 28px rgba(139,92,246,.08)}.peek{position:absolute;right:7px;top:7px;width:36px;height:36px;border:0;border-radius:9px;background:transparent;color:#757680;cursor:pointer}.peek:hover{background:rgba(255,255,255,.05);color:#fff}.submit{width:100%;height:49px;margin-top:11px;border:1px solid #fff;border-radius:12px;background:#f4f4f5;color:#08080b;font-weight:800;cursor:pointer;transition:.2s;box-shadow:0 12px 34px rgba(255,255,255,.06)}.submit:hover{transform:translateY(-1px);background:#fff}.submit:disabled{opacity:.6;cursor:wait;transform:none}.error{min-height:18px;margin-top:11px;color:#ff7b9b;font-size:12px}.foot{margin-top:13px;text-align:center;color:#5f6068;font-size:11px}.foot b{color:#888993;font-weight:600}
 .keyState{min-height:18px;margin:8px 2px -2px;color:#777985;font-size:11px}.keyState.ok{color:#58e69a}.keyState.bad{color:#ff7b9b}.existing{display:flex;align-items:center;justify-content:center;width:100%;height:44px;margin-top:9px;border:1px solid var(--line);border-radius:11px;background:rgba(255,255,255,.025);color:#8e8f98;text-decoration:none;font-size:12px;font-weight:600;transition:.2s}.existing:hover{background:rgba(255,255,255,.055);color:#fff}.existing b{margin-left:4px;color:#cfd0d6}.field input{text-transform:uppercase;letter-spacing:.035em}.field input::placeholder{text-transform:none;letter-spacing:0}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+body.has-bg:before,body.has-bg:after,body.has-bg .orb{opacity:0!important}
 </style>
 <link rel="icon" href="/caruzo-logo.png" type="image/png">
 </head>
@@ -40,6 +42,7 @@ body:after{content:"";position:fixed;inset:0;opacity:.22;background-image:linear
   </form>
 </main>
 <script>
+window.CaruzoBG&&CaruzoBG.mount('login');
 const form=document.getElementById('form'),key=document.getElementById('invite'),error=document.getElementById('error'),submit=document.getElementById('submit'),state=document.getElementById('keyState');
 const params=new URLSearchParams(location.search);if(params.get('error')==='invite-required')error.textContent='Für einen neuen Account brauchst du zuerst einen gültigen Invite Key.';
 document.getElementById('paste').onclick=async()=>{try{key.value=(await navigator.clipboard.readText()).trim();key.dispatchEvent(new Event('input'))}catch{key.focus()}};
