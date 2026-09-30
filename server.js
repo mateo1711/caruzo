@@ -85,9 +85,18 @@ function persistedAdminState(state) {
   return c;
 }
 async function atomicWriteJson(file, value) {
-  const tmp = `${file}.${process.pid}.${Date.now()}.tmp`;
-  await fs.promises.writeFile(tmp, JSON.stringify(value, null, 2), { mode: 0o600 });
-  await fs.promises.rename(tmp, file);
+  // Use a truly unique temp file for every write. Date.now() alone can collide
+  // when several requests save the same session within the same millisecond.
+  await fs.promises.mkdir(path.dirname(file), { recursive: true });
+  const tmp = `${file}.${process.pid}.${Date.now()}.${crypto.randomUUID()}.tmp`;
+  try {
+    await fs.promises.writeFile(tmp, JSON.stringify(value, null, 2), { mode: 0o600 });
+    await fs.promises.rename(tmp, file);
+  } catch (err) {
+    // Best-effort cleanup. Never mask the original error.
+    try { await fs.promises.unlink(tmp); } catch {}
+    throw err;
+  }
 }
 let dbWriteTimer = null, adminWriteTimer = null;
 function queueDbWrite() {
@@ -1040,13 +1049,81 @@ app.use((req, res, next) => {
 app.use(express.json({ limit: '200kb', strict: true }));
 
 class FileSessionStore extends session.Store {
-  constructor(dir) { super(); this.dir = dir; setInterval(() => this.cleanup(), 60 * 60 * 1000).unref(); }
+  constructor(dir) {
+    super();
+    this.dir = dir;
+    this.writeQueues = new Map();
+    fs.mkdirSync(this.dir, { recursive: true });
+    setInterval(() => this.cleanup(), 60 * 60 * 1000).unref();
+  }
   file(sid) { return path.join(this.dir, crypto.createHash('sha256').update(String(sid)).digest('hex') + '.json'); }
-  get(sid, cb) { fs.promises.readFile(this.file(sid), 'utf8').then(raw => { const rec = JSON.parse(raw); if (rec.expires && rec.expires < Date.now()) { this.destroy(sid, () => {}); return cb(null, null); } cb(null, rec.session || null); }).catch(e => cb(e.code === 'ENOENT' ? null : e, null)); }
-  set(sid, sess, cb = () => {}) { const exp = sess?.cookie?.expires ? new Date(sess.cookie.expires).getTime() : Date.now() + 30*86400000; atomicWriteJson(this.file(sid), { expires: exp, session: sess }).then(() => cb()).catch(cb); }
-  destroy(sid, cb = () => {}) { fs.promises.unlink(this.file(sid)).then(() => cb()).catch(e => cb(e.code === 'ENOENT' ? null : e)); }
-  touch(sid, sess, cb = () => {}) { this.set(sid, sess, cb); }
-  cleanup() { fs.promises.readdir(this.dir).then(async files => { const now = Date.now(); for (const f of files.slice(0, 10000)) { try { const full=path.join(this.dir,f), rec=JSON.parse(await fs.promises.readFile(full,'utf8')); if (!rec.expires || rec.expires < now) await fs.promises.unlink(full); } catch {} } }).catch(()=>{}); }
+  _queue(sid, task) {
+    const key = String(sid);
+    const previous = this.writeQueues.get(key) || Promise.resolve();
+    const current = previous.catch(() => {}).then(task);
+    this.writeQueues.set(key, current);
+    current.finally(() => { if (this.writeQueues.get(key) === current) this.writeQueues.delete(key); }).catch(() => {});
+    return current;
+  }
+  get(sid, cb) {
+    this._queue(sid, async () => {
+      try {
+        const raw = await fs.promises.readFile(this.file(sid), 'utf8');
+        const rec = JSON.parse(raw);
+        if (rec.expires && rec.expires < Date.now()) {
+          try { await fs.promises.unlink(this.file(sid)); } catch (e) { if (e.code !== 'ENOENT') throw e; }
+          return null;
+        }
+        return rec.session || null;
+      } catch (e) {
+        if (e.code === 'ENOENT') return null;
+        throw e;
+      }
+    }).then(sess => cb(null, sess)).catch(err => cb(err, null));
+  }
+  set(sid, sess, cb = () => {}) {
+    this._queue(sid, async () => {
+      const exp = sess?.cookie?.expires ? new Date(sess.cookie.expires).getTime() : Date.now() + 30 * 86400000;
+      await atomicWriteJson(this.file(sid), { expires: exp, session: sess });
+    }).then(() => cb()).catch(cb);
+  }
+  destroy(sid, cb = () => {}) {
+    this._queue(sid, async () => {
+      try { await fs.promises.unlink(this.file(sid)); }
+      catch (e) { if (e.code !== 'ENOENT') throw e; }
+    }).then(() => cb()).catch(cb);
+  }
+  touch(sid, sess, cb = () => {}) {
+    this._queue(sid, async () => {
+      const file = this.file(sid);
+      const exp = sess?.cookie?.expires ? new Date(sess.cookie.expires).getTime() : Date.now() + 30 * 86400000;
+      try {
+        const raw = await fs.promises.readFile(file, 'utf8');
+        const rec = JSON.parse(raw);
+        // Preserve the stored session payload and only refresh its expiry. This
+        // avoids stale parallel requests overwriting newer session contents.
+        rec.expires = exp;
+        if (!rec.session) rec.session = sess;
+        await atomicWriteJson(file, rec);
+      } catch (e) {
+        if (e.code !== 'ENOENT') throw e;
+        // A touch may race with a freshly-created session. Recreate it safely.
+        await atomicWriteJson(file, { expires: exp, session: sess });
+      }
+    }).then(() => cb()).catch(cb);
+  }
+  cleanup() {
+    fs.promises.mkdir(this.dir, { recursive: true }).then(() => fs.promises.readdir(this.dir)).then(async files => {
+      const now = Date.now();
+      for (const f of files.slice(0, 10000)) {
+        if (!f.endsWith('.json')) continue;
+        try {
+          const full = path.join(this.dir, f), rec = JSON.parse(await fs.promises.readFile(full, 'utf8'));
+          if (!rec.expires || rec.expires < now) await fs.promises.unlink(full);
+        } catch {}
+      }
+    }).catch(() => {});
+  }
 }
 const sessionStore = new FileSessionStore(SESSION_DIR);
 app.use(session({

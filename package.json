@@ -1,6 +1,6 @@
 {
   "name": "biolink",
-  "version": "1.6.0-security",
+  "version": "1.6.1-security",
   "private": true,
   "main": "server.js",
   "scripts": {
