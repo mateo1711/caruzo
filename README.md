@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="https://capsule-render.vercel.app/api?type=waving&height=220&color=0:08080d,45:6d28d9,100:00e5ff&text=CARUZO.LOL&fontColor=ffffff&fontSize=58&fontAlignY=38&animation=fadeIn&desc=Your%20profile.%20Your%20style.%20Your%20identity.&descAlignY=58&descSize=18" width="100%" alt="caruzo.lol banner" />
+<img src="./assets/caruzo-banner.svg" width="100%" alt="caruzo.lol animated banner" />
 
 <a href="https://caruzo.lol">
   <img src="https://readme-typing-svg.demolab.com?font=JetBrains+Mono&weight=600&size=23&pause=1100&color=8B5CF6&center=true&vCenter=true&width=720&lines=Create+your+own+profile.;Connect+Discord+%26+your+socials.;Music%2C+effects%2C+badges+%26+more.;Make+it+yours+on+caruzo.lol." alt="Animated typing" />
