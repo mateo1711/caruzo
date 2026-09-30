@@ -1124,7 +1124,7 @@ function statisticsSummary(user,days=30){
   const today=daily[daily.length-1]||{};
   return {days,totalViews,viewsToday:Number(today.views||0),viewsPeriod,totalReactions,reactionsPeriod,totalSocial,socialPeriod,totalHighlights,highlightPeriod,musicPlays:Number(a.musicPlays||0),musicPeriod,musicSkips:Number(a.musicSkips||0),engagementRate:totalViews?Math.round(((totalReactions+totalSocial+totalHighlights)/totalViews)*1000)/10:0,daily,topSocials:topMap(a.socialClicks),topHighlights:topMap(a.highlightClicks),topReferrers:topMap(a.referrers),devices:topMap(a.devices),topReactions:reactionSummary(user,days).breakdown.slice(0,6)};
 }
-app.get('/api/statistics', auth, (req,res)=>res.json(statisticsSummary(db[req.session.uid],req.query.days)));
+app.get('/api/statistics', auth, (req,res)=>{ const user=db[req.session.uid]; if(!metaFor(user).premium) return res.status(403).json({error:'Premium erforderlich'}); res.json(statisticsSummary(user,req.query.days)); });
 app.post('/api/profile/:name/event', async (req,res)=>{
   const user=findByName(req.params.name);if(!user||isBanned(user)||user.privacy?.visibility==='disabled')return res.status(404).json({error:'Profil nicht verfügbar'});
   const type=str(req.body?.type,24),key=str(req.body?.key,48);if(!['social','highlight','music_play','music_skip'].includes(type))return res.status(400).json({error:'Unbekanntes Event'});
