@@ -212,6 +212,10 @@ function defaults(dc) {
     highlights: [],
     privacy: { visibility: 'public', noIndex: false },
     share: { title: '', description: '', imageMode: 'avatar', image: '' },
+    reactions: { enabled: true, title: 'React', position: 'profile-bottom', animation: 'pop', showCounts: true, items: [
+      { id: 'fire', emoji: '🔥', label: 'Fire' }, { id: 'heart', emoji: '❤️', label: 'Love' }, { id: 'music', emoji: '🎧', label: 'Music' }, { id: 'game', emoji: '🎮', label: 'Gaming' }
+    ] },
+    reactionStats: { total: 0, byItem: {}, daily: {} },
     design: {
       nameEffect: 'standard', nameColor: '#f6eff2', accentColor: '#8b5cf6',
       avatarFrameEffect: 'glow', avatarFrameColor: '#8b5cf6', avatarFrameWidth: 2, avatarShape: 'circle',
@@ -274,6 +278,25 @@ function applyUpdate(user, b) {
     imageMode: ['avatar','background','custom'].includes(sh.imageMode) ? sh.imageMode : 'avatar',
     image: url(sh.image),
   };
+  if (b.reactions !== undefined) {
+    const rr = b.reactions || {};
+    const reactionItems = (Array.isArray(rr.items) ? rr.items : (Array.isArray(user.reactions?.items) ? user.reactions.items : [])).slice(0, 8).map((x, i) => ({
+      id: str(x?.id, 48) || `reaction-${i + 1}`,
+      emoji: str(x?.emoji, 16) || '✨',
+      label: str(x?.label, 24) || `Reaction ${i + 1}`,
+    })).filter(x => x.emoji);
+    user.reactions = {
+      enabled: rr.enabled !== false,
+      title: str(rr.title, 28) || 'React',
+      position: ['profile-bottom','before-highlights','after-highlights','before-socials','floating-left','floating-right'].includes(rr.position) ? rr.position : 'profile-bottom',
+      animation: ['pop','bounce','float','burst','ripple','shake','glow','confetti'].includes(rr.animation) ? rr.animation : 'pop',
+      showCounts: rr.showCounts !== false,
+      items: reactionItems.length ? reactionItems : [{ id:'fire', emoji:'🔥', label:'Fire' }],
+    };
+  } else if (!user.reactions) {
+    user.reactions = { enabled:true, title:'React', position:'profile-bottom', animation:'pop', showCounts:true, items:[{id:'fire',emoji:'🔥',label:'Fire'},{id:'heart',emoji:'❤️',label:'Love'},{id:'music',emoji:'🎧',label:'Music'},{id:'game',emoji:'🎮',label:'Gaming'}] };
+  }
+  user.reactionStats ||= { total: 0, byItem: {}, daily: {} };
   const des=b.design||{};
   const color=(v,d)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:d;
   user.design={
@@ -353,7 +376,7 @@ function applyUpdate(user, b) {
 }
 
 function publicView(u) {
-  const { auth, adminMeta, spotifyAuth, spotifyDiag, ...rest } = u; // Tokens und interne Moderationsdaten niemals ausliefern
+  const { auth, adminMeta, spotifyAuth, spotifyDiag, reactionStats, ...rest } = u; // Tokens, Analytics-Rohdaten und interne Moderationsdaten niemals ausliefern
   const d = { ...rest.discord };
   const manualNitro = !!rest.settings?.manualNitro;
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
@@ -371,7 +394,10 @@ function publicView(u) {
   const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
   const spotifyAccount = rest.spotifyAccount?.connected ? { connected: true, displayName: str(rest.spotifyAccount.displayName, 80), url: url(rest.spotifyAccount.url), image: url(rest.spotifyAccount.image) } : null;
-  return { ...rest, spotifyAccount, premiumSections, platform, discord: d };
+  const reactionCfg = rest.reactions || { enabled:true, title:'React', position:'profile-bottom', animation:'pop', showCounts:true, items:[] };
+  const byItem = u.reactionStats?.byItem || {};
+  const reactions = { ...reactionCfg, items: (Array.isArray(reactionCfg.items) ? reactionCfg.items : []).map(x => ({ ...x, count: Number(byItem[x.id] || 0) })) };
+  return { ...rest, reactions, spotifyAccount, premiumSections, platform, discord: d };
 }
 
 /* ------------------------------------------------------------------ */
@@ -382,7 +408,7 @@ const MARKET_VIS = new Set(['private','public']);
 const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
 function privatePresetSnapshot(user) {
   const src = publicView(user);
-  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
   const out = {};
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
   return out;
@@ -1035,6 +1061,78 @@ app.post('/api/me', auth, async (req, res) => {
   if (err) return res.status(400).json({ error: err });
   await saveUser(user);
   res.json(publicView(user));
+});
+
+// --- Profile Reactions ---
+function reactionDayKey(ts = Date.now()) {
+  const d = new Date(ts);
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth()+1).padStart(2,'0')}-${String(d.getUTCDate()).padStart(2,'0')}`;
+}
+function ensureReactionStats(user) {
+  user.reactionStats ||= { total: 0, byItem: {}, daily: {} };
+  user.reactionStats.byItem ||= {}; user.reactionStats.daily ||= {};
+  if (!Number.isFinite(Number(user.reactionStats.total))) user.reactionStats.total = 0;
+  const cutoff = Date.now() - 370 * 86400000;
+  for (const k of Object.keys(user.reactionStats.daily)) {
+    const t = Date.parse(`${k}T00:00:00Z`);
+    if (!Number.isFinite(t) || t < cutoff) delete user.reactionStats.daily[k];
+  }
+  return user.reactionStats;
+}
+function reactionSummary(user, days = 30) {
+  const stats = ensureReactionStats(user);
+  const allowed = [7,30,90,365];
+  days = allowed.includes(Number(days)) ? Number(days) : 30;
+  const items = Array.isArray(user.reactions?.items) ? user.reactions.items : [];
+  const dates = [];
+  const byItemRange = {};
+  let periodTotal = 0;
+  for (let i = days - 1; i >= 0; i--) {
+    const ts = Date.now() - i * 86400000;
+    const key = reactionDayKey(ts);
+    const day = stats.daily[key] || { total:0, byItem:{} };
+    const total = Number(day.total || 0);
+    periodTotal += total;
+    for (const [id, n] of Object.entries(day.byItem || {})) byItemRange[id] = (byItemRange[id] || 0) + Number(n || 0);
+    dates.push({ date:key, value:total });
+  }
+  const today = Number(stats.daily[reactionDayKey()]?.total || 0);
+  const breakdown = items.map(x => ({ id:x.id, emoji:x.emoji, label:x.label, total:Number(stats.byItem[x.id] || 0), period:Number(byItemRange[x.id] || 0) })).sort((a,b)=>b.period-a.period || b.total-a.total);
+  const top = breakdown[0] || null;
+  return {
+    days, total:Number(stats.total || 0), today, periodTotal, views:Number(user.views || 0),
+    rate:Number(user.views || 0) > 0 ? Math.round((Number(stats.total || 0) / Number(user.views || 1)) * 1000) / 10 : 0,
+    top, breakdown, daily:dates,
+  };
+}
+
+app.get('/api/reactions/stats', auth, (req, res) => {
+  const user = db[req.session.uid];
+  res.json(reactionSummary(user, req.query.days));
+});
+
+app.post('/api/profile/:name/reaction', async (req, res) => {
+  const user = findByName(req.params.name);
+  if (!user || isBanned(user) || user.privacy?.visibility === 'disabled') return res.status(404).json({ error:'Profil nicht verfügbar' });
+  if (user.reactions?.enabled === false) return res.status(400).json({ error:'Reactions sind deaktiviert' });
+  const itemId = str(req.body?.id, 48);
+  const item = (Array.isArray(user.reactions?.items) ? user.reactions.items : []).find(x => x.id === itemId);
+  if (!item) return res.status(400).json({ error:'Reaction nicht gefunden' });
+  req.session.reactionVotes ||= {};
+  const lockKey = `${user.id}:${itemId}`;
+  const last = Number(req.session.reactionVotes[lockKey] || 0);
+  if (Date.now() - last < 12 * 3600000) return res.status(429).json({ error:'Diese Reaction hast du vor Kurzem bereits verwendet.', cooldown:true });
+  req.session.reactionVotes[lockKey] = Date.now();
+  const stats = ensureReactionStats(user);
+  stats.total = Number(stats.total || 0) + 1;
+  stats.byItem[itemId] = Number(stats.byItem[itemId] || 0) + 1;
+  const key = reactionDayKey();
+  stats.daily[key] ||= { total:0, byItem:{} };
+  stats.daily[key].total = Number(stats.daily[key].total || 0) + 1;
+  stats.daily[key].byItem ||= {};
+  stats.daily[key].byItem[itemId] = Number(stats.daily[key].byItem[itemId] || 0) + 1;
+  await saveUser(user);
+  res.json({ ok:true, count:Number(stats.byItem[itemId] || 0), total:Number(stats.total || 0) });
 });
 
 // --- Preset Marketplace ---
