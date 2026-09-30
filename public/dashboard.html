@@ -161,7 +161,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
             <div style="display:flex;gap:8px"><a class="btn primary" id="spotifyConnectBtn" href="/auth/spotify"><i data-lucide="music-2"></i>Spotify verbinden</a><button class="btn" id="spotifyDisconnectBtn" type="button" hidden><i data-lucide="unlink"></i>Trennen</button></div>
           </div>
           <label class="switchRow" style="margin-top:12px"><span class="switchText"><b>Aktuell gehörten Song anzeigen</b><small>Zeigt Track, Artist, Cover und Fortschritt live auf deinem öffentlichen Profil.</small></span><span class="switch"><input type="checkbox" data-p="settings.showSpotifyNowPlaying"><i></i></span></label>
-          <div class="statusBox" id="spotifyLiveState" style="margin-top:9px"><span class="statusDot"></span><span>Spotify nicht verbunden</span></div>
+          <div class="statusBox" id="spotifyLiveState" style="margin-top:9px"><span class="statusDot"></span><span>Spotify nicht verbunden</span></div><small id="spotifyRedirectHint" style="display:block;margin-top:8px;color:var(--muted);line-height:1.45"></small>
         </div>
         <div class="section"><label class="field"><span>Spotify track / album / playlist</span><input type="url" data-p="spotify" placeholder="https://open.spotify.com/..."></label><div class="grid2" style="margin-top:10px"><label class="field"><span>Spotify layout</span><select data-p="spotifyStyle.layout"><option value="compact">Spotify · large</option><option value="full">Spotify · extra large</option></select><small>Large nutzt die offizielle Spotify-Embed-Höhe (352 px). Extra large zeigt noch mehr von Playlist oder Album.</small></label><div></div><div class="rangeBox"><div class="rangeTop"><span>Spotify glass blur</span><b data-out="spotifyStyle.blur"></b></div><input type="range" min="0" max="50" data-p="spotifyStyle.blur"></div><div class="rangeBox"><div class="rangeTop"><span>Spotify ambient glow</span><b data-out="spotifyStyle.glow"></b></div><input type="range" min="0" max="100" data-p="spotifyStyle.glow"></div></div></div>
       </section>
@@ -677,10 +677,11 @@ $('#zoom').oninput=e=>$('#pvCard').style.setProperty('--pv-scale',e.target.value
 
 
 async function refreshSpotifyAccount(){
-  const name=$('#spotifyAccountName'),sub=$('#spotifyAccountSub'),live=$('#spotifyLiveState'),connect=$('#spotifyConnectBtn'),disconnect=$('#spotifyDisconnectBtn');
+  const name=$('#spotifyAccountName'),sub=$('#spotifyAccountSub'),live=$('#spotifyLiveState'),connect=$('#spotifyConnectBtn'),disconnect=$('#spotifyDisconnectBtn'),hint=$('#spotifyRedirectHint');
   if(!name||!live)return;
   try{
     const r=await api('/api/spotify/status');
+    if(hint)hint.textContent=r.redirectUri?'Spotify Redirect URI: '+r.redirectUri:'';
     if(!r.configured){name.textContent='Spotify noch nicht eingerichtet';sub.textContent='SPOTIFY_CLIENT_ID und SPOTIFY_CLIENT_SECRET fehlen auf Render.';connect.hidden=true;disconnect.hidden=true;live.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Spotify API nicht konfiguriert</span>';return}
     connect.hidden=!!r.connected;disconnect.hidden=!r.connected;
     if(!r.connected){name.textContent='Nicht verbunden';sub.textContent='Verbinde Spotify, damit dein Profil automatisch zeigt, was du gerade hörst.';live.innerHTML='<span class="statusDot" style="background:#80848e"></span><span>Spotify nicht verbunden</span>';return}
@@ -717,7 +718,25 @@ $$('[data-reset]').forEach(b=>b.onclick=()=>{if(b.dataset.reset==='views')me.vie
 
 setInterval(()=>{if(me?.discord?.id)refreshPresenceDiagnostic()},6000);
 setInterval(()=>refreshSpotifyAccount(),15000);
-Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;$('#adminNav').hidden=!(canAdmin||canModerator);$('#adminNavLabel').textContent=canAdmin?'Admin':'Moderator';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();openTab(location.hash.slice(1)||'profil');if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
+function handleSpotifyCallbackNotice(){
+  const q=new URLSearchParams(location.search);
+  const status=q.get('spotify');
+  if(!status)return;
+  const detail=q.get('detail')||'';
+  const messages={
+    connected:'Spotify wurde erfolgreich verbunden.',
+    denied:'Spotify-Verknüpfung wurde abgebrochen.',
+    'not-configured':'Spotify API ist auf Render noch nicht konfiguriert.',
+    'state-error':'Spotify-Verknüpfung konnte nicht validiert werden.',
+    'token-error':'Spotify konnte den Login-Code nicht in ein Access Token umwandeln.',
+    'profile-error':'Spotify Account-Daten konnten nicht geladen werden.',
+    error:'Spotify-Verknüpfung ist fehlgeschlagen.'
+  };
+  toast((messages[status]||'Spotify Status: '+status)+(detail?' · '+detail:''));
+  // Query entfernen, Hash #media behalten, damit Reload nicht erneut dieselbe Meldung zeigt.
+  history.replaceState(null,'',location.pathname+(location.hash||'#media'));
+}
+Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;$('#adminNav').hidden=!(canAdmin||canModerator);$('#adminNavLabel').textContent=canAdmin?'Admin':'Moderator';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();openTab(location.hash.slice(1)||'profil');handleSpotifyCallbackNotice();if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
 window.lucide?.createIcons?.();
 </script>
 </body>
