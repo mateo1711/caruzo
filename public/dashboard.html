@@ -154,16 +154,13 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
       </section>
 
       <section class="panel" data-panel="media" hidden>
-        <div class="panelHead"><div><span class="panelKicker">Spotify</span><h2>Spotify</h2><p>Account verbinden, Live-Listening anzeigen oder Playlist, Album und Track einbetten.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save</button></div></div>
+        <div class="panelHead"><div><span class="panelKicker">Spotify</span><h2>Spotify</h2><p>Live-Listening automatisch über Discord anzeigen oder Playlist, Album und Track einbetten.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save</button></div></div>
         <div class="section" id="spotifyAccountSection">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap">
-            <div><div class="panelKicker" style="margin-bottom:5px">SPOTIFY ACCOUNT</div><b id="spotifyAccountName" style="font-size:14px">Nicht verbunden</b><small id="spotifyAccountSub" style="display:block;margin-top:5px;color:var(--muted)">Verbinde Spotify, damit dein Profil automatisch zeigt, was du gerade hörst.</small></div>
-            <div style="display:flex;gap:8px"><a class="btn primary" id="spotifyConnectBtn" href="/auth/spotify"><i data-lucide="music-2"></i>Spotify verbinden</a><button class="btn" id="spotifyDisconnectBtn" type="button" hidden><i data-lucide="unlink"></i>Trennen</button></div>
-          </div>
-          <label class="switchRow" style="margin-top:12px"><span class="switchText"><b>Aktuell gehörten Song anzeigen</b><small>Zeigt Track, Artist, Cover und Fortschritt live auf deinem öffentlichen Profil.</small></span><span class="switch"><input type="checkbox" data-p="settings.showSpotifyNowPlaying"><i></i></span></label>
-          <div class="statusBox" id="spotifyLiveState" style="margin-top:9px"><span class="statusDot"></span><span>Spotify nicht verbunden</span></div>
-          <div class="statusBox" id="spotifyAuthDiagnostic" style="margin-top:8px" hidden><span class="statusDot"></span><span></span></div>
-          <small id="spotifyRedirectHint" style="display:block;margin-top:8px;color:var(--muted);line-height:1.45"></small>
+          <div><div class="panelKicker" style="margin-bottom:5px">SPOTIFY · DISCORD SYNC</div><b id="spotifyAccountName" style="font-size:14px">Automatisch über Discord</b><small id="spotifyAccountSub" style="display:block;margin-top:5px;color:var(--muted)">Kein Spotify Developer Login nötig. Caruzo erkennt Spotify automatisch über deine Discord-Aktivität.</small></div>
+          <label class="switchRow" style="margin-top:12px"><span class="switchText"><b>Aktuell gehörten Song anzeigen</b><small>Zeigt Track, Artist, Cover und Fortschritt, sobald Discord deine Spotify-Aktivität meldet.</small></span><span class="switch"><input type="checkbox" data-p="settings.showSpotifyNowPlaying"><i></i></span></label>
+          <div class="statusBox" id="spotifyLiveState" style="margin-top:9px"><span class="statusDot"></span><span>Discord Spotify Presence wird geprüft …</span></div>
+          <div class="statusBox" style="margin-top:8px"><i data-lucide="info" style="width:15px"></i><span>In Discord unter <b>Benutzereinstellungen → Verbindungen → Spotify</b> verbinden und „Spotify als Status anzeigen“ aktivieren.</span></div>
+          <label class="field" style="margin-top:12px"><span>Spotify Profil-Link <small style="color:var(--muted)">optional</small></span><input type="url" data-p="links.spotifyProfile" placeholder="https://open.spotify.com/user/..."><small>Zeigt deinen Spotify-Account als Social-Link. Now Playing funktioniert unabhängig davon über Discord.</small></label>
         </div>
         <div class="section"><label class="field"><span>Spotify track / album / playlist</span><input type="url" data-p="spotify" placeholder="https://open.spotify.com/..."></label><div class="grid2" style="margin-top:10px"><label class="field"><span>Spotify layout</span><select data-p="spotifyStyle.layout"><option value="compact">Spotify · large</option><option value="full">Spotify · extra large</option></select><small>Large nutzt die offizielle Spotify-Embed-Höhe (352 px). Extra large zeigt noch mehr von Playlist oder Album.</small></label><div></div><div class="rangeBox"><div class="rangeTop"><span>Spotify glass blur</span><b data-out="spotifyStyle.blur"></b></div><input type="range" min="0" max="50" data-p="spotifyStyle.blur"></div><div class="rangeBox"><div class="rangeTop"><span>Spotify ambient glow</span><b data-out="spotifyStyle.glow"></b></div><input type="range" min="0" max="100" data-p="spotifyStyle.glow"></div></div></div>
       </section>
@@ -325,7 +322,7 @@ function defaults(){
   me.background??={type:'image',url:'',blur:6,dim:55,effect:'none',videoSound:true,videoVolume:30,videoStart:0};ensure(me.background,'videoVolume',30);ensure(me.background,'videoStart',0);
   me.spotifyStyle??={blur:26,glow:24,layout:'compact'};ensure(me.spotifyStyle,'blur',26);ensure(me.spotifyStyle,'glow',24);ensure(me.spotifyStyle,'layout','compact');
   me.settings??={};ensure(me.settings,'showSpotifyNowPlaying',true);
-  me.links??={};me.links.steam??=[];me.links.custom??=[];ensure(me.links,'epic','');ensure(me.links,'valorant','');ensure(me.links,'discordServerName','');ensure(me.links,'discordServer','');
+  me.links??={};me.links.steam??=[];me.links.custom??=[];ensure(me.links,'epic','');ensure(me.links,'valorant','');ensure(me.links,'discordServerName','');ensure(me.links,'discordServer','');ensure(me.links,'spotifyProfile','');
   me.floating??=[];me.tags??={};me.premiumSections??=[];
 }
 function openTab(name){
@@ -466,7 +463,7 @@ function renderPreview(){
   const corners={'top-left':['10px','auto','auto','12px'],'top-right':['10px','12px','auto','auto'],'bottom-left':['auto','auto','10px','12px'],'bottom-right':['auto','12px','10px','auto']}[vs.corner]||['10px','12px','auto','auto'];[view.style.top,view.style.right,view.style.bottom,view.style.left]=corners;
 
   $('#previewBg').style.filter=`blur(${me.background.blur||0}px)`;$('#previewBg').style.opacity=1-(me.background.dim||0)/150;
-  const links=[];if(me.links.tiktok)links.push('TikTok');if(me.links.youtube)links.push('YouTube');if(me.links.instagram)links.push('Instagram');if(me.links.twitch)links.push('Twitch');if(me.links.github)links.push('GitHub');if(me.links.epic)links.push('Epic');if(me.links.valorant)links.push('Valorant');if(me.links.discordServer)links.push(me.links.discordServerName||'Discord Server');if(!links.length)links.push('Discord','Social link');
+  const links=[];if(me.links.tiktok)links.push('TikTok');if(me.links.youtube)links.push('YouTube');if(me.links.instagram)links.push('Instagram');if(me.links.twitch)links.push('Twitch');if(me.links.github)links.push('GitHub');if(me.links.epic)links.push('Epic');if(me.links.valorant)links.push('Valorant');if(me.links.discordServer)links.push(me.links.discordServerName||'Discord Server');if(me.links.spotifyProfile)links.push('Spotify');if(!links.length)links.push('Discord','Social link');
   $('#pvLinks').replaceChildren(...links.slice(0,6).map(n=>{const el=document.createElement('span');el.className='pvLink';el.textContent=n;el.style.borderRadius=(d.socialRadius||18)+'px';return el}));
 
   const badges=$('#pvBadges');badges.replaceChildren();
@@ -679,24 +676,19 @@ $('#zoom').oninput=e=>$('#pvCard').style.setProperty('--pv-scale',e.target.value
 
 
 async function refreshSpotifyAccount(){
-  const name=$('#spotifyAccountName'),sub=$('#spotifyAccountSub'),live=$('#spotifyLiveState'),connect=$('#spotifyConnectBtn'),disconnect=$('#spotifyDisconnectBtn'),hint=$('#spotifyRedirectHint'),diag=$('#spotifyAuthDiagnostic');
-  if(!name||!live)return;
+  const name=$('#spotifyAccountName'),sub=$('#spotifyAccountSub'),live=$('#spotifyLiveState');
+  if(!name||!live||!me?.username)return;
+  name.textContent='Automatisch über Discord';
+  sub.textContent='Kein Spotify Login und kein Spotify Premium für die Caruzo-Integration nötig.';
   try{
-    const r=await api('/api/spotify/status?t='+Date.now());
-    if(hint)hint.textContent=r.redirectUri?'Redirect URI: '+r.redirectUri+' · OAuth: '+String(r.authMode||'pkce').toUpperCase():'';
-    if(diag){
-      const d=r.diagnostic;
-      diag.hidden=!d;
-      if(d){const ok=!!d.ok;diag.innerHTML=`<span class="statusDot" style="background:${ok?'#1ed760':'#f23f43'}"></span><span><b>${ok?'Spotify OAuth':'Spotify Fehler'}</b> · ${escapeHtml(d.message||d.stage||'Status unbekannt')}${d.status?' · HTTP '+escapeHtml(String(d.status)):''}</span>`}
+    const r=await api('/api/spotify/now/'+encodeURIComponent(me.username)+'?t='+Date.now());
+    if(r.active){
+      live.innerHTML=`<span class="statusDot" style="background:#1ed760"></span><span><b>JETZT LÄUFT</b> · ${escapeHtml(r.name||'Spotify')}${r.artists?.length?' · '+escapeHtml(r.artists.join(', ')):''} · <small>${escapeHtml(String(r.source||'Discord'))}</small></span>`;
+    }else{
+      live.innerHTML='<span class="statusDot" style="background:#80848e"></span><span>Keine Spotify-Aktivität erkannt · prüfe Discord → Verbindungen → Spotify und Aktivitätsstatus.</span>';
     }
-    if(!r.configured){name.textContent='Spotify noch nicht eingerichtet';sub.textContent='Auf Render fehlt SPOTIFY_CLIENT_ID.';connect.hidden=true;disconnect.hidden=true;live.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Spotify API nicht konfiguriert</span>';return}
-    connect.hidden=!!r.connected;disconnect.hidden=!r.connected;
-    if(!r.connected){name.textContent='Nicht verbunden';sub.textContent='Verbinde Spotify über den sicheren PKCE-Login. Falls Spotify ablehnt, steht der genaue Grund direkt darunter.';live.innerHTML='<span class="statusDot" style="background:#80848e"></span><span>Spotify nicht verbunden</span>';return}
-    const a=r.account||{};name.textContent=a.displayName||'Spotify verbunden';sub.textContent=a.url?'Account verknüpft · '+a.url.replace(/^https?:\/\//,''):'Account erfolgreich verknüpft';
-    const now=r.now||{};live.innerHTML=now.active?`<span class="statusDot" style="background:#1ed760"></span><span><b>${now.isPlaying?'JETZT LÄUFT':'PAUSIERT'}</b> · ${escapeHtml(now.name||'Spotify')}${now.artists?.length?' · '+escapeHtml(now.artists.join(', ')):''}</span>`:'<span class="statusDot" style="background:#1ed760"></span><span>Spotify verbunden · aktuell keine Wiedergabe</span>';
-  }catch(e){live.innerHTML='<span class="statusDot" style="background:#f23f43"></span><span>Spotify Status nicht erreichbar</span>';if(diag){diag.hidden=false;diag.innerHTML='<span class="statusDot" style="background:#f23f43"></span><span><b>API Fehler</b> · '+escapeHtml(e.message||'Spotify Status nicht erreichbar')+'</span>'}}
+  }catch(e){live.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Discord Spotify Presence aktuell nicht erreichbar.</span>'}
 }
-$('#spotifyDisconnectBtn')?.addEventListener('click',async()=>{if(!confirm('Spotify-Verknüpfung wirklich trennen?'))return;try{await api('/api/spotify/disconnect',{method:'POST'});me.spotifyAccount=null;refreshSpotifyAccount()}catch(e){toast(e.message||'Trennen fehlgeschlagen')}});
 async function refreshPresenceDiagnostic(){
   if(!me?.discord?.id)return;const box=$('#presenceLiveState');if(!box)return;
   try{const r=await api('/api/presence/'+encodeURIComponent(me.discord.id)+'?t='+Date.now());const st=String(r.data?.discord_status||'offline').toLowerCase();const names={online:'ONLINE',idle:'ABWESEND',dnd:'BESCHÄFTIGT',offline:'OFFLINE'};const source=r.data?.source==='discord-bot'?'Discord Gateway':String(r.data?.source||'').startsWith('lanyard')?'Lanyard Live':'Keine Live-Quelle';const act=(r.data?.activities||[]).find(a=>a&&a.type!==4&&String(a.name||'').toLowerCase()!=='spotify');const issue=r.diagnostics?.gatewayIssue||r.diagnostics?.note||'';box.innerHTML=`<span class="statusDot" style="background:${st==='online'?'#23a55a':st==='idle'?'#f0b232':st==='dnd'?'#f23f43':'#80848e'}"></span><span><b>${names[st]||'OFFLINE'}</b> · ${source}${act?' · '+act.name:''}${issue?' · '+issue:''}</span>`}catch{box.innerHTML='<span class="statusDot" style="background:#f0b232"></span><span>Presence aktuell nicht erreichbar</span>'}
@@ -725,28 +717,7 @@ $$('[data-reset]').forEach(b=>b.onclick=()=>{if(b.dataset.reset==='views')me.vie
 
 setInterval(()=>{if(me?.discord?.id)refreshPresenceDiagnostic()},6000);
 setInterval(()=>refreshSpotifyAccount(),15000);
-function handleSpotifyCallbackNotice(){
-  const q=new URLSearchParams(location.search);
-  const status=q.get('spotify');
-  if(!status)return;
-  const detail=q.get('detail')||'';
-  const messages={
-    connected:'Spotify wurde erfolgreich verbunden.',
-    denied:'Spotify-Verknüpfung wurde abgebrochen.',
-    'not-configured':'Spotify API ist auf Render noch nicht konfiguriert.',
-    'state-error':'Spotify-Verknüpfung konnte nicht validiert werden.',
-    'token-error':'Spotify konnte den Login-Code nicht in ein Access Token umwandeln.',
-    'profile-error':'Spotify Account-Daten konnten nicht geladen werden.',
-    error:'Spotify-Verknüpfung ist fehlgeschlagen.'
-  };
-  const message=(messages[status]||'Spotify Status: '+status)+(detail?' · '+detail:'');
-  toast(message);
-  const diag=$('#spotifyAuthDiagnostic');
-  if(diag){const ok=status==='connected';diag.hidden=false;diag.innerHTML=`<span class="statusDot" style="background:${ok?'#1ed760':'#f23f43'}"></span><span><b>${ok?'Spotify verbunden':'Spotify OAuth'}</b> · ${escapeHtml(message)}</span>`}
-  setTimeout(()=>refreshSpotifyAccount(),250);
-  // Query entfernen, Hash #media behalten, damit Reload nicht erneut dieselbe Meldung zeigt.
-  history.replaceState(null,'',location.pathname+(location.hash||'#media'));
-}
+function handleSpotifyCallbackNotice(){}
 Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;$('#adminNav').hidden=!(canAdmin||canModerator);$('#adminNavLabel').textContent=canAdmin?'Admin':'Moderator';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();openTab(location.hash.slice(1)||'profil');handleSpotifyCallbackNotice();if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
 window.lucide?.createIcons?.();
 </script>

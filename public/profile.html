@@ -363,7 +363,7 @@ function render(u) {
   }
 
 
-  if (u.spotifyAccount?.connected && s.showSpotifyNowPlaying !== false) startSpotifyNowPlaying(u.username);
+  if (s.showSpotifyNowPlaying !== false) startSpotifyNowPlaying(u.username);
 
   // Socials
   const grid = $('#grid');
@@ -389,7 +389,7 @@ function render(u) {
   if(u.links.epic)grid.append(card(icon('epicgames','ffffff','rgba(255,255,255,.08)'),'Epic Games',u.links.epic,null,()=>copyAccount('Epic Benutzername',u.links.epic)));
   if(u.links.valorant)grid.append(card(icon('valorant','ff4655','rgba(255,70,85,.14)'),'Valorant',u.links.valorant,null,()=>copyAccount('Valorant / Riot ID',u.links.valorant)));
   if(u.links.discordServer)grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server','Discord Server · beitreten',u.links.discordServer));
-  if(u.spotifyAccount?.connected&&u.spotifyAccount?.url)grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify',u.spotifyAccount.displayName||'Spotify',u.spotifyAccount.url));
+  if(u.links.spotifyProfile)grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify','Spotify Profil',u.links.spotifyProfile));
   u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url)));
   grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
   setupSocialHover(grid, des.socialEffect || 'lift');
@@ -440,7 +440,7 @@ function renderSpotifyNow(data){
   if(!data?.active){box.hidden=true;box.replaceChildren();return}
   box.hidden=false;box.classList.toggle('paused',!data.isPlaying);
   const cover=data.image?el('img',{class:'spotify-now-cover',src:data.image,alt:''}):el('div',{class:'spotify-now-cover',style:'background:#171717'});
-  const kicker=el('span',{class:'spotify-now-kicker'},data.isPlaying?'Now playing on Spotify':'Paused on Spotify');
+  const kicker=el('span',{class:'spotify-now-kicker'},data.isPlaying?'Now playing via Discord':'Spotify activity');
   const title=el('b',{class:'spotify-now-title'},data.name||'Spotify');
   const artists=el('span',{class:'spotify-now-artists'},(data.artists||[]).join(', '));
   const album=data.album?el('span',{class:'spotify-now-album'},data.album):'';
