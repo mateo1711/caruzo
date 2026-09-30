@@ -304,6 +304,7 @@ function defaults(dc) {
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
     highlights: [],
+    profileLayout: { order: ['reactions','music-player','activity','spotify-now','spotify','highlights','socials','premium','about'], hidden: [] },
     privacy: { visibility: 'public', noIndex: false },
     share: { title: '', description: '', imageMode: 'avatar', image: '' },
     reactions: { enabled: true, title: 'React', position: 'profile-bottom', animation: 'pop', showCounts: true, items: [
@@ -324,7 +325,7 @@ function defaults(dc) {
     browser: { effect: 'rotate', speed: 1500, messages: [] },
     settings: { showBanner: false, bannerHeight: 120, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, showBoostBadge: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
-    music: { url: '', title: '', volume: 40 },
+    music: { url: '', title: '', volume: 40, globalMute: false },
     musicPlayer: { enabled:false, title:'My Playlist', style:'glass-wave', position:'below-profile', accent:'#8b5cf6', secondary:'#22d3ee', volume:65, showCover:true, sources:[] },
     analytics: { viewsDaily:{}, eventsDaily:{}, socialClicks:{}, highlightClicks:{}, musicPlays:0, musicSkips:0, referrers:{}, devices:{} },
     soundMode: 'auto',
@@ -362,6 +363,12 @@ function applyUpdate(user, b) {
     value: str(x?.value, 80),
     url: url(x?.url),
   })).filter(x => x.label || x.value);
+  const PROFILE_MODULE_IDS = ['reactions','music-player','activity','spotify-now','spotify','highlights','socials','premium','about'];
+  const pl = b.profileLayout || user.profileLayout || {};
+  const rawOrder = Array.isArray(pl.order) ? pl.order.map(x => str(x, 24)) : [];
+  const order = [...rawOrder.filter((x, i, a) => PROFILE_MODULE_IDS.includes(x) && a.indexOf(x) === i), ...PROFILE_MODULE_IDS.filter(x => !rawOrder.includes(x))];
+  const hidden = Array.isArray(pl.hidden) ? pl.hidden.map(x => str(x, 24)).filter((x, i, a) => PROFILE_MODULE_IDS.includes(x) && a.indexOf(x) === i) : [];
+  user.profileLayout = { order, hidden };
   const pr = b.privacy || {};
   user.privacy = {
     visibility: ['public','unlisted','disabled'].includes(pr.visibility) ? pr.visibility : 'public',
@@ -427,7 +434,7 @@ function applyUpdate(user, b) {
   const bg = b.background || {};
   user.background = { type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30), videoStart: num(bg.videoStart, 0, 21600, 0) };
   const m = b.music || {};
-  user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
+  user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40), globalMute: !!m.globalMute };
   if (metaFor(user).premium && b.musicPlayer !== undefined) {
     const mp = b.musicPlayer || {};
     const mpColor=(v,d)=>/^#[0-9a-f]{6}$/i.test(v||'')?v:d;
@@ -527,7 +534,7 @@ const MARKET_VIS = new Set(['private','public']);
 const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
 function privatePresetSnapshot(user) {
   const src = publicView(user);
-  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
   const out = {};
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
   return out;
@@ -546,7 +553,7 @@ function publicPresetSnapshot(userOrSnapshot) {
       type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur,0,30,6), dim: num(bg.dim,0,90,55),
       effect: str(bg.effect, 32) || 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume,0,100,30), videoStart: num(bg.videoStart,0,21600,0),
     },
-    music: { url: url(music.url), title: str(music.title,80), volume: num(music.volume,0,100,40) },
+    music: { url: url(music.url), title: str(music.title,80), volume: num(music.volume,0,100,40), globalMute: !!music.globalMute },
     soundMode: ['auto','music','video','mute'].includes(src.soundMode) ? src.soundMode : 'auto',
     spotifyStyle: deepClone(src.spotifyStyle || {}),
   };
@@ -601,7 +608,7 @@ function applyPresetSnapshot(user, snapshot, scope = 'full') {
     const taken = Object.values(db).some(x => x && x.id !== user.id && x.username === s);
     if (s.length >= 2 && !RESERVED.includes(s) && !taken) user.username = s;
   }
-  const keys = ['displayName','tagline','about','enterText','tags','highlights','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','links'];
+  const keys = ['displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','links'];
   for (const k of keys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
   if (metaFor(user).premium && snapshot.premiumSections !== undefined) user.premiumSections = deepClone(snapshot.premiumSections);
 }
