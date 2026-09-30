@@ -221,7 +221,7 @@ function defaults(dc) {
     spotifyAuth: null,
     floating: [],
     premiumSections: [],
-    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', spotifyProfile: '', custom: [] },
+    links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', spotifyProfile: '', order: [], custom: [] },
     views: 0,
     createdAt: Date.now(),
   };
@@ -263,7 +263,7 @@ function applyUpdate(user, b) {
     hoverGlow:num(des.hoverGlow,0,100,35),
   };
   const vs=b.viewsStyle||{}; user.viewsStyle={visible:vs.visible!==false,placement:['profile','page-bottom'].includes(vs.placement)?vs.placement:'profile',corner:['top-left','top-right','bottom-left','bottom-right'].includes(vs.corner)?vs.corner:'top-right',effect:['none','glow','pulse','scan','blur'].includes(vs.effect)?vs.effect:'glow',backgroundOpacity:num(vs.backgroundOpacity,0,100,22),borderOpacity:num(vs.borderOpacity,0,100,14),eyeOpacity:num(vs.eyeOpacity,0,100,92),countOpacity:num(vs.countOpacity,0,100,88)};
-  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','snow','particles','constellation','rays','scanlines','stars','mesh','nebula','noise','orbs','rain'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
+  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','snow','particles','constellation','rays','scanlines','stars','mesh','nebula','noise','orbs','rain','halo','pulse-grid','ribbons','bubbles','trail','wavefield','lightscape'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
   const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
@@ -273,7 +273,7 @@ function applyUpdate(user, b) {
   for (const [k, def] of Object.entries(settingDefaults)) user.settings[k] = s[k] !== undefined ? !!s[k] : (prevSettings[k] !== undefined ? !!prevSettings[k] : def);
   user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : (prevSettings.nitroTier || '');
   const bg = b.background || {};
-  user.background = { type: bg.type === 'video' ? 'video' : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30), videoStart: num(bg.videoStart, 0, 21600, 0) };
+  user.background = { type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur, 0, 30, 6), dim: num(bg.dim, 0, 90, 55), effect: ['none','aurora','plasma','dither','float','tilt','zoom','pulse','levitate','breathe','sway','glitch','shimmer'].includes(bg.effect) ? bg.effect : 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume, 0, 100, 30), videoStart: num(bg.videoStart, 0, 21600, 0) };
   const m = b.music || {};
   user.music = { url: url(m.url), title: str(m.title, 80), volume: num(m.volume, 0, 100, 40) };
   user.soundMode = ['auto','music','video','mute'].includes(b.soundMode) ? b.soundMode : 'auto';
@@ -303,6 +303,7 @@ function applyUpdate(user, b) {
     });
   } else if (!Array.isArray(user.premiumSections)) user.premiumSections = [];
   const l = b.links || {};
+  const allowedOrder = new Set(['discord','steam','twitch','tiktok','x','instagram','youtube','github','bluesky','epic','valorant','discordServer','spotifyProfile','custom']);
   user.links = {
     steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: url(x.url) })).filter(x => x.url),
     twitch: url(l.twitch),
@@ -313,6 +314,7 @@ function applyUpdate(user, b) {
     discordServerName: str(l.discordServerName, 48).trim(),
     discordServer: discordInvite(l.discordServer),
     instagram: url(l.instagram), youtube: url(l.youtube), github: url(l.github), bluesky: url(l.bluesky), spotifyProfile: url(l.spotifyProfile),
+    order: (Array.isArray(l.order) ? l.order : []).map(x => str(x, 32)).filter(x => allowedOrder.has(x)).slice(0, 24),
     custom: (Array.isArray(l.custom) ? l.custom : []).slice(0, 12).map(x => ({ label: str(x.label, 30), url: url(x.url) })).filter(x => x.url),
   };
   return null;
