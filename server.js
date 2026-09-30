@@ -13,6 +13,7 @@ const {
   HOME_USER = '', PORT = 3000, DISCORD_BOT_TOKEN = '', SITE_PASSWORD = '0x5c28182!',
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
   ADMIN_DISCORD_IDS = '219224335670312960',
+  DISCORD_BOOST_GUILD_ID = '',
   SPOTIFY_CLIENT_ID = '', SPOTIFY_CLIENT_SECRET = '',
 } = process.env;
 const BASE_URL = String(BASE_URL_RAW || 'http://localhost:3000').trim().replace(/\/+$/, '');
@@ -32,7 +33,13 @@ const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
 let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
 adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= [];
-function ensureAdminSettings() { adminState.settings ||= {}; adminState.settings.backgrounds ||= {}; for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|10)$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none'; }
+function ensureAdminSettings() {
+  adminState.settings ||= {};
+  adminState.settings.backgrounds ||= {};
+  for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|1[0-7])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none';
+  adminState.settings.scrollAnimations ||= {};
+  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
+}
 ensureAdminSettings();
 const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
 const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
@@ -211,7 +218,7 @@ function defaults(dc) {
     pageFx: { type: 'grid', color: '#8b5cf6', secondary: '#ff2e93', opacity: 18, density: 44, speed: 9 },
     cursor: { effect: 'none', image: 'system', svg: '' },
     browser: { effect: 'rotate', speed: 1500, messages: [] },
-    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, manualNitro: false, nitroTier: '' },
+    settings: { showBanner: false, showDecoration: true, showBadges: true, showTag: true, showStatus: true, showActivity: false, showSpotifyNowPlaying: true, showProfileBrand: true, showPremiumBadge: true, showAdminBadge: true, showModeratorBadge: true, showBoostBadge: true, manualNitro: false, nitroTier: '' },
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
     music: { url: '', title: '', volume: 40 },
     soundMode: 'auto',
@@ -263,12 +270,12 @@ function applyUpdate(user, b) {
     hoverGlow:num(des.hoverGlow,0,100,35),
   };
   const vs=b.viewsStyle||{}; user.viewsStyle={visible:vs.visible!==false,placement:['profile','page-bottom'].includes(vs.placement)?vs.placement:'profile',corner:['top-left','top-right','bottom-left','bottom-right'].includes(vs.corner)?vs.corner:'top-right',effect:['none','glow','pulse','scan','blur'].includes(vs.effect)?vs.effect:'glow',backgroundOpacity:num(vs.backgroundOpacity,0,100,22),borderOpacity:num(vs.borderOpacity,0,100,14),eyeOpacity:num(vs.eyeOpacity,0,100,92),countOpacity:num(vs.countOpacity,0,100,88)};
-  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','snow','particles','constellation','rays','scanlines','stars','mesh','nebula','noise','orbs','rain','halo','pulse-grid','ribbons','bubbles','trail','wavefield','lightscape'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
+  const pf=b.pageFx||{}; user.pageFx={type:['none','grid','matrix','snow','particles','constellation','rays','scanlines','stars','mesh','nebula','noise','orbs','rain'].includes(pf.type)?pf.type:'grid',color:color(pf.color,'#8b5cf6'),secondary:color(pf.secondary,'#ff2e93'),opacity:num(pf.opacity,0,80,18),density:num(pf.density,16,96,44),speed:num(pf.speed,2,30,9)};
   const cur=b.cursor||{}; user.cursor={effect:['none','spark','trail','snow','hearts','fire','magic','orbit','matrix'].includes(cur.effect)?cur.effect:'none',image:['system','crosshair','dot','ring','cross','arrow','star'].includes(cur.image)?cur.image:'system',svg:str(cur.svg,4000)};
   const br=b.browser||{}; user.browser={effect:['rotate','type','marquee','pulse'].includes(br.effect)?br.effect:'rotate',speed:num(br.speed,300,6000,1500),messages:(Array.isArray(br.messages)?br.messages:[]).slice(0,10).map(x=>str(x,80)).filter(Boolean)};
   const s = b.settings || {};
   const prevSettings = user.settings || {};
-  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showSpotifyNowPlaying:true, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, showModeratorBadge:true, manualNitro:false };
+  const settingDefaults = { showBanner:false, showDecoration:true, showBadges:true, showTag:true, showStatus:true, showActivity:false, showSpotifyNowPlaying:true, showProfileBrand:true, showPremiumBadge:true, showAdminBadge:true, showModeratorBadge:true, showBoostBadge:true, manualNitro:false };
   user.settings = {};
   for (const [k, def] of Object.entries(settingDefaults)) user.settings[k] = s[k] !== undefined ? !!s[k] : (prevSettings[k] !== undefined ? !!prevSettings[k] : def);
   user.settings.nitroTier = ['','beginner','bronze','silver','gold','platinum','diamond','emerald','ruby','opal'].includes(s.nitroTier) ? s.nitroTier : (prevSettings.nitroTier || '');
@@ -327,11 +334,14 @@ function publicView(u) {
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
   d.nitroVerified = !!d.nitro;
   d.nitro = manualNitro || d.nitroVerified;
-  d.badges = Array.isArray(d.badges) ? [...d.badges].filter(b => b.key !== 'nitro') : [];
+  d.badges = Array.isArray(d.badges) ? [...d.badges].filter(b => !['nitro','server_booster'].includes(b.key)) : [];
   if (d.nitro) {
     d.badges.unshift(tier
       ? { key: 'nitro', name: `Discord Nitro · ${tier.label}`, asset: tier.asset, emoji: '💎', tier: tier.key }
       : NITRO);
+  }
+  if (d.booster && rest.settings?.showBoostBadge !== false) {
+    d.badges.push({ key: 'server_booster', name: 'Discord Server Booster', asset: '/discord-boost.png', emoji: '💗' });
   }
   const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
@@ -497,6 +507,7 @@ const presenceCache = new Map();
 const presenceGuildForUser = new Map();
 const discordGuildIds = new Set();
 const pendingPresenceRequests = new Map();
+const boostCache = new Map();
 let gatewayReady = false;
 let discordGatewaySocket = null;
 let discordGatewayIssue = '';
@@ -520,6 +531,56 @@ function normalizeGatewayPresence(d, source = 'discord-bot') {
 function gatewaySend(payload) {
   if (discordGatewaySocket?.readyState !== WebSocket.OPEN) return false;
   try { discordGatewaySocket.send(JSON.stringify(payload)); return true; } catch { return false; }
+}
+async function discordGuildMember(guildId, userId) {
+  if (!DISCORD_BOT_TOKEN || !guildId || !userId) return { ok:false, status:0, data:null };
+  try {
+    const r = await fetch(`https://discord.com/api/v10/guilds/${encodeURIComponent(String(guildId))}/members/${encodeURIComponent(String(userId))}`, {
+      headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}`, 'User-Agent': 'Caruzo/1.0' }
+    });
+    const data = r.ok ? await r.json() : null;
+    return { ok:r.ok, status:r.status, data };
+  } catch { return { ok:false, status:0, data:null }; }
+}
+async function getBoostStatus(userId, force = false) {
+  const id = String(userId || '');
+  if (!id || !DISCORD_BOT_TOKEN) return { available:false, boosted:false, reason:'bot-unavailable', checkedAt:Date.now() };
+  const cached = boostCache.get(id);
+  if (!force && cached && Date.now() - Number(cached.checkedAt || 0) < 120000) return cached;
+  const preferred = String(DISCORD_BOOST_GUILD_ID || '').trim();
+  const known = presenceGuildForUser.get(id);
+  const guilds = [...new Set([preferred, known, ...discordGuildIds].filter(Boolean))].slice(0, 30);
+  if (!guilds.length) {
+    const value = { available:false, boosted:false, reason:'no-mutual-guild', checkedAt:Date.now() };
+    boostCache.set(id, value); return value;
+  }
+  let sawMember = false, sawForbidden = false;
+  for (let i = 0; i < guilds.length; i += 4) {
+    const batch = guilds.slice(i, i + 4);
+    const results = await Promise.all(batch.map(gid => discordGuildMember(gid, id).then(r => ({ gid, ...r }))));
+    for (const r of results) {
+      if (r.status === 403) sawForbidden = true;
+      if (!r.ok || !r.data) continue;
+      sawMember = true;
+      if (r.data.premium_since) {
+        const value = { available:true, boosted:true, guildId:r.gid, premiumSince:String(r.data.premium_since), checkedAt:Date.now() };
+        boostCache.set(id, value); return value;
+      }
+    }
+  }
+  const value = { available:sawMember, boosted:false, reason:sawMember?'not-boosting':(sawForbidden?'forbidden':'not-mutual'), checkedAt:Date.now() };
+  boostCache.set(id, value); return value;
+}
+async function syncUserBoostState(user, force = false) {
+  if (!user) return null;
+  const st = await getBoostStatus(user.discord?.id || user.id, force);
+  user.discord ||= {};
+  user.discord.booster = !!st.boosted;
+  user.discord.boosterSince = st.premiumSince || '';
+  user.discord.boosterGuildId = st.guildId || '';
+  user.discord.boosterCheckAvailable = !!st.available;
+  user.discord.boosterCheckedAt = st.checkedAt || Date.now();
+  return st;
 }
 function finishPresenceProbe(nonce, value) {
   const p = pendingPresenceRequests.get(nonce); if (!p) return;
@@ -1041,8 +1102,27 @@ app.post('/api/sync', auth, async (req, res) => {
   }
   if (!me) return res.status(401).json({ error: 'Token abgelaufen – bitte neu einloggen.' });
   user.discord = mapDiscord(me);
+  await syncUserBoostState(user, true);
   await saveUser(user);
   res.json(publicView(user));
+});
+
+app.get('/api/discord/boost-status', auth, async (req, res) => {
+  const user = db[req.session.uid];
+  const before = !!user.discord?.booster;
+  const beforeCheckedAt = Number(user.discord?.boosterCheckedAt || 0);
+  const st = await syncUserBoostState(user, false);
+  if (before !== !!user.discord?.booster || beforeCheckedAt !== Number(user.discord?.boosterCheckedAt || 0)) await saveUser(user);
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    available: !!st?.available,
+    boosted: !!st?.boosted,
+    premiumSince: st?.premiumSince || '',
+    guildId: st?.guildId || '',
+    reason: st?.reason || '',
+    asset: '/discord-boost.png',
+    discord: publicView(user).discord,
+  });
 });
 
 const EXT = {
@@ -1167,16 +1247,34 @@ app.post('/api/admin/keys/:id/replace', adminOnly, async (req,res)=>{
   adminState.keys.unshift(rec); audit('key_replaced',{keyId:old.id,newKeyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
 });
 // --- Site-Hintergründe (Hauptseite + Dashboard) -----------------------
-app.get('/api/site-settings', (req, res) => { ensureAdminSettings(); res.set('Cache-Control', 'no-store'); res.json({ backgrounds: { ...adminState.settings.backgrounds } }); });
+app.get('/api/site-settings', (req, res) => {
+  ensureAdminSettings();
+  res.set('Cache-Control', 'no-store');
+  res.json({
+    backgrounds: { ...adminState.settings.backgrounds },
+    scrollAnimations: { ...adminState.settings.scrollAnimations },
+  });
+});
 app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
   const page = String(req.body?.page || ''), preset = String(req.body?.preset ?? '');
   if (!['landing', 'dashboard'].includes(page)) return res.status(400).json({ error: 'Ungültige Seite' });
-  if (!/^(none|[1-9]|10)$/.test(preset)) return res.status(400).json({ error: 'Ungültiges Preset' });
+  if (!/^(none|[1-9]|1[0-7])$/.test(preset)) return res.status(400).json({ error: 'Ungültiges Preset' });
   ensureAdminSettings();
   adminState.settings.backgrounds[page] = preset;
   audit('background_changed', { page, preset, by: req.session.uid });
   await saveAdminState();
   res.json({ ok: true, backgrounds: { ...adminState.settings.backgrounds } });
+});
+app.post('/api/admin/scroll-animation', adminOnly, async (req, res) => {
+  const page = String(req.body?.page || 'landing');
+  const animation = String(req.body?.animation || 'none');
+  if (page !== 'landing') return res.status(400).json({ error: 'Scroll Animation ist nur für die Hauptseite verfügbar' });
+  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards'].includes(animation)) return res.status(400).json({ error: 'Ungültige Scroll Animation' });
+  ensureAdminSettings();
+  adminState.settings.scrollAnimations[page] = animation;
+  audit('scroll_animation_changed', { page, animation, by: req.session.uid });
+  await saveAdminState();
+  res.json({ ok:true, scrollAnimations:{ ...adminState.settings.scrollAnimations } });
 });
 // --- Changelog ------------------------------------------------------
 app.get('/api/changelog', (req,res)=>{
@@ -1284,10 +1382,15 @@ app.get('/api/profile/:name', async (req, res) => {
   const user = req.params.name === '__home__' ? findByName(HOME_USER) : findByName(req.params.name);
   if (!user) return res.status(404).json({ error: 'Profil nicht gefunden' });
   if (isBanned(user)) return res.status(403).json({ error: 'Profil gesperrt', banned: true });
+  const beforeBooster = !!user.discord?.booster;
+  const beforeBoostChecked = Number(user.discord?.boosterCheckedAt || 0);
+  await syncUserBoostState(user, false);
+  let shouldSave = beforeBooster !== !!user.discord?.booster || beforeBoostChecked !== Number(user.discord?.boosterCheckedAt || 0);
   if (shouldCountView(req, user)) {
     user.views = (user.views || 0) + 1;
-    await saveUser(user);
+    shouldSave = true;
   }
+  if (shouldSave) await saveUser(user);
   res.json(publicView(user));
 });
 
