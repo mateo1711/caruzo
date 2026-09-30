@@ -32,6 +32,8 @@ const ADMIN_STATE_ROW_ID = '__caruzo_admin_state__';
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
 let adminState = fs.existsSync(ADMIN_FILE) ? JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8')) : { keys: [], audit: [], changelog: [] };
 adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= [];
+function ensureAdminSettings() { adminState.settings ||= {}; adminState.settings.backgrounds ||= {}; for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-5])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none'; }
+ensureAdminSettings();
 const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
 const SUPABASE_ENABLED = !!(SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY);
 const sbHeaders = (extra = {}) => ({
@@ -49,7 +51,7 @@ async function hydrateFromSupabase() {
     let profileCount = 0;
     for (const row of rows) {
       if (!row || !row.id || !row.data) continue;
-      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; continue; }
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { adminState = row.data; adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; ensureAdminSettings(); continue; }
       db[String(row.id)] = row.data; profileCount++;
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(db, null, 2));
@@ -1161,6 +1163,18 @@ app.post('/api/admin/keys/:id/replace', adminOnly, async (req,res)=>{
   let key; do{key=makeInviteKey()}while(adminState.keys.some(x=>x.key===key));
   const rec={id:crypto.randomUUID(),key,label:(old.label||'Invite')+' · replacement',createdAt:Date.now(),createdBy:req.session.uid,replaces:old.id,redeemedAt:0,redeemedBy:'',redeemedUsername:'',revokedAt:0};
   adminState.keys.unshift(rec); audit('key_replaced',{keyId:old.id,newKeyId:rec.id,by:req.session.uid}); await saveAdminState(); res.json({ok:true,key:rec});
+});
+// --- Site-Hintergründe (Hauptseite + Dashboard) -----------------------
+app.get('/api/site-settings', (req, res) => { ensureAdminSettings(); res.set('Cache-Control', 'no-store'); res.json({ backgrounds: { ...adminState.settings.backgrounds } }); });
+app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
+  const page = String(req.body?.page || ''), preset = String(req.body?.preset ?? '');
+  if (!['landing', 'dashboard'].includes(page)) return res.status(400).json({ error: 'Ungültige Seite' });
+  if (!/^(none|[1-5])$/.test(preset)) return res.status(400).json({ error: 'Ungültiges Preset' });
+  ensureAdminSettings();
+  adminState.settings.backgrounds[page] = preset;
+  audit('background_changed', { page, preset, by: req.session.uid });
+  await saveAdminState();
+  res.json({ ok: true, backgrounds: { ...adminState.settings.backgrounds } });
 });
 // --- Changelog ------------------------------------------------------
 app.get('/api/changelog', (req,res)=>{
