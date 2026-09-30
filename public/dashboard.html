@@ -56,6 +56,8 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
 .bgGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:9px}.bgCard{display:grid;gap:5px;text-align:left;padding:8px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.025);color:var(--text);cursor:pointer;transition:.2s}.bgCard:hover:not(:disabled){border-color:rgba(255,255,255,.25);transform:translateY(-2px)}.bgCard.on{border-color:rgba(var(--accent-rgb),.8);box-shadow:0 0 0 1px rgba(var(--accent-rgb),.5)}.bgCard:disabled{cursor:not-allowed;opacity:.42;filter:grayscale(.7)}.bgCard b{font-size:11px}.bgCard small{color:var(--muted);font:700 9px var(--mono);letter-spacing:.06em;text-transform:uppercase}.bgSwatch{aspect-ratio:16/9;border-radius:7px;border:1px solid var(--line2);background-size:cover}.bgSwatch.none{background:repeating-linear-gradient(45deg,rgba(255,255,255,.04) 0 6px,transparent 6px 12px)}@media(max-width:700px){.bgGrid{grid-template-columns:repeat(2,1fr)}}
 
 @media(max-width:1180px){.categoryGrid{grid-template-columns:1fr 1fr}.workspace{grid-template-columns:1fr}.previewPanel{position:relative;top:auto}.topbar{grid-template-columns:1fr auto}.topnav{display:none}.categoryGrid .catGroup{min-height:0}}
+.highlightIntro{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:17px;padding:15px;border:1px solid rgba(var(--accent-rgb),.17);border-radius:13px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.07),rgba(255,255,255,.015))}.highlightIntro>div{display:flex;align-items:center;gap:11px}.highlightIntroIcon{width:38px;height:38px;border-radius:11px;display:grid;place-items:center;background:rgba(var(--accent-rgb),.11);border:1px solid rgba(var(--accent-rgb),.18);color:#c4b5fd}.highlightIntroIcon svg{width:18px}.highlightIntro b{display:block;font-size:12px}.highlightIntro small{display:block;margin-top:3px;color:#777983;font-size:10px}.highlightCount{padding:6px 9px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.025);color:#b8b9c0;font:800 9px var(--mono)}.highlightQuick{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:7px}.highlightQuick button{min-height:65px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.018);color:#aaaab2;cursor:pointer;font-weight:750}.highlightQuick button:hover{border-color:rgba(var(--accent-rgb),.3);background:rgba(var(--accent-rgb),.06);color:#fff}.highlightQuick button span{display:block;margin-bottom:5px;font-size:18px}.highlightEditor{display:grid;gap:8px}.highlightItem{display:grid;grid-template-columns:auto 54px minmax(120px,.65fr) minmax(140px,1fr) minmax(170px,1fr) auto;gap:8px;align-items:center;padding:9px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.018)}.highlightItem.dragging{opacity:.48;border-style:dashed}.highlightDrag{width:30px;height:38px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:8px;color:#696b74;cursor:grab}.highlightEmoji{text-align:center;font-size:18px!important;padding:0!important}.highlightItem .remove{width:36px;height:38px;border:1px solid var(--line2);border-radius:8px;background:rgba(255,255,255,.02);color:#8a8b94;cursor:pointer}.highlightItem .remove:hover{color:#ff8ba4;border-color:rgba(255,85,119,.2)}.highlightEmpty{padding:25px;border:1px dashed var(--line2);border-radius:11px;text-align:center;color:#6f7079}.privacyStatus{display:flex;align-items:center;gap:12px;margin-top:17px;padding:15px;border:1px solid rgba(52,211,153,.15);border-radius:13px;background:linear-gradient(135deg,rgba(52,211,153,.055),rgba(255,255,255,.015))}.privacyStatus.warn{border-color:rgba(245,158,11,.2);background:linear-gradient(135deg,rgba(245,158,11,.055),rgba(255,255,255,.015))}.privacyStatus.off{border-color:rgba(255,85,119,.2);background:linear-gradient(135deg,rgba(255,85,119,.055),rgba(255,255,255,.015))}.privacyStatusIcon{width:38px;height:38px;display:grid;place-items:center;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.025);color:#74e7a5}.privacyStatus.warn .privacyStatusIcon{color:#f5c66e}.privacyStatus.off .privacyStatusIcon{color:#ff859e}.privacyStatus b{display:block;font-size:12px}.privacyStatus small{display:block;margin-top:3px;color:#777983;font-size:10px}.privacyChoice{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}.privacyChoice button{display:flex;align-items:center;gap:10px;min-height:74px;padding:11px;border:1px solid var(--line2);border-radius:11px;background:rgba(255,255,255,.018);color:#8d8f97;text-align:left;cursor:pointer}.privacyChoice button:hover,.privacyChoice button.on{border-color:rgba(var(--accent-rgb),.34);background:rgba(var(--accent-rgb),.07);color:#fff}.privacyChoice button svg{width:19px;flex:none}.privacyChoice button span{display:block}.privacyChoice button b{display:block;font-size:11px}.privacyChoice button small{display:block;margin-top:3px;color:#6f7079;font-size:9px}.sharePreview{overflow:hidden;border:1px solid rgba(255,255,255,.09);border-radius:15px;background:#0b0b10;box-shadow:0 20px 60px rgba(0,0,0,.28)}.sharePreviewMedia{height:180px;position:relative;background:radial-gradient(circle at 30% 20%,rgba(var(--accent-rgb),.28),transparent 36%),linear-gradient(145deg,#111118,#08080c);background-size:cover;background-position:center}.sharePreviewMedia:after{content:"";position:absolute;inset:0;background:linear-gradient(to bottom,transparent 45%,rgba(7,7,10,.88))}.sharePreviewBody{padding:14px 16px 16px}.sharePreviewDomain{display:block;color:#72737c;font:800 8px var(--mono);letter-spacing:.12em;text-transform:uppercase}.sharePreviewBody b{display:block;margin-top:5px;font-size:15px}.sharePreviewBody p{margin:5px 0 0;color:#9698a1;font-size:10px;line-height:1.5}.sharePreviewBody small{display:block;margin-top:9px;color:#5f616a;font:700 8px var(--mono)}.pvHighlights{display:none;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:11px;position:relative;z-index:2}.pvHighlights.show{display:grid}.pvHighlight{padding:7px 8px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.023);min-width:0}.pvHighlight span{font-size:11px}.pvHighlight small{display:block;margin-top:3px;color:#777983;font-size:7px;letter-spacing:.05em;text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.pvHighlight b{display:block;margin-top:2px;color:#e7e6ec;font-size:8px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:900px){.highlightQuick{grid-template-columns:repeat(3,minmax(0,1fr))}.highlightItem{grid-template-columns:auto 50px 1fr 1fr auto}.highlightItem input[type=url]{grid-column:3/5}.highlightItem .remove{grid-column:5;grid-row:1/3}.privacyChoice{grid-template-columns:1fr}.pvHighlights{grid-template-columns:repeat(2,minmax(0,1fr))}}
 @media(max-width:1320px){.marketGrid{grid-template-columns:repeat(3,minmax(0,1fr))}}
 @media(max-width:1180px){.marketGrid{grid-template-columns:repeat(2,minmax(0,1fr))}.marketHero{grid-template-columns:1fr}.marketToolbar{grid-template-columns:1fr}}
 @media(max-width:720px){.nitroGrid{grid-template-columns:repeat(3,1fr)}.colorPopover{left:12px!important;right:12px!important;top:72px!important;width:auto}.themePalette{align-items:flex-start;flex-direction:column}.shell{width:min(100% - 18px,1640px)}.topbar{top:5px;padding:0 10px}.context,.account span,.unsaved{display:none!important}.actions .btn span{display:none}.categoryGrid{grid-template-columns:1fr}.tileGrid,.catGroup.content .tileGrid,.catGroup.style .tileGrid{grid-template-columns:repeat(2,1fr)}.workspace{gap:10px}.panel{padding:11px}.panelHead{display:block}.panelActions{margin-top:12px}.grid2,.grid3{grid-template-columns:1fr}.socialRow{grid-template-columns:110px 1fr}.presetGrid,.marketGrid{grid-template-columns:1fr}.marketCreateGrid{grid-template-columns:1fr}.previewStage{padding:14px;min-height:260px}.pvCard{padding:18px}.pvTop{gap:12px}.pvAvatarWrap{width:56px;height:56px}.pvName{font-size:21px}}
@@ -92,6 +94,9 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
         <button class="tile" data-tab="labels"><span class="ico"><i data-lucide="tags"></i></span>Labels<span class="dot"></span></button>
         <button class="tile" data-tab="browser"><span class="ico"><i data-lucide="type"></i></span>Metadata<span class="dot"></span></button>
         <button class="tile" data-tab="entrance"><span class="ico"><i data-lucide="door-open"></i></span>Entrance<span class="dot"></span></button>
+        <button class="tile" data-tab="highlights"><span class="ico"><i data-lucide="sparkles"></i></span>Highlights<span class="dot"></span></button>
+        <button class="tile" data-tab="privacy"><span class="ico"><i data-lucide="shield-check"></i></span>Privacy<span class="dot"></span></button>
+        <button class="tile" data-tab="share"><span class="ico"><i data-lucide="send"></i></span>Share<span class="dot"></span></button>
       </div></div>
       <div class="catGroup content"><div class="catTitle">Content</div><div class="tileGrid">
         <button class="tile" data-tab="presence"><span class="ico"><i data-lucide="radio"></i></span>Presence<span class="dot"></span></button>
@@ -153,6 +158,41 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
       <section class="panel" data-panel="entrance" hidden>
         <div class="panelHead"><div><span class="panelKicker">Entrance</span><h2>Click to enter</h2><p>Der animierte Startscreen vor dem Profil.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save</button></div></div>
         <div class="section"><label class="field"><span>Entrance text</span><input type="text" data-p="enterText" placeholder="click to enter..."></label><div class="statusBox" style="margin-top:12px"><i data-lucide="sparkles" style="width:15px"></i>Der Startscreen nutzt automatisch deinen Accent, Blur und Hintergrund.</div></div>
+      </section>
+
+      <section class="panel" data-panel="highlights" hidden>
+        <div class="panelHead"><div><span class="panelKicker">Highlights</span><h2>Deine wichtigsten Dinge</h2><p>Kurze Karten für Games, Projekte, Musik, Status oder andere Infos, die sofort auffallen sollen.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save highlights</button></div></div>
+        <div class="highlightIntro">
+          <div><span class="highlightIntroIcon"><i data-lucide="sparkles"></i></span><div><b>Weniger Text, mehr Persönlichkeit</b><small>Bis zu 6 Highlights. Optional kann jede Karte auf eine Seite verlinken.</small></div></div><span class="highlightCount" id="highlightCount">0 / 6</span>
+        </div>
+        <div class="section"><div class="sectionTitle"><h3>Schnell hinzufügen</h3><span class="miniHint">Vorlage wählen und direkt bearbeiten</span></div><div class="highlightQuick" id="highlightQuick">
+          <button type="button" data-highlight-template="game"><span>🎮</span>Game</button><button type="button" data-highlight-template="project"><span>◇</span>Projekt</button><button type="button" data-highlight-template="music"><span>♫</span>Musik</button><button type="button" data-highlight-template="status"><span>●</span>Status</button><button type="button" data-highlight-template="website"><span>↗</span>Website</button><button type="button" data-highlight-template="fact"><span>✦</span>Fact</button>
+        </div></div>
+        <div class="section"><div class="sectionTitle"><h3>Deine Highlights</h3><button class="btn ghost" type="button" id="addHighlight"><i data-lucide="plus"></i>Highlight</button></div><p class="desc">Ziehe die Karten am Griff in die gewünschte Reihenfolge. Leere Highlights werden beim Speichern automatisch entfernt.</p><div class="highlightEditor" id="highlightEditor"></div></div>
+      </section>
+
+      <section class="panel" data-panel="privacy" hidden>
+        <div class="panelHead"><div><span class="panelKicker">Privacy</span><h2>Wer sieht dein Profil?</h2><p>Einfach festlegen, wie öffentlich dein Caruzo-Profil sein soll und welche Live-Infos Besucher sehen.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save privacy</button></div></div>
+        <div class="privacyStatus" id="privacyStatus"><span class="privacyStatusIcon"><i data-lucide="globe-2"></i></span><div><b>Öffentlich</b><small>Dein Profil ist über den direkten Link erreichbar.</small></div></div>
+        <div class="section"><div class="sectionTitle"><h3>Profil-Sichtbarkeit</h3></div><div class="privacyChoice" data-segment="privacy.visibility">
+          <button type="button" data-value="public"><i data-lucide="globe-2"></i><span><b>Öffentlich</b><small>Normal sichtbar und teilbar</small></span></button>
+          <button type="button" data-value="unlisted"><i data-lucide="link-2"></i><span><b>Ungelisted</b><small>Nur wer den Link kennt</small></span></button>
+          <button type="button" data-value="disabled"><i data-lucide="eye-off"></i><span><b>Deaktiviert</b><small>Für Besucher nicht erreichbar</small></span></button>
+        </div></div>
+        <div class="section"><div class="sectionTitle"><h3>Was Besucher sehen</h3></div>
+          <label class="switchRow"><span class="switchText"><b>Profilaufrufe anzeigen</b><small>Die Aufrufe werden intern weiterhin gezählt, auch wenn du den Counter ausblendest.</small></span><span class="switch"><input type="checkbox" data-p="viewsStyle.visible"><i></i></span></label>
+          <label class="switchRow"><span class="switchText"><b>Discord Live-Status</b><small>Online, Idle, DND oder Offline auf dem Profil anzeigen.</small></span><span class="switch"><input type="checkbox" data-p="settings.showStatus"><i></i></span></label>
+          <label class="switchRow"><span class="switchText"><b>Discord Aktivität / Spiel</b><small>Aktuelles Spiel, Stream oder andere Discord-Aktivität anzeigen.</small></span><span class="switch"><input type="checkbox" data-p="settings.showActivity"><i></i></span></label>
+          <label class="switchRow"><span class="switchText"><b>Spotify „Now Playing“</b><small>Aktuellen Song nur anzeigen, wenn Discord die Spotify-Aktivität liefert.</small></span><span class="switch"><input type="checkbox" data-p="settings.showSpotifyNowPlaying"><i></i></span></label>
+          <label class="switchRow"><span class="switchText"><b>Von Suchmaschinen ausblenden</b><small>Setzt dein Profil auf noindex. Sinnvoll für private oder ungelistete Profile.</small></span><span class="switch"><input type="checkbox" data-p="privacy.noIndex"><i></i></span></label>
+        </div>
+        <div class="statusBox" id="privacyLink"><i data-lucide="link-2" style="width:15px"></i><span>Direktlink wird geladen …</span></div>
+      </section>
+
+      <section class="panel" data-panel="share" hidden>
+        <div class="panelHead"><div><span class="panelKicker">Share & Preview</span><h2>So sieht dein Link beim Teilen aus</h2><p>Titel, Beschreibung und Vorschaubild für Discord, WhatsApp, X und andere Plattformen.</p></div><div class="panelActions"><button class="btn" type="button" id="copyShareLink"><i data-lucide="copy"></i>Link kopieren</button><button class="btn primary saveBtn"><i data-lucide="save"></i>Save share</button></div></div>
+        <div class="section"><div class="grid2"><label class="field"><span>Share title</span><input type="text" data-p="share.title" maxlength="70" placeholder="Leer = dein Display Name"></label><label class="field"><span>Vorschaubild</span><select data-p="share.imageMode"><option value="avatar">Discord Avatar</option><option value="background">Profil-Hintergrund</option><option value="custom">Eigenes Bild</option></select></label></div><label class="field" style="margin-top:10px"><span>Beschreibung</span><textarea data-p="share.description" maxlength="180" placeholder="Leer = deine Tagline"></textarea><small>Am besten 70–150 Zeichen. Persönliche Accounts oder Tokens werden hier niemals eingebettet.</small></label><div class="grid2" style="margin-top:10px"><label class="field"><span>Eigenes Vorschaubild <small style="color:var(--muted)">optional</small></span><input type="url" data-p="share.image" placeholder="https://..."></label><div class="upload"><input type="file" data-upload="share" accept="image/png,image/jpeg,image/gif,image/webp"><small>PNG, JPG, GIF oder WebP</small></div></div></div>
+        <div class="section"><div class="sectionTitle"><h3>Live Share Preview</h3><span class="miniHint">Beispielansicht · je nach App leicht unterschiedlich</span></div><div class="sharePreview" id="sharePreview"><div class="sharePreviewMedia" id="sharePreviewMedia"></div><div class="sharePreviewBody"><span class="sharePreviewDomain">caruzo.lol</span><b id="sharePreviewTitle">Dein Profil · Caruzo</b><p id="sharePreviewDescription">Deine Tagline erscheint hier.</p><small id="sharePreviewUrl">https://caruzo.lol/username</small></div></div></div>
       </section>
 
       <section class="panel" data-panel="presence" hidden>
@@ -319,7 +359,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
     <aside class="previewArea">
       <section class="previewPanel">
         <div class="previewHead"><b>Live preview</b><div class="previewTools"><div class="zoom"><i data-lucide="zoom-out" style="width:14px"></i><input id="zoom" type="range" min="70" max="110" value="92"><i data-lucide="zoom-in" style="width:14px"></i></div></div></div>
-        <div class="previewStage" id="previewStage"><div class="previewBg" id="previewBg"></div><div class="pvCard" id="pvCard"><div class="pvBanner" id="pvBanner" hidden></div><div class="pvView" id="pvView"><i data-lucide="eye" style="width:10px"></i><span id="pvViews">0</span></div><div class="pvTop"><div class="pvAvatarWrap" id="pvAvatarWrap"><img class="pvAvatar" id="pvAvatar" alt=""></div><div class="pvIdentity"><div class="pvName" id="pvName">Your name</div><div class="pvHandle" id="pvHandle">@username</div></div><div class="pvBadges" id="pvBadges"></div></div><div class="pvTagline" id="pvTagline"></div><div class="pvAbout" id="pvAbout"></div><div class="pvDetails" id="pvDetails"></div><div class="pvLinks" id="pvLinks"></div></div><div class="pvFooterView" id="pvFooterView"><i data-lucide="eye" style="width:10px"></i><span id="pvFooterViews">0</span></div></div>
+        <div class="previewStage" id="previewStage"><div class="previewBg" id="previewBg"></div><div class="pvCard" id="pvCard"><div class="pvBanner" id="pvBanner" hidden></div><div class="pvView" id="pvView"><i data-lucide="eye" style="width:10px"></i><span id="pvViews">0</span></div><div class="pvTop"><div class="pvAvatarWrap" id="pvAvatarWrap"><img class="pvAvatar" id="pvAvatar" alt=""></div><div class="pvIdentity"><div class="pvName" id="pvName">Your name</div><div class="pvHandle" id="pvHandle">@username</div></div><div class="pvBadges" id="pvBadges"></div></div><div class="pvTagline" id="pvTagline"></div><div class="pvAbout" id="pvAbout"></div><div class="pvHighlights" id="pvHighlights"></div><div class="pvDetails" id="pvDetails"></div><div class="pvLinks" id="pvLinks"></div></div><div class="pvFooterView" id="pvFooterView"><i data-lucide="eye" style="width:10px"></i><span id="pvFooterViews">0</span></div></div>
       </section>
     </aside>
   </div>
@@ -394,6 +434,9 @@ function defaults(){
   me.spotifyStyle??={blur:26,glow:24,layout:'compact'};ensure(me.spotifyStyle,'blur',26);ensure(me.spotifyStyle,'glow',24);ensure(me.spotifyStyle,'layout','compact');
   me.settings??={};ensure(me.settings,'showSpotifyNowPlaying',true);
   me.links??={};me.links.steam??=[];me.links.custom??=[];ensure(me.links,'epic','');ensure(me.links,'valorant','');ensure(me.links,'discordServerName','');ensure(me.links,'discordServer','');ensure(me.links,'spotifyProfile','');ensureSocialOrder();
+  me.highlights??=[];
+  me.privacy??={visibility:'public',noIndex:false};ensure(me.privacy,'visibility','public');ensure(me.privacy,'noIndex',false);
+  me.share??={title:'',description:'',imageMode:'avatar',image:''};ensure(me.share,'title','');ensure(me.share,'description','');ensure(me.share,'imageMode','avatar');ensure(me.share,'image','');
   me.floating??=[];me.tags??={};me.premiumSections??=[];
 }
 function openTab(name){
@@ -402,7 +445,7 @@ function openTab(name){
   document.body.classList.toggle('admin-mode',name==='admin');
   $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
   $$('[data-tab]').forEach(b=>b.classList.toggle('active',b.dataset.tab===name));
-  const groups={profil:'profile',views:'profile',badges:'profile',labels:'profile',browser:'profile',entrance:'profile',presence:'profile',media:'spotify',musik:'spotify',socials:'socials',premium:'profile',appearance:'style',presets:'style',marketplace:'style',background:'style',placement:'style',effects:'style',discord:'content',admin:'admin'};
+  const groups={profil:'profile',views:'profile',badges:'profile',labels:'profile',browser:'profile',entrance:'profile',highlights:'profile',privacy:'profile',share:'profile',presence:'profile',media:'spotify',musik:'spotify',socials:'socials',premium:'profile',appearance:'style',presets:'style',marketplace:'style',background:'style',placement:'style',effects:'style',discord:'content',admin:'admin'};
   $$('.topnav [data-section]').forEach(b=>b.classList.toggle('active',b.dataset.section===groups[name]));
   history.replaceState(null,'','#'+name);
   if(name==='admin'){loadAdminOverview();loadAdminKeys();loadAdminUsers();if(canAdmin)loadAdminChangelog();selectAdminTab('overview');window.scrollTo({top:0,behavior:'smooth'})}
@@ -483,6 +526,59 @@ function renderBadges(){
   if(canModerator){const c=document.createElement('span');c.className='badgeChip';c.textContent='◇ Caruzo Moderator';box.append(c)}
 }
 
+const HIGHLIGHT_TEMPLATES={
+  game:{icon:'🎮',label:'Game',value:'Mein Lieblingsspiel'},project:{icon:'◇',label:'Projekt',value:'Mein aktuelles Projekt'},music:{icon:'♫',label:'Musik',value:'Was ich gerade höre'},status:{icon:'●',label:'Status',value:'Aktuell aktiv'},website:{icon:'↗',label:'Website',value:'Meine Website'},fact:{icon:'✦',label:'Fact',value:'Etwas über mich'}
+};
+function addHighlight(template='fact'){
+  me.highlights??=[];if(me.highlights.length>=6)return toast('Maximal 6 Highlights');
+  const t=HIGHLIGHT_TEMPLATES[template]||HIGHLIGHT_TEMPLATES.fact;
+  me.highlights.push({id:(crypto?.randomUUID?.()||('highlight-'+Date.now())),icon:t.icon,label:t.label,value:t.value,url:''});
+  markDirty();renderHighlightsEditor();renderPreview();
+}
+function renderHighlightsEditor(){
+  const box=$('#highlightEditor'),count=$('#highlightCount');if(!box||!me)return;me.highlights??=[];box.replaceChildren();if(count)count.textContent=`${me.highlights.length} / 6`;
+  if(!me.highlights.length){const empty=document.createElement('div');empty.className='highlightEmpty';empty.innerHTML='<b style="display:block;color:#a6a7af;margin-bottom:4px">Noch keine Highlights</b><span>Wähle oben eine Vorlage oder füge ein eigenes Highlight hinzu.</span>';box.append(empty);return}
+  let dragging=-1;
+  me.highlights.forEach((item,i)=>{
+    const row=document.createElement('div');row.className='highlightItem';row.draggable=true;
+    const drag=document.createElement('span');drag.className='highlightDrag';drag.textContent='↕';drag.title='Ziehen zum Sortieren';
+    const icon=document.createElement('input');icon.className='highlightEmoji';icon.type='text';icon.maxLength=8;icon.value=item.icon||'✦';icon.title='Emoji / Symbol';icon.oninput=()=>{item.icon=icon.value;markDirty();renderPreview()};
+    const label=document.createElement('input');label.type='text';label.maxLength=28;label.placeholder='Label';label.value=item.label||'';label.oninput=()=>{item.label=label.value;markDirty();renderPreview()};
+    const value=document.createElement('input');value.type='text';value.maxLength=80;value.placeholder='Wert / Text';value.value=item.value||'';value.oninput=()=>{item.value=value.value;markDirty();renderPreview()};
+    const link=document.createElement('input');link.type='url';link.placeholder='Optionaler Link';link.value=item.url||'';link.oninput=()=>{item.url=link.value;markDirty()};
+    const del=document.createElement('button');del.type='button';del.className='remove';del.textContent='×';del.title='Highlight entfernen';del.onclick=()=>{me.highlights.splice(i,1);markDirty();renderHighlightsEditor();renderPreview()};
+    row.addEventListener('dragstart',()=>{dragging=i;row.classList.add('dragging')});row.addEventListener('dragend',()=>{dragging=-1;row.classList.remove('dragging')});row.addEventListener('dragover',e=>e.preventDefault());row.addEventListener('drop',e=>{e.preventDefault();if(dragging<0||dragging===i)return;const moved=me.highlights.splice(dragging,1)[0];me.highlights.splice(i,0,moved);markDirty();renderHighlightsEditor();renderPreview()});
+    row.append(drag,icon,label,value,link,del);box.append(row);
+  });
+}
+function updatePrivacyStatus(){
+  const box=$('#privacyStatus'),link=$('#privacyLink');if(!box||!me)return;
+  const v=me.privacy?.visibility||'public';box.classList.toggle('warn',v==='unlisted');box.classList.toggle('off',v==='disabled');
+  const data=v==='public'?['Öffentlich','Dein Profil ist normal erreichbar und kann geteilt werden.','globe-2']:v==='unlisted'?['Ungelisted','Dein Profil funktioniert über den direkten Link, soll aber nicht gelistet werden.','link-2']:['Deaktiviert','Besucher erhalten eine 404-Seite. Du selbst kannst dein Profil weiterhin prüfen.','eye-off'];
+  box.innerHTML=`<span class="privacyStatusIcon"><i data-lucide="${data[2]}"></i></span><div><b>${data[0]}</b><small>${data[1]}</small></div>`;
+  if(link)link.innerHTML=`<i data-lucide="link-2" style="width:15px"></i><span>Direktlink: <b>${escapeHtml(location.origin+'/'+encodeURIComponent(me.username))}</b></span>`;
+  window.lucide?.createIcons?.();
+}
+function sharePreviewImage(){
+  const mode=me.share?.imageMode||'avatar';
+  if(mode==='custom'&&me.share?.image)return me.share.image;
+  if(mode==='background'&&me.background?.url){
+    const y=extractYouTubeId(me.background.url);if(y)return `https://i.ytimg.com/vi/${y}/maxresdefault.jpg`;
+    if(me.background.type==='image')return me.background.url;
+  }
+  return me.discord?.avatar||'';
+}
+function renderSharePreview(){
+  const media=$('#sharePreviewMedia');if(!media||!me)return;
+  const img=sharePreviewImage();media.style.backgroundImage=img?`linear-gradient(to bottom,transparent 45%,rgba(7,7,10,.88)),url("${String(img).replace(/"/g,'')}")`:'radial-gradient(circle at 30% 20%,rgba(var(--accent-rgb),.28),transparent 36%),linear-gradient(145deg,#111118,#08080c)';
+  $('#sharePreviewTitle').textContent=me.share?.title||`${me.displayName||me.username} · Caruzo`;
+  $('#sharePreviewDescription').textContent=me.share?.description||me.tagline||`Profil von ${me.displayName||me.username} auf Caruzo.`;
+  $('#sharePreviewUrl').textContent=location.origin+'/'+(me.username||'username');
+}
+$('#addHighlight').onclick=()=>addHighlight('fact');
+$$('[data-highlight-template]').forEach(b=>b.onclick=()=>addHighlight(b.dataset.highlightTemplate));
+$('#copyShareLink').onclick=async()=>{try{await navigator.clipboard.writeText(location.origin+'/'+encodeURIComponent(me.username));toast('Profil-Link kopiert')}catch{toast('Link konnte nicht kopiert werden')}};
+
 function bind(){
   defaults();
   $$('[data-p]').forEach(e=>{
@@ -495,14 +591,16 @@ function bind(){
       if(e.dataset.p==='settings.manualNitro'){renderBadges();renderNitroGrid()}
       if(['settings.showPremiumBadge','settings.showAdminBadge','settings.showModeratorBadge','settings.showBoostBadge','settings.showBadges'].includes(e.dataset.p))renderBadges();
       if(e.dataset.p.startsWith('links.'))renderSocialSort();
+      if(e.dataset.p.startsWith('privacy.')||['viewsStyle.visible','settings.showStatus','settings.showActivity','settings.showSpotifyNowPlaying'].includes(e.dataset.p))updatePrivacyStatus();
+      if(e.dataset.p.startsWith('share.')||e.dataset.p==='tagline'||e.dataset.p==='displayName'||e.dataset.p.startsWith('background.'))renderSharePreview();
     };
   });
-  $$('[data-segment] button').forEach(b=>b.onclick=()=>{set(me,b.parentElement.dataset.segment,b.dataset.value);markDirty();updateOutputs();renderPreview()});
+  $$('[data-segment] button').forEach(b=>b.onclick=()=>{set(me,b.parentElement.dataset.segment,b.dataset.value);markDirty();updateOutputs();renderPreview();if(b.parentElement.dataset.segment==='privacy.visibility')updatePrivacyStatus()});
   $('#hAvatar').src=me.discord.avatar;$('#accountName').textContent=me.discord.globalName||me.discord.username;$('#accountProfile').href='/'+encodeURIComponent(me.username);
   $('#discordState').textContent=`${me.discord.globalName||me.discord.username} · ${me.discord.id}`;
-  updateUrl();renderNitroGrid();renderBadges();repeaters();renderPremiumSections();applyPremiumAccess();applyBoostAccess();updateOutputs();renderPreview();refreshPresenceDiagnostic();refreshSpotifyAccount();refreshBoostStatus();window.lucide?.createIcons?.();
+  updateUrl();renderNitroGrid();renderBadges();repeaters();renderHighlightsEditor();renderPremiumSections();applyPremiumAccess();applyBoostAccess();updateOutputs();renderPreview();updatePrivacyStatus();renderSharePreview();refreshPresenceDiagnostic();refreshSpotifyAccount();refreshBoostStatus();window.lucide?.createIcons?.();
 }
-function updateUrl(){const h=location.host+'/';$('#hostPrefix').textContent=h;$('#view').href='/'+encodeURIComponent(me.username)}
+function updateUrl(){const h=location.host+'/';$('#hostPrefix').textContent=h;$('#view').href='/'+encodeURIComponent(me.username);updatePrivacyStatus();renderSharePreview()}
 
 function renderPreview(){
   if(!me)return;
@@ -515,6 +613,10 @@ function renderPreview(){
 
   const tag=$('#pvTagline');tag.textContent=me.tagline||'';tag.style.display=me.tagline?'block':'none';
   const about=$('#pvAbout');about.textContent=me.about||'';about.style.display=me.about?'block':'none';
+  const pvHighlights=$('#pvHighlights');
+  const hs=(Array.isArray(me.highlights)?me.highlights:[]).filter(x=>x&&(x.label||x.value)).slice(0,6);
+  pvHighlights.replaceChildren(...hs.map(x=>{const n=document.createElement('div');n.className='pvHighlight';n.innerHTML=`<span>${escapeHtml(x.icon||'✦')}</span><small>${escapeHtml(x.label||'Highlight')}</small><b>${escapeHtml(x.value||'—')}</b>`;return n}));
+  pvHighlights.classList.toggle('show',!!hs.length);
 
   const wrap=$('#pvAvatarWrap');wrap.className=`pvAvatarWrap frame-${d.avatarFrameEffect||'glow'} avatar-${d.avatarShape||'circle'}`;wrap.style.setProperty('--frame',d.avatarFrameColor||accent);
   const previewAvatarSize=Math.max(50,Math.min(80,Math.round((d.avatarSize||132)*.5)));wrap.style.width=previewAvatarSize+'px';wrap.style.height=previewAvatarSize+'px';$('#pvAvatar').style.borderWidth=(d.avatarFrameWidth??2)+'px';
@@ -1069,7 +1171,7 @@ $('#clearNitroTier').onclick=()=>{me.settings.nitroTier='';markDirty();renderNit
 
 $$('[data-upload]').forEach(inp=>inp.onchange=async()=>{
   const f=inp.files[0];if(!f)return;const fd=new FormData();fd.append('file',f);
-  try{toast('Upload läuft …');const r=await api('/api/upload/'+inp.dataset.upload,{method:'POST',body:fd});if(inp.dataset.upload==='background'){me.background.url=r.url;me.background.type=f.type.startsWith('video')?'video':'image'}else me.music.url=r.url;bind();markDirty();toast('Upload fertig · jetzt speichern')}catch(e){toast(e.message)}
+  try{toast('Upload läuft …');const r=await api('/api/upload/'+inp.dataset.upload,{method:'POST',body:fd});if(inp.dataset.upload==='background'){me.background.url=r.url;me.background.type=f.type.startsWith('video')?'video':'image'}else if(inp.dataset.upload==='share'){me.share.image=r.url;me.share.imageMode='custom'}else me.music.url=r.url;bind();markDirty();toast('Upload fertig · jetzt speichern')}catch(e){toast(e.message)}
 });
 $$('[data-color]').forEach(b=>b.onclick=()=>{me.design.accentColor=b.dataset.color;me.design.avatarFrameColor=b.dataset.color;markDirty();bind()});
 

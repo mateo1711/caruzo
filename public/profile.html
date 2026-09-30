@@ -113,6 +113,9 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 .link small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .link .ext{width:14px;height:14px;fill:#6ea8ff;flex:none}
 
+/* Highlights */
+.highlight-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}.highlight-card{position:relative;display:flex;align-items:center;gap:12px;min-height:76px;padding:14px 15px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:linear-gradient(145deg,rgba(18,18,23,var(--card-alpha)),rgba(8,8,11,var(--card-alpha)));backdrop-filter:blur(var(--card-blur,22px)) saturate(var(--glass-saturation,120%));box-shadow:0 14px 38px rgba(0,0,0,.2),0 0 24px color-mix(in srgb,var(--accent) 9%,transparent);transition:transform .18s,border-color .18s,box-shadow .18s}.highlight-card:hover{transform:translateY(-2px);border-color:color-mix(in srgb,var(--accent) 42%,rgba(255,255,255,.1));box-shadow:0 18px 42px rgba(0,0,0,.26),0 0 30px color-mix(in srgb,var(--accent) 14%,transparent)}.highlight-icon{width:42px;height:42px;flex:none;display:grid;place-items:center;border-radius:13px;border:1px solid color-mix(in srgb,var(--accent) 22%,rgba(255,255,255,.08));background:color-mix(in srgb,var(--accent) 9%,rgba(255,255,255,.02));font-size:20px}.highlight-copy{min-width:0;flex:1}.highlight-copy small{display:block;color:#85858f;font:800 9px var(--mono);letter-spacing:.1em;text-transform:uppercase}.highlight-copy b{display:block;margin-top:5px;color:#f2eef0;font:700 13px/1.25 var(--display);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.highlight-open{width:28px;height:28px;display:grid;place-items:center;border-radius:9px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);color:#8f90a0}.highlight-open svg{width:13px;height:13px;fill:currentColor}@media(max-width:760px){.highlight-grid{grid-template-columns:1fr 1fr}}@media(max-width:500px){.highlight-grid{grid-template-columns:1fr}}
+
 /* About */
 .about{padding:30px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere;color:#e7dce1}
 
@@ -219,6 +222,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
     <div class="card spotify-now" id="spotifyNow" hidden></div>
     <div class="card spotify" id="spotify" hidden></div>
   </section>
+  <section id="highlights" hidden><div class="highlight-grid" id="highlightGrid"></div></section>
   <section id="socials"><div class="grid" id="grid"></div></section>
   <section id="premiumCustom" hidden><div class="premium-custom-list" id="premiumSectionsList"></div></section>
   <section id="about" hidden><div class="card about" id="aboutText"></div></section>
@@ -395,6 +399,20 @@ function render(u) {
   p.append(el('div', { class: 'inner' }, avatar, info));
   setupProfileHover(p, u);
   typewriter(tl, u.tagline);
+
+  // Highlights
+  const highlightSection=$('#highlights'),highlightGrid=$('#highlightGrid');
+  const highlights=(Array.isArray(u.highlights)?u.highlights:[]).filter(x=>x&&(x.label||x.value)).slice(0,6);
+  if(highlights.length){
+    highlightGrid.replaceChildren();
+    highlights.forEach(x=>{
+      const body=el('div',{class:'highlight-copy'},el('small',{},x.label||'Highlight'),el('b',{},x.value||'—'));
+      const open=x.url?el('span',{class:'highlight-open'},svg(PATH.ext)):'';
+      const children=[el('span',{class:'highlight-icon'},x.icon||'✦'),body,open];
+      highlightGrid.append(x.url?el('a',{class:'highlight-card',href:x.url,target:'_blank',rel:'noopener noreferrer'},children):el('div',{class:'highlight-card'},children));
+    });
+    highlightSection.hidden=false;
+  }
 
   // Spotify embed via the official IFrame API. This lets Caruzo detect playback
   // and immediately silence the profile's own music/video sound to avoid overlap.
