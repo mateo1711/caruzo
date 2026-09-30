@@ -37,6 +37,8 @@ function ensureAdminSettings() {
   adminState.settings ||= {};
   adminState.settings.backgrounds ||= {};
   for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|1[0-7])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none';
+  if (!/^(none|[1-8])$/.test(String(adminState.settings.backgrounds.login ?? ''))) adminState.settings.backgrounds.login = 'none';
+  if (!/^[1-8]$/.test(String(adminState.settings.page404Design || ''))) adminState.settings.page404Design = '1';
   adminState.settings.scrollAnimations ||= {};
   if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
   if (!['none','neon-dot','halo-ring','precision','diamond','spark','pixel','orbit','minimal-arrow'].includes(String(adminState.settings.landingCursor || ''))) adminState.settings.landingCursor = 'none';
@@ -367,15 +369,18 @@ function publicPresetSnapshot(userOrSnapshot) {
   const src = userOrSnapshot?.id ? publicView(userOrSnapshot) : (userOrSnapshot || {});
   const bg = src.background || {};
   const cur = src.cursor || {};
+  const music = src.music || {};
   return {
     design: deepClone(src.design || {}),
     viewsStyle: deepClone(src.viewsStyle || {}),
     pageFx: deepClone(src.pageFx || {}),
     cursor: { effect: str(cur.effect, 32), image: str(cur.image, 32), svg: '' },
     background: {
-      type: 'image', url: '', blur: num(bg.blur,0,30,6), dim: num(bg.dim,0,90,55),
-      effect: str(bg.effect, 32) || 'none', videoSound: false, videoVolume: num(bg.videoVolume,0,100,30), videoStart: 0,
+      type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur,0,30,6), dim: num(bg.dim,0,90,55),
+      effect: str(bg.effect, 32) || 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume,0,100,30), videoStart: num(bg.videoStart,0,21600,0),
     },
+    music: { url: url(music.url), title: str(music.title,80), volume: num(music.volume,0,100,40) },
+    soundMode: ['auto','music','video','mute'].includes(src.soundMode) ? src.soundMode : 'auto',
     spotifyStyle: deepClone(src.spotifyStyle || {}),
   };
 }
@@ -402,17 +407,24 @@ function marketplaceMeta(rec, viewerId = '') {
     preview: {
       accentColor: /^#[0-9a-f]{6}$/i.test(design.accentColor || '') ? design.accentColor : '#8b5cf6',
       frameColor: /^#[0-9a-f]{6}$/i.test(design.avatarFrameColor || '') ? design.avatarFrameColor : '#8b5cf6',
+      secondaryColor: /^#[0-9a-f]{6}$/i.test(snap.pageFx?.secondary || '') ? snap.pageFx.secondary : '#ff2e93',
       cardStyle: str(design.cardStyle, 24) || 'glass',
       nameEffect: str(design.nameEffect, 24) || 'standard',
+      socialEffect: str(design.socialEffect, 24) || 'lift',
       pageFx: str(snap.pageFx?.type, 24) || 'none',
       backgroundEffect: str(snap.background?.effect, 24) || 'none',
+      backgroundType: ['image','video','youtube'].includes(snap.background?.type) ? snap.background.type : 'image',
+      backgroundUrl: url(snap.background?.url),
+      avatar: owner?.discord?.avatar || rec.authorAvatar || '',
+      username: owner?.username || rec.authorUsername || 'user',
+      displayName: owner?.displayName || rec.authorDisplayName || 'Caruzo User',
     },
   };
 }
 function presetOwned(rec, uid) { return !!rec && String(rec.ownerId || '') === String(uid || ''); }
 function applyPresetSnapshot(user, snapshot, scope = 'full') {
   if (!snapshot || typeof snapshot !== 'object') return;
-  const styleKeys = ['design','viewsStyle','pageFx','cursor','background','spotifyStyle'];
+  const styleKeys = ['design','viewsStyle','pageFx','cursor','background','music','soundMode','spotifyStyle'];
   if (scope === 'style') {
     for (const k of styleKeys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
     return;
@@ -1459,17 +1471,28 @@ app.get('/api/site-settings', (req, res) => {
     backgrounds: { ...adminState.settings.backgrounds },
     scrollAnimations: { ...adminState.settings.scrollAnimations },
     landingCursor: adminState.settings.landingCursor || 'none',
+    page404Design: adminState.settings.page404Design || '1',
   });
 });
 app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
   const page = String(req.body?.page || ''), preset = String(req.body?.preset ?? '');
-  if (!['landing', 'dashboard'].includes(page)) return res.status(400).json({ error: 'Ungültige Seite' });
-  if (!/^(none|[1-9]|1[0-7])$/.test(preset)) return res.status(400).json({ error: 'Ungültiges Preset' });
+  if (!['landing', 'dashboard', 'login'].includes(page)) return res.status(400).json({ error: 'Ungültige Seite' });
+  const valid = page === 'login' ? /^(none|[1-8])$/.test(preset) : /^(none|[1-9]|1[0-7])$/.test(preset);
+  if (!valid) return res.status(400).json({ error: 'Ungültiges Preset' });
   ensureAdminSettings();
   adminState.settings.backgrounds[page] = preset;
   audit('background_changed', { page, preset, by: req.session.uid });
   await saveAdminState();
   res.json({ ok: true, backgrounds: { ...adminState.settings.backgrounds } });
+});
+app.post('/api/admin/404-design', adminOnly, async (req, res) => {
+  const design = String(req.body?.design || '1');
+  if (!/^[1-8]$/.test(design)) return res.status(400).json({ error: 'Ungültiges 404-Design' });
+  ensureAdminSettings();
+  adminState.settings.page404Design = design;
+  audit('404_design_changed', { design, by: req.session.uid });
+  await saveAdminState();
+  res.json({ ok:true, page404Design:design });
 });
 app.post('/api/admin/scroll-animation', adminOnly, async (req, res) => {
   const page = String(req.body?.page || 'landing');
