@@ -139,6 +139,10 @@ function ensureAdminSettings() {
   adminState.settings.scrollAnimations ||= {};
   if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
   if (!['none','neon-dot','halo-ring','precision','diamond','spark','pixel','orbit','minimal-arrow'].includes(String(adminState.settings.landingCursor || ''))) adminState.settings.landingCursor = 'none';
+  adminState.settings.landingModules ||= {};
+  for (const [key, fallback] of Object.entries({ recently:true, premiumCount:true, marketplaceCount:true })) {
+    if (typeof adminState.settings.landingModules[key] !== 'boolean') adminState.settings.landingModules[key] = fallback;
+  }
 }
 ensureAdminSettings();
 const ADMIN_IDS = new Set(String(ADMIN_DISCORD_IDS || '').split(',').map(x => x.trim()).filter(Boolean));
@@ -313,7 +317,7 @@ function defaults(dc) {
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
     highlights: [],
-    profileLayout: { order: ['reactions','music-player','activity','spotify-now','spotify','highlights','socials','premium','about'], hidden: [] },
+    profileLayout: { order: ['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about'], hidden: [] },
     privacy: { visibility: 'public', noIndex: false },
     share: { title: '', description: '', imageMode: 'avatar', image: '' },
     reactions: { enabled: true, title: 'React', position: 'profile-bottom', animation: 'pop', showCounts: true, items: [
@@ -336,6 +340,7 @@ function defaults(dc) {
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
     music: { url: '', title: '', volume: 40, globalMute: false },
     musicPlayer: { enabled:false, title:'My Playlist', style:'glass-wave', position:'below-profile', accent:'#8b5cf6', secondary:'#22d3ee', volume:65, showCover:true, sources:[] },
+    premiumStatusCard: { enabled:false, icon:'✨', eyebrow:'STATUS', title:'Open for collabs', text:'Available for projects, gaming and creative work.', accent:'#8b5cf6', style:'glass', expiresAt:'', showCountdown:false },
     analytics: { viewsDaily:{}, eventsDaily:{}, socialClicks:{}, highlightClicks:{}, musicPlays:0, musicSkips:0, referrers:{}, devices:{} },
     soundMode: 'auto',
     spotify: '',
@@ -372,7 +377,7 @@ function applyUpdate(user, b) {
     value: str(x?.value, 80),
     url: url(x?.url),
   })).filter(x => x.label || x.value);
-  const PROFILE_MODULE_IDS = ['reactions','music-player','activity','spotify-now','spotify','highlights','socials','premium','about'];
+  const PROFILE_MODULE_IDS = ['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about'];
   const pl = b.profileLayout || user.profileLayout || {};
   const rawOrder = Array.isArray(pl.order) ? pl.order.map(x => str(x, 24)) : [];
   const order = [...rawOrder.filter((x, i, a) => PROFILE_MODULE_IDS.includes(x) && a.indexOf(x) === i), ...PROFILE_MODULE_IDS.filter(x => !rawOrder.includes(x))];
@@ -471,6 +476,20 @@ function applyUpdate(user, b) {
   user.spotifyStyle = { blur: num(sp.blur, 0, 50, 26), glow: num(sp.glow, 0, 100, 24), layout: ['compact','full'].includes(sp.layout) ? sp.layout : 'compact' };
   user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
   if (metaFor(user).premium) {
+    const sc = b.premiumStatusCard || user.premiumStatusCard || {};
+    const expiresRaw = str(sc.expiresAt, 40).trim();
+    const expiresAt = expiresRaw && !Number.isNaN(Date.parse(expiresRaw)) ? expiresRaw : '';
+    user.premiumStatusCard = {
+      enabled: !!sc.enabled,
+      icon: str(sc.icon, 16) || '✨',
+      eyebrow: str(sc.eyebrow, 24) || 'STATUS',
+      title: str(sc.title, 60),
+      text: str(sc.text, 220),
+      accent: /^#[0-9a-f]{6}$/i.test(String(sc.accent || '')) ? String(sc.accent) : '#8b5cf6',
+      style: ['glass','signal','minimal','gradient'].includes(sc.style) ? sc.style : 'glass',
+      expiresAt,
+      showCountdown: !!sc.showCountdown,
+    };
     user.premiumSections = (Array.isArray(b.premiumSections) ? b.premiumSections : []).slice(0, 6).map((x, index) => {
       const type = x?.type === 'gallery' ? 'gallery' : 'text';
       const legacyText = str(x?.text, 1800);
@@ -490,7 +509,10 @@ function applyUpdate(user, b) {
         images: (Array.isArray(x?.images) ? x.images : []).slice(0, 12).map(url).filter(Boolean),
       };
     });
-  } else if (!Array.isArray(user.premiumSections)) user.premiumSections = [];
+  } else {
+    if (!Array.isArray(user.premiumSections)) user.premiumSections = [];
+    user.premiumStatusCard ||= { enabled:false, icon:'✨', eyebrow:'STATUS', title:'', text:'', accent:'#8b5cf6', style:'glass', expiresAt:'', showCountdown:false };
+  }
   const l = b.links || {};
   const allowedOrder = new Set(['discord','steam','twitch','tiktok','x','instagram','youtube','github','bluesky','epic','valorant','discordServer','spotifyProfile','custom']);
   user.links = {
@@ -528,11 +550,12 @@ function publicView(u) {
   const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
   const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
   const musicPlayer = platform.premium ? (rest.musicPlayer || {enabled:false,sources:[]}) : {enabled:false,sources:[]};
+  const premiumStatusCard = platform.premium ? (rest.premiumStatusCard || {enabled:false}) : {enabled:false};
   const spotifyAccount = rest.spotifyAccount?.connected ? { connected: true, displayName: str(rest.spotifyAccount.displayName, 80), url: url(rest.spotifyAccount.url), image: url(rest.spotifyAccount.image) } : null;
   const reactionCfg = rest.reactions || { enabled:true, title:'React', position:'profile-bottom', animation:'pop', showCounts:true, items:[] };
   const byItem = u.reactionStats?.byItem || {};
   const reactions = { ...reactionCfg, items: (Array.isArray(reactionCfg.items) ? reactionCfg.items : []).map(x => ({ ...x, count: Number(byItem[x.id] || 0) })) };
-  return { ...rest, reactions, spotifyAccount, premiumSections, musicPlayer, platform, discord: d };
+  return { ...rest, reactions, spotifyAccount, premiumSections, musicPlayer, premiumStatusCard, platform, discord: d };
 }
 
 /* ------------------------------------------------------------------ */
@@ -543,7 +566,7 @@ const MARKET_VIS = new Set(['private','public']);
 const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
 function privatePresetSnapshot(user) {
   const src = publicView(user);
-  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+  const keys = ['username','displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','premiumStatusCard','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
   const out = {};
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
   return out;
@@ -617,9 +640,10 @@ function applyPresetSnapshot(user, snapshot, scope = 'full') {
     const taken = Object.values(db).some(x => x && x.id !== user.id && x.username === s);
     if (s.length >= 2 && !RESERVED.includes(s) && !taken) user.username = s;
   }
-  const keys = ['displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','soundMode','spotify','spotifyStyle','floating','links'];
+  const keys = ['displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','premiumStatusCard','soundMode','spotify','spotifyStyle','floating','links'];
   for (const k of keys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
   if (metaFor(user).premium && snapshot.premiumSections !== undefined) user.premiumSections = deepClone(snapshot.premiumSections);
+  if (metaFor(user).premium && snapshot.premiumStatusCard !== undefined) user.premiumStatusCard = deepClone(snapshot.premiumStatusCard);
 }
 
 async function discordMe(token) {
@@ -1928,6 +1952,7 @@ app.get('/api/site-settings', (req, res) => {
     scrollAnimations: { ...adminState.settings.scrollAnimations },
     landingCursor: adminState.settings.landingCursor || 'none',
     page404Design: adminState.settings.page404Design || '1',
+    landingModules: { ...adminState.settings.landingModules },
   });
 });
 app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
@@ -1970,6 +1995,35 @@ app.post('/api/admin/landing-cursor', adminOnly, async (req, res) => {
   audit('landing_cursor_changed', { cursor, by: req.session.uid });
   await saveAdminState();
   res.json({ ok:true, landingCursor:cursor });
+});
+app.post('/api/admin/landing-modules', adminOnly, async (req, res) => {
+  ensureAdminSettings();
+  const allowed = ['recently','premiumCount','marketplaceCount'];
+  const key = String(req.body?.key || '');
+  if (!allowed.includes(key)) return res.status(400).json({ error:'Ungültiges Hauptseiten-Modul' });
+  adminState.settings.landingModules[key] = !!req.body?.enabled;
+  audit('landing_module_changed', { key, enabled:adminState.settings.landingModules[key], by:req.session.uid });
+  await saveAdminState();
+  res.json({ ok:true, landingModules:{ ...adminState.settings.landingModules } });
+});
+
+// Öffentliche, aggregierte Hauptseiten-Informationen + persönliche Recently-Karten.
+app.get('/api/home-community', rateLimit({windowMs:60*1000,max:120,prefix:'home-community'}), (req, res) => {
+  ensureAdminSettings();
+  const enabled = { ...adminState.settings.landingModules };
+  const users = Object.values(db).filter(u => u && !isBanned(u) && u.privacy?.visibility !== 'disabled');
+  const premiumCount = enabled.premiumCount ? users.filter(u => metaFor(u).premium).length : 0;
+  const marketplaceCount = enabled.marketplaceCount ? (adminState.marketplace || []).filter(x => x && x.visibility === 'public').length : 0;
+  const names = String(req.query.recent || '').split(',').map(slug).filter(Boolean).slice(0, 6);
+  const recent = enabled.recently ? names.map(name => findByName(name)).filter(u => u && !isBanned(u) && u.privacy?.visibility !== 'disabled').map(u => ({
+    username:u.username,
+    displayName:str(u.displayName || u.discord?.globalName || u.discord?.username || u.username, 60),
+    avatar:absolutePublicUrl(u.discord?.avatar) || '/caruzo-logo.png',
+    cover:(()=>{const bg=u.background?.type === 'image' ? url(u.background?.url) : '';const trusted=bg && (bg.startsWith('/uploads/') || (SUPABASE_URL && bg.startsWith(SUPABASE_URL)));return trusted ? bg : (absolutePublicUrl(u.discord?.banner) || '');})(),
+    premium:!!metaFor(u).premium,
+  })) : [];
+  res.set('Cache-Control','no-store');
+  res.json({ enabled, premiumCount, marketplaceCount, recent });
 });
 // --- FAQ ------------------------------------------------------------
 app.get('/api/faq', (req, res) => {
