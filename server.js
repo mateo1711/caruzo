@@ -350,6 +350,7 @@ function defaults(dc) {
     floating: [],
     premiumSections: [],
     links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', spotifyProfile: '', order: [], custom: [] },
+    recentlyViewed: [],
     views: 0,
     createdAt: Date.now(),
   };
@@ -532,7 +533,7 @@ function applyUpdate(user, b) {
 }
 
 function publicView(u) {
-  const { auth, adminMeta, spotifyAuth, spotifyDiag, reactionStats, analytics, ...rest } = u; // Tokens, Analytics-Rohdaten und interne Moderationsdaten niemals ausliefern
+  const { auth, adminMeta, spotifyAuth, spotifyDiag, reactionStats, analytics, recentlyViewed, ...rest } = u; // Tokens, Analytics-Rohdaten, private Verlaufshistorie und interne Moderationsdaten niemals ausliefern
   const d = { ...rest.discord };
   const manualNitro = !!rest.settings?.manualNitro;
   const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
@@ -2007,15 +2008,15 @@ app.post('/api/admin/landing-modules', adminOnly, async (req, res) => {
   res.json({ ok:true, landingModules:{ ...adminState.settings.landingModules } });
 });
 
-// Öffentliche, aggregierte Hauptseiten-Informationen + persönliche Recently-Karten.
+// Öffentliche, aggregierte Hauptseiten-Informationen + serverseitig gespeicherte persönliche Recently-Karten.
 app.get('/api/home-community', rateLimit({windowMs:60*1000,max:120,prefix:'home-community'}), (req, res) => {
   ensureAdminSettings();
   const enabled = { ...adminState.settings.landingModules };
   const users = Object.values(db).filter(u => u && !isBanned(u) && u.privacy?.visibility !== 'disabled');
   const premiumCount = enabled.premiumCount ? users.filter(u => metaFor(u).premium).length : 0;
   const marketplaceCount = enabled.marketplaceCount ? (adminState.marketplace || []).filter(x => x && x.visibility === 'public').length : 0;
-  const names = String(req.query.recent || '').split(',').map(slug).filter(Boolean).slice(0, 6);
-  const recent = enabled.recently ? names.map(name => findByName(name)).filter(u => u && !isBanned(u) && u.privacy?.visibility !== 'disabled').map(u => ({
+  const recentEntries = enabled.recently ? recentListForRequest(req) : [];
+  const recent = enabled.recently ? recentEntries.map(entry => findByName(entry.username)).filter(u => u && !isBanned(u) && u.privacy?.visibility !== 'disabled').slice(0, 6).map(u => ({
     username:u.username,
     displayName:str(u.displayName || u.discord?.globalName || u.discord?.username || u.username, 60),
     avatar:absolutePublicUrl(u.discord?.avatar) || '/caruzo-logo.png',
@@ -2180,6 +2181,45 @@ function shouldCountView(req, user) {
   return now - sessionLast >= VIEW_COOLDOWN_MS && now - fingerprintLast >= VIEW_COOLDOWN_MS;
 }
 const findByName = n => Object.values(db).find(u => u.username === String(n).toLowerCase());
+const RECENTLY_VIEWED_MAX = 12;
+function normalizeRecentlyViewed(list) {
+  const seen = new Set();
+  return (Array.isArray(list) ? list : []).map((x) => {
+    if (typeof x === 'string') return { username: slug(x), viewedAt: 0 };
+    return { username: slug(x?.username), viewedAt: Number(x?.viewedAt || 0) };
+  }).filter((x) => {
+    if (!x.username || seen.has(x.username)) return false;
+    seen.add(x.username); return true;
+  }).sort((a,b) => Number(b.viewedAt || 0) - Number(a.viewedAt || 0)).slice(0, RECENTLY_VIEWED_MAX);
+}
+function recentListForRequest(req) {
+  const uid = String(req.session?.uid || '');
+  const account = uid && db[uid] ? db[uid] : null;
+  // Eingeloggte User bekommen ihren accountgebundenen Verlauf; eine vor dem Login
+  // entstandene anonyme Session-Historie wird für die Anzeige sicher dazugemischt.
+  if (account) return normalizeRecentlyViewed([...(req.session?.recentlyViewed || []), ...(account.recentlyViewed || [])]);
+  return normalizeRecentlyViewed(req.session?.recentlyViewed);
+}
+function recordRecentlyViewed(req, target) {
+  if (!target?.username || isBanned(target) || target.privacy?.visibility === 'disabled') return;
+  ensureAdminSettings();
+  // Wenn der Admin das Modul deaktiviert, wird bewusst auch keine neue Historie gesammelt.
+  if (adminState.settings.landingModules?.recently === false) return;
+  const viewerId = String(req.session?.uid || '');
+  if (viewerId && viewerId === String(target.id || '')) return; // eigenes Profil nicht in den Verlauf aufnehmen
+  const entry = { username: slug(target.username), viewedAt: Date.now() };
+  if (!entry.username) return;
+  const sessionList = normalizeRecentlyViewed([entry, ...(req.session?.recentlyViewed || [])]);
+  if (req.session) req.session.recentlyViewed = sessionList;
+  const viewer = viewerId && db[viewerId] ? db[viewerId] : null;
+  if (viewer) {
+    // Beim ersten Profilaufruf nach einem Login wird die bisherige Session-Historie
+    // in den accountgebundenen Verlauf übernommen. So bleibt Recently Viewed auch
+    // geräte-/sessionübergreifend erhalten, ohne es öffentlich auszuliefern.
+    viewer.recentlyViewed = normalizeRecentlyViewed([entry, ...sessionList, ...(viewer.recentlyViewed || [])]);
+    queueTelemetrySave(viewer, 900);
+  }
+}
 function youtubeIdFromUrl(raw) {
   try {
     const u = new URL(String(raw || ''));
@@ -2239,6 +2279,7 @@ app.get('/api/profile/:name', async (req, res) => {
     shouldSave = true;
   }
   if (shouldSave) queueTelemetrySave(user);
+  recordRecentlyViewed(req, user);
   res.json(publicView(user));
 });
 
