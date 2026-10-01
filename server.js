@@ -360,6 +360,7 @@ function defaults(dc) {
     links: { steam: [], twitch: '', tiktok: '', x: '', epic: '', valorant: '', discordServerName: '', discordServer: '', instagram: '', youtube: '', github: '', bluesky: '', spotifyProfile: '', order: [], custom: [] },
     views: 0,
     createdAt: Date.now(),
+    profileCreatedAt: 0,
   };
 }
 
@@ -1347,6 +1348,9 @@ app.post('/api/me', auth, async (req, res) => {
   const user = db[req.session.uid];
   const err = applyUpdate(user, req.body);
   if (err) return res.status(400).json({ error: err });
+  // V42: 'Zuletzt erstellte Profile' richtet sich nach dem ersten echten Profil-Speichern,
+  // nicht nach dem Zeitpunkt der Discord-Registrierung.
+  if (!Number(user.profileCreatedAt || 0)) user.profileCreatedAt = Date.now();
   await saveUser(user);
   res.json(publicView(user));
 });
@@ -2015,6 +2019,25 @@ app.post('/api/admin/landing-modules', adminOnly, async (req, res) => {
   res.json({ ok:true, landingModules:{ ...adminState.settings.landingModules } });
 });
 
+function profileLooksConfigured(u) {
+  if (!u) return false;
+  if (str(u.about, 1500).trim()) return true;
+  if (str(u.tagline, 160).trim() && str(u.tagline,160).trim() !== 'the end is never the end is never the end') return true;
+  if (url(u.background?.url)) return true;
+  if (Array.isArray(u.highlights) && u.highlights.length) return true;
+  if (Array.isArray(u.premiumSections) && u.premiumSections.length) return true;
+  if (u.music?.url || u.spotify || (u.musicPlayer?.sources || []).length) return true;
+  const links = u.links || {};
+  if (Object.entries(links).some(([k,v]) => k === 'order' ? false : (Array.isArray(v) ? v.length > 0 : !!String(v || '').trim()))) return true;
+  return false;
+}
+function effectiveProfileCreatedAt(u) {
+  const explicit = Number(u?.profileCreatedAt || 0);
+  if (explicit > 0) return explicit;
+  // Migration für bestehende V41-Profile: bereits konfigurierte Profile behalten ihren ursprünglichen Erstellzeitpunkt.
+  return profileLooksConfigured(u) ? Number(u?.createdAt || 0) : 0;
+}
+
 // Öffentliche, aggregierte Hauptseiten-Informationen + zuletzt erstellte öffentliche Profile.
 app.get('/api/home-community', rateLimit({windowMs:60*1000,max:120,prefix:'home-community'}), (req, res) => {
   ensureAdminSettings();
@@ -2022,8 +2045,11 @@ app.get('/api/home-community', rateLimit({windowMs:60*1000,max:120,prefix:'home-
   const visibleUsers = Object.values(db).filter(u => u && !isBanned(u) && (u.privacy?.visibility || 'public') === 'public');
   const premiumCount = enabled.premiumCount ? visibleUsers.filter(u => metaFor(u).premium).length : 0;
   const marketplaceCount = enabled.marketplaceCount ? (adminState.marketplace || []).filter(x => x && x.visibility === 'public').length : 0;
-  const latestProfiles = enabled.latestProfiles ? [...visibleUsers]
-    .sort((a,b) => Number(b.createdAt || 0) - Number(a.createdAt || 0))
+  const latestProfiles = enabled.latestProfiles ? visibleUsers
+    // Nur Profile, die mindestens einmal wirklich im Dashboard gespeichert wurden.
+    // Damit landen reine Discord-Registrierungen/Default-Profile nicht in diesem Bereich.
+    .filter(u => effectiveProfileCreatedAt(u) > 0)
+    .sort((a,b) => effectiveProfileCreatedAt(b) - effectiveProfileCreatedAt(a))
     .slice(0, 6)
     .map(u => ({
       username:u.username,
@@ -2031,7 +2057,7 @@ app.get('/api/home-community', rateLimit({windowMs:60*1000,max:120,prefix:'home-
       avatar:absolutePublicUrl(u.discord?.avatar) || '/caruzo-logo.png',
       cover:(()=>{const bg=u.background?.type === 'image' ? url(u.background?.url) : '';const trusted=bg && (bg.startsWith('/uploads/') || (SUPABASE_URL && bg.startsWith(SUPABASE_URL)));return trusted ? bg : (absolutePublicUrl(u.discord?.banner) || '');})(),
       premium:!!metaFor(u).premium,
-      createdAt:Number(u.createdAt || 0),
+      createdAt:effectiveProfileCreatedAt(u),
     })) : [];
   res.set('Cache-Control','no-store');
   res.json({ enabled, premiumCount, marketplaceCount, latestProfiles });
