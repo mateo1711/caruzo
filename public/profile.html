@@ -437,7 +437,6 @@ function render(u) {
   document.body.classList.add('card-style-' + (des.cardStyle || 'glass'), 'social-' + (des.socialLayout || 'grid'), 'social-effect-' + (des.socialEffect || 'lift'), 'badge-style-' + (des.badgeStyle || 'icon'));
   if (des.contentAlign === 'center') document.body.classList.add('content-center');
   document.title = u.displayName; setupBrowserTab(u);
-  try{const key='caruzo_recent_profiles_v1',raw=JSON.parse(localStorage.getItem(key)||'[]'),next=[u.username,...raw.filter(x=>x!==u.username)].slice(0,6);localStorage.setItem(key,JSON.stringify(next));}catch{}
   $('#logoName').append(u.username, el('i', {}, '.lol'));
   if (s.showProfileBrand === false) $('#profileBrand').hidden = true;
   $('#enterText').textContent = u.enterText;
