@@ -903,32 +903,93 @@ async function discordGuildMember(guildId, userId) {
   } catch { return { ok:false, status:0, data:null }; }
 }
 const caruzoEmojiCache = new Map();
-async function getCaruzoGuildEmojiAccess(userId, force = false) {
-  const guildId = String(CARUZO_DISCORD_GUILD_ID || DISCORD_BOOST_GUILD_ID || '').trim();
-  const uid = String(userId || '').trim();
-  if (!guildId || !DISCORD_BOT_TOKEN || !uid) return { configured:false, member:false, emojis:[] };
-  const cacheKey = `${guildId}:${uid}`;
-  const cached = caruzoEmojiCache.get(cacheKey);
-  if (!force && cached && Date.now() - Number(cached.checkedAt || 0) < 120000) return cached;
-  const member = await discordGuildMember(guildId, uid);
-  if (!member.ok || !member.data) {
-    const value = { configured:true, member:false, emojis:[], checkedAt:Date.now() };
-    caruzoEmojiCache.set(cacheKey, value); return value;
-  }
-  let emojis = [];
+const caruzoGuildMetaCache = new Map();
+async function caruzoGuildMeta(guildId, force = false) {
+  const gid = String(guildId || '').trim();
+  if (!gid || !DISCORD_BOT_TOKEN) return { id:gid, name:'', emojis:[], emojiOk:false };
+  const cached = caruzoGuildMetaCache.get(gid);
+  if (!force && cached && Date.now() - Number(cached.checkedAt || 0) < 5 * 60 * 1000) return cached;
+  let name = '', emojis = [], emojiOk = false;
   try {
-    const r = await fetch(`https://discord.com/api/v10/guilds/${encodeURIComponent(guildId)}/emojis`, {
-      headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}`, 'User-Agent':'Caruzo/1.0' }
-    });
-    if (r.ok) {
-      const rows = await r.json();
-      emojis = (Array.isArray(rows) ? rows : []).filter(x => x?.id && x?.name && x.available !== false).map(x => ({
-        id: String(x.id), name: str(x.name, 64), animated: !!x.animated,
-        url: `https://cdn.discordapp.com/emojis/${encodeURIComponent(String(x.id))}.${x.animated ? 'gif' : 'webp'}?size=64&quality=lossless`
-      })).sort((a,b) => Number(b.animated) - Number(a.animated) || a.name.localeCompare(b.name)).slice(0, 200);
+    const [gr, er] = await Promise.all([
+      fetch(`https://discord.com/api/v10/guilds/${encodeURIComponent(gid)}`, { headers:{ Authorization:`Bot ${DISCORD_BOT_TOKEN}`, 'User-Agent':'Caruzo/1.0' } }),
+      fetch(`https://discord.com/api/v10/guilds/${encodeURIComponent(gid)}/emojis`, { headers:{ Authorization:`Bot ${DISCORD_BOT_TOKEN}`, 'User-Agent':'Caruzo/1.0' } })
+    ]);
+    if (gr.ok) { const g = await gr.json(); name = str(g?.name, 100); }
+    if (er.ok) {
+      emojiOk = true;
+      const rows = await er.json();
+      emojis = (Array.isArray(rows) ? rows : [])
+        .filter(x => x?.id && x?.name && x.available !== false)
+        .map(x => ({
+          id:String(x.id), name:str(x.name,64), animated:!!x.animated,
+          url:`https://cdn.discordapp.com/emojis/${encodeURIComponent(String(x.id))}.${x.animated ? 'gif' : 'webp'}?size=96&quality=lossless`
+        }))
+        .sort((a,b) => Number(b.animated) - Number(a.animated) || a.name.localeCompare(b.name))
+        .slice(0, 300);
     }
   } catch {}
-  const value = { configured:true, member:true, emojis, checkedAt:Date.now() };
+  const value = { id:gid, name, emojis, emojiOk, checkedAt:Date.now() };
+  caruzoGuildMetaCache.set(gid, value);
+  return value;
+}
+async function getCaruzoGuildEmojiAccess(userId, force = false) {
+  const preferredGuild = String(CARUZO_DISCORD_GUILD_ID || DISCORD_BOOST_GUILD_ID || '').trim();
+  const uid = String(userId || '').trim();
+  if (!DISCORD_BOT_TOKEN || !uid) return { configured:!!preferredGuild, botReady:false, member:false, emojis:[], reason:'bot-unavailable' };
+
+  // If the explicit Caruzo guild id is missing/wrong, automatically fall back to
+  // the guilds the bot actually sees. This fixes members being hidden simply
+  // because CARUZO_DISCORD_GUILD_ID was not set correctly on Render.
+  let knownGuild = presenceGuildForUser.get(uid) || '';
+  if (!knownGuild && gatewayReady && discordGuildIds.size) {
+    try { await requestPresenceFromGateway(uid); knownGuild = presenceGuildForUser.get(uid) || ''; } catch {}
+  }
+  const candidates = [...new Set([preferredGuild, knownGuild, ...discordGuildIds].filter(Boolean))].slice(0, 60);
+  const cacheKey = `${preferredGuild || 'auto'}:${uid}:${candidates.length}`;
+  const cached = caruzoEmojiCache.get(cacheKey);
+  if (!force && cached && Date.now() - Number(cached.checkedAt || 0) < 120000) return cached;
+  if (!candidates.length) {
+    const value = { configured:!!preferredGuild, botReady:true, member:false, emojis:[], reason:'no-bot-guilds', checkedAt:Date.now(), checkedGuilds:0 };
+    caruzoEmojiCache.set(cacheKey, value); return value;
+  }
+
+  const memberGuilds = [];
+  let sawForbidden = false;
+  for (let i = 0; i < candidates.length; i += 5) {
+    const batch = candidates.slice(i, i + 5);
+    const results = await Promise.all(batch.map(gid => discordGuildMember(gid, uid).then(r => ({ gid, ...r }))));
+    for (const r of results) {
+      if (r.status === 403) sawForbidden = true;
+      if (r.ok && r.data) memberGuilds.push(r.gid);
+    }
+    // An explicitly configured guild that matched is authoritative; no need to
+    // scan every other guild just to decide membership.
+    if (preferredGuild && memberGuilds.includes(preferredGuild)) break;
+  }
+  if (!memberGuilds.length) {
+    const value = { configured:!!preferredGuild, botReady:true, member:false, emojis:[], reason:sawForbidden?'forbidden':'not-member', checkedAt:Date.now(), checkedGuilds:candidates.length };
+    caruzoEmojiCache.set(cacheKey, value); return value;
+  }
+
+  const metas = await Promise.all(memberGuilds.slice(0, 12).map(gid => caruzoGuildMeta(gid, force)));
+  const score = m => {
+    let n = Math.min(500, Array.isArray(m.emojis) ? m.emojis.length : 0);
+    if (m.id === preferredGuild) n += 100000;
+    if (/caruzo/i.test(String(m.name || ''))) n += 20000;
+    if (m.id === knownGuild) n += 2500;
+    if (m.emojiOk) n += 200;
+    return n;
+  };
+  metas.sort((a,b) => score(b) - score(a));
+  const best = metas[0] || { id:memberGuilds[0], name:'', emojis:[], emojiOk:false };
+  presenceGuildForUser.set(uid, best.id);
+  const value = {
+    configured:!!preferredGuild, botReady:true, member:true,
+    guildId:best.id, guildName:best.name || '', fallback:!!preferredGuild && best.id !== preferredGuild,
+    emojis:Array.isArray(best.emojis) ? best.emojis : [], emojiAccess:!!best.emojiOk,
+    reason:best.emojiOk?'ok':'emoji-fetch-failed', checkedAt:Date.now(), checkedGuilds:candidates.length
+  };
   caruzoEmojiCache.set(cacheKey, value); return value;
 }
 
@@ -1429,9 +1490,15 @@ app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/'))); 
 app.get('/api/me', auth, (req, res) => res.json(publicView(db[req.session.uid])));
 
 app.get('/api/discord/status-emojis', auth, rateLimit({windowMs:60*1000,max:20,prefix:'status-emojis'}), async (req, res) => {
+  res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
   const user = db[req.session.uid];
   const access = await getCaruzoGuildEmojiAccess(user.id, req.query?.refresh === '1');
-  res.json({ configured:!!access.configured, member:!!access.member, emojis:access.member ? access.emojis : [] });
+  res.json({
+    configured:!!access.configured, botReady:access.botReady !== false, member:!!access.member,
+    guildId:access.member ? access.guildId || '' : '', guildName:access.member ? access.guildName || '' : '',
+    fallback:!!access.fallback, emojiAccess:access.emojiAccess !== false, reason:access.reason || '', checkedGuilds:Number(access.checkedGuilds || 0),
+    emojis:access.member ? access.emojis : []
+  });
 });
 
 app.post('/api/me', auth, async (req, res) => {
@@ -2366,7 +2433,14 @@ app.get('/api/profile/:name', async (req, res) => {
     shouldSave = true;
   }
   if (shouldSave) queueTelemetrySave(user);
-  res.json(publicView(user));
+  const view = publicView(user);
+  // Discord server emojis are a membership perk. If the owner is no longer on
+  // a mutual Caruzo/bot server, never expose the saved CDN emoji on the public profile.
+  if (/^https:\/\/cdn\.discordapp\.com\/emojis\/[0-9]+\.(?:gif|webp)(?:\?.*)?$/i.test(String(view.premiumStatusCard?.iconUrl || ''))) {
+    const emojiAccess = await getCaruzoGuildEmojiAccess(user.id, false);
+    if (!emojiAccess.member) view.premiumStatusCard = { ...(view.premiumStatusCard || {}), icon:'✨', iconUrl:'' };
+  }
+  res.json(view);
 });
 
 // --- Seiten ---
