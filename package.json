@@ -1,10 +1,12 @@
 {
-  "name": "biolink",
-  "version": "1.6.1-security",
+  "name": "caruzo",
+  "version": "49.0.0",
   "private": true,
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js",
+    "security-check": "node scripts/security-check.js"
   },
   "engines": {
     "node": ">=18"
@@ -14,6 +16,7 @@
     "express": "4.22.3",
     "express-session": "1.19.0",
     "multer": "2.4.0",
-    "ws": "8.22.0"
+    "ws": "8.22.0",
+    "lucide": "0.468.0"
   }
 }

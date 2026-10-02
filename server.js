@@ -548,31 +548,92 @@ function applyUpdate(user, b) {
   return null;
 }
 
-function publicView(u) {
-  const { auth, adminMeta, spotifyAuth, spotifyDiag, reactionStats, analytics, recentlyViewed, ...rest } = u; // Tokens, Analytics-Rohdaten, legacy private Verlaufshistorie und interne Moderationsdaten niemals ausliefern
-  const d = { ...rest.discord };
-  const manualNitro = !!rest.settings?.manualNitro;
-  const tier = NITRO_TIERS[rest.settings?.nitroTier || ''];
-  d.nitroVerified = !!d.nitro;
-  d.nitro = manualNitro || d.nitroVerified;
-  d.badges = Array.isArray(d.badges) ? [...d.badges].filter(b => !['nitro','server_booster'].includes(b.key)) : [];
+function discordProfileView(user) {
+  const src = user?.discord && typeof user.discord === 'object' ? user.discord : {};
+  const settings = user?.settings && typeof user.settings === 'object' ? user.settings : {};
+  const manualNitro = !!settings.manualNitro;
+  const tier = NITRO_TIERS[settings.nitroTier || ''];
+  const verifiedNitro = !!src.nitro;
+  const d = {
+    id: str(src.id, 32),
+    username: str(src.username, 80),
+    globalName: str(src.globalName, 80),
+    avatar: url(src.avatar),
+    banner: url(src.banner),
+    bannerColor: /^#[0-9a-f]{6}$/i.test(String(src.bannerColor || '')) ? String(src.bannerColor) : null,
+    decoration: url(src.decoration),
+    nitroVerified: verifiedNitro,
+    nitro: manualNitro || verifiedNitro,
+    booster: !!src.booster,
+    badges: Array.isArray(src.badges)
+      ? src.badges.filter(b => b && !['nitro','server_booster'].includes(b.key)).slice(0, 32).map(b => ({
+          key: str(b.key, 40), name: str(b.name, 80), icon: str(b.icon, 160), emoji: str(b.emoji, 16)
+        }))
+      : [],
+    serverTag: src.serverTag && typeof src.serverTag === 'object'
+      ? { tag: str(src.serverTag.tag, 12), badge: url(src.serverTag.badge) || null }
+      : null,
+  };
   if (d.nitro) {
     d.badges.unshift(tier
       ? { key: 'nitro', name: `Discord Nitro · ${tier.label}`, asset: tier.asset, emoji: '💎', tier: tier.key }
       : NITRO);
   }
-  if (d.booster && rest.settings?.showBoostBadge !== false) {
+  if (d.booster && settings.showBoostBadge !== false) {
     d.badges.push({ key: 'server_booster', name: 'Discord Server Booster', asset: '/discord-boost.png', emoji: '💗' });
   }
-  const platform = { premium: !!metaFor(u).premium, admin: isAdminId(u.id), moderator: isModerator(u) };
-  const premiumSections = platform.premium && Array.isArray(rest.premiumSections) ? rest.premiumSections : [];
-  const musicPlayer = platform.premium ? (rest.musicPlayer || {enabled:false,sources:[]}) : {enabled:false,sources:[]};
-  const premiumStatusCard = platform.premium ? (rest.premiumStatusCard || {enabled:false}) : {enabled:false};
-  const spotifyAccount = rest.spotifyAccount?.connected ? { connected: true, displayName: str(rest.spotifyAccount.displayName, 80), url: url(rest.spotifyAccount.url), image: url(rest.spotifyAccount.image) } : null;
-  const reactionCfg = rest.reactions || { enabled:true, title:'React', position:'profile-bottom', animation:'pop', showCounts:true, items:[] };
-  const byItem = u.reactionStats?.byItem || {};
-  const reactions = { ...reactionCfg, items: (Array.isArray(reactionCfg.items) ? reactionCfg.items : []).map(x => ({ ...x, count: Number(byItem[x.id] || 0) })) };
-  return { ...rest, reactions, spotifyAccount, premiumSections, musicPlayer, premiumStatusCard, platform, discord: d };
+  return d;
+}
+
+const PUBLIC_PROFILE_KEYS = [
+  'username','displayName','tagline','about','enterText','tags','highlights','profileLayout',
+  'reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music',
+  'soundMode','spotify','spotifyStyle','floating','links','views'
+];
+
+function publicProfileView(user) {
+  // SECURITY: allowlist only. New internal fields are private by default and
+  // must be explicitly added here before they can ever reach public visitors.
+  const out = {};
+  for (const key of PUBLIC_PROFILE_KEYS) {
+    if (user?.[key] !== undefined) out[key] = user[key];
+  }
+
+  const platform = {
+    premium: !!metaFor(user).premium,
+    admin: isAdminId(user.id),
+    moderator: isModerator(user),
+  };
+
+  const reactionCfg = user.reactions || { enabled:true, title:'React', position:'profile-bottom', animation:'pop', showCounts:true, items:[] };
+  const byItem = user.reactionStats?.byItem || {};
+  out.reactions = {
+    ...reactionCfg,
+    items: (Array.isArray(reactionCfg.items) ? reactionCfg.items : []).map(x => ({
+      ...x,
+      count: Number(byItem[x.id] || 0),
+    })),
+  };
+
+  out.premiumSections = platform.premium && Array.isArray(user.premiumSections) ? user.premiumSections : [];
+  out.musicPlayer = platform.premium ? (user.musicPlayer || { enabled:false, sources:[] }) : { enabled:false, sources:[] };
+  out.premiumStatusCard = platform.premium ? (user.premiumStatusCard || { enabled:false }) : { enabled:false };
+  out.platform = platform;
+  out.discord = discordProfileView(user);
+  return out;
+}
+
+function ownerProfileView(user) {
+  // Dashboard view is also allowlist-based. It contains owner-editable fields,
+  // but never OAuth tokens, raw analytics, moderation metadata, or session data.
+  return {
+    id: String(user?.id || ''),
+    ...publicProfileView(user),
+    privacy: user?.privacy || { visibility:'public', noIndex:false },
+    share: user?.share || { title:'', description:'', imageMode:'avatar', image:'' },
+    createdAt: Number(user?.createdAt || 0),
+    profileCreatedAt: Number(user?.profileCreatedAt || 0),
+  };
 }
 
 /* ------------------------------------------------------------------ */
@@ -582,7 +643,7 @@ const MARKET_MAX_PER_USER = 30;
 const MARKET_VIS = new Set(['private','public']);
 const deepClone = v => JSON.parse(JSON.stringify(v ?? null));
 function privatePresetSnapshot(user) {
-  const src = publicView(user);
+  const src = ownerProfileView(user);
   const keys = ['username','displayName','tagline','about','enterText','tags','highlights','profileLayout','privacy','share','reactions','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','premiumStatusCard','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
   const out = {};
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
@@ -612,7 +673,7 @@ function publicPresetSnapshot(userOrSnapshot) {
   // Marketplace templates copy the complete editable profile presentation while
   // stripping account identity. Social platforms stay enabled, but every owner
   // handle/link is replaced by "@" so the importing user can fill in their own.
-  const src = userOrSnapshot?.id ? publicView(userOrSnapshot) : deepClone(userOrSnapshot || {});
+  const src = userOrSnapshot?.id ? ownerProfileView(userOrSnapshot) : deepClone(userOrSnapshot || {});
   const settings = src.settings || {};
   const out = {};
   const copyKeys = [
@@ -1209,6 +1270,48 @@ async function spotifyPresenceSnapshot(userId) {
 }
 
 /* ------------------------------------------------------------------ */
+/* Content Security Policy                                             */
+/* ------------------------------------------------------------------ */
+const PUBLIC_DIR = path.join(__dirname, 'public');
+function inlineScriptHashes() {
+  const hashes = new Set();
+  let files = [];
+  try { files = fs.readdirSync(PUBLIC_DIR).filter(f => f.endsWith('.html')); } catch {}
+  const inlineScript = /<script\b(?![^>]*\bsrc\s*=)[^>]*>([\s\S]*?)<\/script>/gi;
+  for (const file of files) {
+    let html = '';
+    try { html = fs.readFileSync(path.join(PUBLIC_DIR, file), 'utf8'); } catch { continue; }
+    let m;
+    while ((m = inlineScript.exec(html))) {
+      const body = m[1];
+      if (!body.trim()) continue;
+      const digest = crypto.createHash('sha256').update(body, 'utf8').digest('base64');
+      hashes.add(`'sha256-${digest}'`);
+    }
+  }
+  return [...hashes];
+}
+const CSP_INLINE_SCRIPT_HASHES = inlineScriptHashes();
+const CONTENT_SECURITY_POLICY = [
+  `default-src 'self'`,
+  `script-src 'self' ${CSP_INLINE_SCRIPT_HASHES.join(' ')} https://www.youtube.com https://s.ytimg.com https://open.spotify.com https://*.spotifycdn.com`,
+  `script-src-attr 'none'`,
+  // Inline styles are still used heavily by the existing UI. Keeping this
+  // separate from script-src means injected JavaScript is still blocked.
+  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+  `font-src 'self' data: https://fonts.gstatic.com`,
+  // Profiles may intentionally use user-selected remote media URLs.
+  `img-src 'self' data: blob: https: http:`,
+  `media-src 'self' data: blob: https: http:`,
+  `connect-src 'self' https://api.lanyard.rest wss://api.lanyard.rest`,
+  `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com`,
+  `object-src 'none'`,
+  `base-uri 'self'`,
+  `form-action 'self'`,
+  `frame-ancestors 'self'`,
+].join('; ');
+
+/* ------------------------------------------------------------------ */
 /* App                                                                 */
 /* ------------------------------------------------------------------ */
 const app = express();
@@ -1220,7 +1323,7 @@ app.use((req, res, next) => {
   res.setHeader('Referrer-Policy', 'no-referrer');
   res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
   res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
-  res.setHeader('Content-Security-Policy', "object-src 'none'; base-uri 'self'; frame-ancestors 'self'");
+  res.setHeader('Content-Security-Policy', CONTENT_SECURITY_POLICY);
   if (BASE_URL.startsWith('https://')) res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
   next();
 });
@@ -1324,8 +1427,19 @@ function rateLimit({ windowMs, max, prefix }) {
 }
 const sameOriginWrites = (req,res,next) => {
   if (!['POST','PUT','PATCH','DELETE'].includes(req.method)) return next();
-  const origin = String(req.get('origin') || ''); if (!origin) return next();
-  try { if (new URL(origin).origin !== new URL(BASE_URL).origin) return res.status(403).json({ error:'Ungültige Anfragequelle' }); } catch { return res.status(403).json({ error:'Ungültige Anfragequelle' }); }
+  // Browser-level CSRF hardening: reject explicit cross-site navigation/fetches
+  // even when an Origin header is missing. Requests from scripts/CLI without
+  // Sec-Fetch-Site remain compatible and are still protected by auth/session rules.
+  const fetchSite = String(req.get('sec-fetch-site') || '').toLowerCase();
+  if (fetchSite === 'cross-site') return res.status(403).json({ error:'Ungültige Anfragequelle' });
+  if (fetchSite && !['same-origin','same-site','none'].includes(fetchSite)) return res.status(403).json({ error:'Ungültige Anfragequelle' });
+  const origin = String(req.get('origin') || '');
+  if (!origin) return next();
+  try {
+    if (new URL(origin).origin !== new URL(BASE_URL).origin) return res.status(403).json({ error:'Ungültige Anfragequelle' });
+  } catch {
+    return res.status(403).json({ error:'Ungültige Anfragequelle' });
+  }
   next();
 };
 app.use(sameOriginWrites);
@@ -1397,12 +1511,22 @@ app.post('/api/private-logout', (req, res) => { req.session.siteUnlocked = false
 app.get('/api/session-info', (req, res) => {
   const user = req.session.uid && db[req.session.uid] ? db[req.session.uid] : null;
   if (!user) return res.json({ authenticated: false, isAdmin: false });
-  const view = publicView(user);
+  const view = ownerProfileView(user);
   res.json({ authenticated: true, isAdmin: isAdminId(user.id), isModerator: isModerator(user), premium: !!metaFor(user).premium, user: { id: user.id, username: view.username, name: view.displayName || view.discord?.globalName || view.discord?.username || view.username, avatar: view.discord?.avatar || '' } });
 });
 app.get('/private-login.html', (req, res) => res.redirect(301, '/login'));
 app.get('/dashboard.html', (req, res) => res.redirect(302, '/dashboard'));
 app.use('/uploads', express.static(UP_DIR, { setHeaders: r => r.setHeader('X-Content-Type-Options', 'nosniff') }));
+// Lucide is installed as a pinned npm dependency and served by Caruzo itself.
+// This removes executable third-party CDN code from the dashboard/landing page.
+app.get('/vendor/lucide.min.js', (req, res) => {
+  const file = path.join(__dirname, 'node_modules', 'lucide', 'dist', 'umd', 'lucide.min.js');
+  res.setHeader('Cache-Control', 'public, max-age=31536000, immutable');
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.type('application/javascript').sendFile(file, err => {
+    if (err && !res.headersSent) res.status(503).send('Lucide asset unavailable');
+  });
+});
 app.use(express.static(path.join(__dirname, 'public'), { index: false }));
 
 const auth = (req, res, next) => {
@@ -1484,10 +1608,21 @@ app.get('/auth/callback', async (req, res) => {
 });
 
 app.post('/logout', (req, res) => req.session.destroy(() => res.json({ ok:true })));
-app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/'))); // legacy compatibility
+// Legacy link compatibility without cross-site logout CSRF: browsers navigating
+// from another site are rejected. New code should prefer POST /logout.
+app.get('/logout', (req, res) => {
+  const fetchSite = String(req.get('sec-fetch-site') || '').toLowerCase();
+  if (fetchSite === 'cross-site') return res.status(403).send('Cross-site logout blocked');
+  const referer = String(req.get('referer') || '');
+  if (referer) {
+    try { if (new URL(referer).origin !== new URL(BASE_URL).origin) return res.status(403).send('Cross-site logout blocked'); }
+    catch { return res.status(403).send('Cross-site logout blocked'); }
+  }
+  req.session.destroy(() => res.redirect('/'));
+});
 
 // --- Dashboard-API ---
-app.get('/api/me', auth, (req, res) => res.json(publicView(db[req.session.uid])));
+app.get('/api/me', auth, (req, res) => res.json(ownerProfileView(db[req.session.uid])));
 
 app.get('/api/discord/status-emojis', auth, rateLimit({windowMs:60*1000,max:20,prefix:'status-emojis'}), async (req, res) => {
   res.setHeader('Cache-Control','no-store, no-cache, must-revalidate, proxy-revalidate');
@@ -1509,7 +1644,7 @@ app.post('/api/me', auth, async (req, res) => {
   // nicht nach dem Zeitpunkt der Discord-Registrierung.
   if (!Number(user.profileCreatedAt || 0)) user.profileCreatedAt = Date.now();
   await saveUser(user);
-  res.json(publicView(user));
+  res.json(ownerProfileView(user));
 });
 
 // --- Public profile statistics ---
@@ -1736,7 +1871,7 @@ app.post('/api/marketplace/:id/apply', auth, async (req, res) => {
   if (rec.visibility === 'public') rec.loadCount = Number(rec.loadCount || 0) + 1;
   rec.updatedAt ||= rec.createdAt;
   await Promise.all([saveUser(user), rec.visibility === 'public' ? saveAdminState() : Promise.resolve()]);
-  res.json({ ok: true, user: publicView(user), item: marketplaceMeta(rec, uid) });
+  res.json({ ok: true, user: ownerProfileView(user), item: marketplaceMeta(rec, uid) });
 });
 
 app.post('/api/marketplace/:id/save', auth, async (req, res) => {
@@ -1951,7 +2086,7 @@ app.post('/api/sync', auth, async (req, res) => {
   user.discord = mapDiscord(me);
   await syncUserBoostState(user, true);
   await saveUser(user);
-  res.json(publicView(user));
+  res.json(ownerProfileView(user));
 });
 
 app.get('/api/discord/boost-status', auth, async (req, res) => {
@@ -1968,7 +2103,7 @@ app.get('/api/discord/boost-status', auth, async (req, res) => {
     guildId: st?.guildId || '',
     reason: st?.reason || '',
     asset: '/discord-boost.png',
-    discord: publicView(user).discord,
+    discord: ownerProfileView(user).discord,
   });
 });
 
@@ -2020,7 +2155,8 @@ app.post('/api/upload/:kind', auth, uploadRate, (req, res) => {
     try {
       const detected=await inspectUpload(req.file,req.params.kind);
       if (!SUPABASE_ENABLED) return res.json({ url: '/uploads/' + req.file.filename });
-      const ext = path.extname(req.file.originalname).toLowerCase();
+      // Use the signature-detected extension, never the client supplied filename.
+      const ext = detected.ext;
       const key = `${req.session.uid}/${req.params.kind}/${Date.now()}-${crypto.randomBytes(8).toString('hex')}${ext}`;
       const base = SUPABASE_URL.replace(/\/$/, '');
       const stream=fs.createReadStream(req.file.path);
@@ -2433,7 +2569,7 @@ app.get('/api/profile/:name', async (req, res) => {
     shouldSave = true;
   }
   if (shouldSave) queueTelemetrySave(user);
-  const view = publicView(user);
+  const view = publicProfileView(user);
   // Discord server emojis are a membership perk. If the owner is no longer on
   // a mutual Caruzo/bot server, never expose the saved CDN emoji on the public profile.
   if (/^https:\/\/cdn\.discordapp\.com\/emojis\/[0-9]+\.(?:gif|webp)(?:\?.*)?$/i.test(String(view.premiumStatusCard?.iconUrl || ''))) {
