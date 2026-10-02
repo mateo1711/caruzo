@@ -4,10 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <link rel="preconnect" href="https://www.youtube.com">
+<link rel="preload" href="https://www.youtube.com/iframe_api" as="script">
 <link rel="preconnect" href="https://i.ytimg.com">
-<link rel="preconnect" href="https://open.spotify.com">
-<link rel="dns-prefetch" href="https://open.spotify.com">
-<link rel="preload" href="https://open.spotify.com/embed/iframe-api/v1" as="script">
 <title>…</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -30,7 +28,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* Hintergrund */
 .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
   background:radial-gradient(60% 40% at 30% 10%,rgba(255,46,147,.28),transparent 70%),radial-gradient(50% 40% at 80% 15%,rgba(255,46,147,.22),transparent 70%),#0e0a0c}
-.bg img,.bg video,.bg .bg-yt{position:absolute;inset:-3%;width:106%;height:106%;object-fit:cover;filter:blur(var(--blur))}.bg .bg-yt{z-index:0;border:0;pointer-events:none;opacity:0;overflow:hidden;transition:opacity .42s ease}.bg .bg-yt iframe{display:block;width:100%!important;height:100%!important;border:0;pointer-events:none}.bg.youtube-bg .bg-yt{width:120vw;height:67.5vw;min-height:120vh;min-width:213.333vh;left:50%;top:50%;transform:translate(-50%,-50%)}.bg .bg-yt-poster{z-index:0;opacity:1;transition:opacity .45s ease}.bg.youtube-bg.yt-ready .bg-yt{opacity:1}.bg.youtube-bg.yt-ready .bg-yt-poster{opacity:0}
+.bg img,.bg video,.bg .bg-yt{position:absolute;inset:-3%;width:106%;height:106%;object-fit:cover;filter:blur(var(--blur))}.bg .bg-yt{z-index:0;border:0;pointer-events:none;opacity:0;overflow:hidden;transition:opacity .22s ease}.bg .bg-yt iframe{display:block;width:100%!important;height:100%!important;border:0;pointer-events:none}.bg.youtube-bg .bg-yt{width:120vw;height:67.5vw;min-height:120vh;min-width:213.333vh;left:50%;top:50%;transform:translate(-50%,-50%)}.bg .bg-yt-poster{z-index:0;opacity:1;transition:opacity .22s ease}.bg.youtube-bg.yt-ready:not(.yt-mask) .bg-yt{opacity:1}.bg.youtube-bg.yt-ready:not(.yt-mask) .bg-yt-poster{opacity:0}.bg.youtube-bg.yt-mask .bg-yt{opacity:0!important}.bg.youtube-bg.yt-mask .bg-yt-poster{opacity:1!important}
 .bg::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(rgba(10,6,8,calc(var(--dim)*.7)),rgba(10,6,8,var(--dim)) 60%,rgba(10,6,8,.92))}
 
 /* Enter */
@@ -323,59 +321,88 @@ let backgroundYouTubeFrame = null;
 let backgroundYouTubePlayer = null;
 let backgroundYouTubeLoopTimer = 0;
 let backgroundYouTubeStart = 0;
+let backgroundYouTubeVideoId = '';
 let backgroundYouTubeSound = false;
 let backgroundYouTubeVolume = 30;
 let backgroundYouTubeRevealTimer = 0;
 let backgroundYouTubeRecoveryTimer = 0;
 let backgroundYouTubeHasStarted = false;
 let backgroundYouTubeLastLoopAt = 0;
-const BACKGROUND_YOUTUBE_REVEAL_DELAY = 650;
+let backgroundYouTubeMaskedUntil = 0;
+const BACKGROUND_YOUTUBE_REVEAL_DELAY = 900;
+const BACKGROUND_YOUTUBE_LOOP_REVEAL_DELAY = 850;
 let profileEntered = false;
 let premiumPlaylistActive=false, playlistYT=null, playlistSpotifyController=null, playlistIndex=0, playlistUser=null, playlistShell=null, profileLayoutEnabled=false, globalMute=false;
 function applyBackgroundYouTubeAudio(){
   if(!backgroundYouTubePlayer)return;
   try{
-    // Muted autoplay is allowed by browsers. Only restore the configured video
-    // sound after the visitor has interacted with the Enter screen.
     if(profileEntered&&backgroundYouTubeSound&&!globalMute){
       backgroundYouTubePlayer.unMute?.();
       backgroundYouTubePlayer.setVolume?.(backgroundYouTubeVolume);
     }else backgroundYouTubePlayer.mute?.();
   }catch{}
 }
+function maskBackgroundYouTube(ms=0){
+  clearTimeout(backgroundYouTubeRevealTimer);
+  const bg=$('#bg');
+  bg?.classList.add('yt-mask');
+  bg?.classList.remove('yt-ready');
+  backgroundYouTubeMaskedUntil=Math.max(backgroundYouTubeMaskedUntil,performance.now()+Math.max(0,Number(ms)||0));
+}
 function scheduleBackgroundYouTubeReveal(delay=BACKGROUND_YOUTUBE_REVEAL_DELAY){
   clearTimeout(backgroundYouTubeRevealTimer);
+  const wait=Math.max(Number(delay)||0,backgroundYouTubeMaskedUntil-performance.now(),80);
   backgroundYouTubeRevealTimer=setTimeout(()=>{
     if(!backgroundYouTubePlayer)return;
     try{if(backgroundYouTubePlayer.getPlayerState?.()!==window.YT?.PlayerState?.PLAYING)return}catch{return}
-    $('#bg')?.classList.add('yt-ready');
-  },Math.max(80,Number(delay)||0));
+    const bg=$('#bg');
+    bg?.classList.remove('yt-mask');
+    bg?.classList.add('yt-ready');
+    backgroundYouTubeMaskedUntil=0;
+  },wait);
 }
 function commandBackgroundYouTube(){
   if(backgroundYouTubePlayer){
     applyBackgroundYouTubeAudio();
-    try{backgroundYouTubePlayer.playVideo?.()}catch{}
+    try{
+      const state=backgroundYouTubePlayer.getPlayerState?.();
+      // Do NOT call playVideo again when the background is already playing.
+      // Reissuing playVideo is what makes YouTube paint its native pause/next overlay.
+      if(state!==window.YT?.PlayerState?.PLAYING){
+        maskBackgroundYouTube(950);
+        backgroundYouTubePlayer.playVideo?.();
+        scheduleBackgroundYouTubeReveal(950);
+      }
+    }catch{}
     return;
   }
   if(!backgroundYouTubeFrame?.contentWindow)return;
   const send=(func,args=[])=>{try{backgroundYouTubeFrame.contentWindow.postMessage(JSON.stringify({event:'command',func,args}),'*')}catch{}};
-  // Before Enter always request muted playback so autoplay can begin immediately.
   if(!profileEntered||!backgroundYouTubeSound||globalMute)send('mute');
   send('playVideo');
   if(profileEntered&&backgroundYouTubeSound&&!globalMute){send('unMute');send('setVolume',[backgroundYouTubeVolume])}
 }
-function recoverBackgroundYouTube(){
+function recoverBackgroundYouTube({hard=false}={}){
   if(!backgroundYouTubePlayer)return;
   clearTimeout(backgroundYouTubeRecoveryTimer);
-  $('#bg')?.classList.remove('yt-ready');
+  maskBackgroundYouTube(1050);
   try{backgroundYouTubePlayer.mute?.()}catch{}
-  try{backgroundYouTubePlayer.seekTo?.(backgroundYouTubeStart,true)}catch{}
-  try{backgroundYouTubePlayer.playVideo?.()}catch{}
+  try{
+    const state=backgroundYouTubePlayer.getPlayerState?.();
+    if(hard&&backgroundYouTubeVideoId&&backgroundYouTubePlayer.loadVideoById){
+      backgroundYouTubePlayer.loadVideoById({videoId:backgroundYouTubeVideoId,startSeconds:backgroundYouTubeStart});
+    }else{
+      backgroundYouTubePlayer.seekTo?.(backgroundYouTubeStart,true);
+      if(state!==window.YT?.PlayerState?.PLAYING)backgroundYouTubePlayer.playVideo?.();
+    }
+  }catch{}
   backgroundYouTubeRecoveryTimer=setTimeout(()=>{
     applyBackgroundYouTubeAudio();
-    try{backgroundYouTubePlayer.playVideo?.()}catch{}
-    scheduleBackgroundYouTubeReveal(420);
-  },180);
+    try{
+      if(backgroundYouTubePlayer.getPlayerState?.()!==window.YT?.PlayerState?.PLAYING)backgroundYouTubePlayer.playVideo?.();
+    }catch{}
+    scheduleBackgroundYouTubeReveal(900);
+  },220);
 }
 function startBackgroundYouTubeSeamlessLoop(){
   clearInterval(backgroundYouTubeLoopTimer);
@@ -388,26 +415,28 @@ function startBackgroundYouTubeSeamlessLoop(){
       const cur=Number(backgroundYouTubePlayer.getCurrentTime?.()||0);
       const now=performance.now();
       if(state===YT?.PlayerState?.PLAYING){
-        // Seek well before YouTube's real end screen. A cooldown prevents the
-        // monitor from firing repeatedly while the seek is still being applied.
-        const guard=Math.min(1.8,Math.max(.9,dur*.025));
-        const loopAt=Math.max(backgroundYouTubeStart+.45,dur-guard);
-        if(dur>2&&cur>=loopAt&&now-backgroundYouTubeLastLoopAt>900){
+        // Loop before YouTube reaches its own end-card UI. The iframe is masked
+        // during the seek, so even native pause/next graphics never become visible.
+        const guard=Math.min(3.0,Math.max(1.8,dur*.035));
+        const loopAt=Math.max(backgroundYouTubeStart+.7,dur-guard);
+        if(dur>3&&cur>=loopAt&&now-backgroundYouTubeLastLoopAt>1200){
           backgroundYouTubeLastLoopAt=now;
+          maskBackgroundYouTube(BACKGROUND_YOUTUBE_LOOP_REVEAL_DELAY);
           backgroundYouTubePlayer.seekTo?.(backgroundYouTubeStart,true);
+          scheduleBackgroundYouTubeReveal(BACKGROUND_YOUTUBE_LOOP_REVEAL_DELAY);
         }
         return;
       }
-      // BUFFERING/UNSTARTED are normal for a short time. PAUSED, CUED or ENDED
-      // are not expected for a background video and are recovered automatically.
+      // BUFFERING and UNSTARTED can be transient. If YouTube really pauses or
+      // ends, recover while hidden. ENDED uses a hard reload so it can run forever.
       if([YT?.PlayerState?.PAUSED,YT?.PlayerState?.CUED,YT?.PlayerState?.ENDED].includes(state)){
-        if(now-backgroundYouTubeLastLoopAt>650){
+        if(now-backgroundYouTubeLastLoopAt>900){
           backgroundYouTubeLastLoopAt=now;
-          recoverBackgroundYouTube();
+          recoverBackgroundYouTube({hard:state===YT?.PlayerState?.ENDED});
         }
       }
     }catch{}
-  },90);
+  },100);
 }
 
 const externalRef=(()=>{try{return document.referrer?new URL(document.referrer).hostname:''}catch{return ''}})();
@@ -557,6 +586,8 @@ function render(u) {
         backgroundYouTubeHasStarted = false;
         clearTimeout(backgroundYouTubeRevealTimer);
         backgroundYouTubeStart = start;
+        backgroundYouTubeVideoId = ytId;
+        maskBackgroundYouTube(BACKGROUND_YOUTUBE_REVEAL_DELAY);
         backgroundYouTubeSound = !mute;
         backgroundYouTubeVolume = Math.max(0,Math.min(100,Number(u.background.videoVolume ?? 30)));
         $('#bg').classList.add('youtube-bg');
@@ -569,10 +600,10 @@ function render(u) {
               events:{
                 onReady:e=>{
                   backgroundYouTubeFrame=e.target.getIframe?.()||null;
-                  // Start muted immediately. This works before the Enter click and avoids
-                  // browser autoplay blocking. The configured sound is restored on Enter.
                   try{e.target.mute?.()}catch{}
-                  try{e.target.playVideo?.()}catch{}
+                  // autoplay:1 normally starts the player itself. Only issue playVideo if
+                  // the browser/player is not already playing, avoiding a duplicate command.
+                  try{if(e.target.getPlayerState?.()!==YT.PlayerState.PLAYING)e.target.playVideo?.()}catch{}
                   startBackgroundYouTubeSeamlessLoop();
                 },
                 onStateChange:e=>{
@@ -581,12 +612,10 @@ function render(u) {
                     applyBackgroundYouTubeAudio();
                     scheduleBackgroundYouTubeReveal();
                   }else if(e.data===YT.PlayerState.ENDED){
-                    // This should normally never be reached because the loop monitor seeks
-                    // early, but keep a hidden recovery path as a second safety net.
-                    recoverBackgroundYouTube();
+                    recoverBackgroundYouTube({hard:true});
                   }
                 },
-                onError:()=>recoverBackgroundYouTube()
+                onError:()=>recoverBackgroundYouTube({hard:true})
               }
             });
           }catch{}
@@ -1020,13 +1049,10 @@ function getSpotifyIframeApi(){
   });
   return spotifyApiPromise;
 }
-// Begin fetching Spotify's iframe API while the profile JSON is still loading.
-// This removes most of the blank delay before playlists/albums appear.
-getSpotifyIframeApi().catch(()=>{});
 async function setupSpotifyEmbed(shell,kind,id,layout){
   const height=kind==='track'?(layout==='full'?352:152):(layout==='full'?420:352);
   const target=el('div',{class:'spotify-target'});shell.append(target);
-  const fallback=()=>{if(target.querySelector('iframe'))return;target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,loading:'eager',allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',allowfullscreen:'',title:'Spotify'}))};
+  const fallback=()=>{if(target.querySelector('iframe'))return;target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,loading:'lazy',allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',allowfullscreen:'',title:'Spotify'}))};
   try{
     const api=await getSpotifyIframeApi();
     api.createController(target,{uri:`spotify:${kind}:${id}`,width:'100%',height},controller=>{
@@ -1036,7 +1062,7 @@ async function setupSpotifyEmbed(shell,kind,id,layout){
         if(playing)silenceSiteSoundForSpotify();
       });
     });
-    setTimeout(()=>{if(!target.querySelector('iframe'))fallback()},1600);
+    setTimeout(()=>{if(!target.querySelector('iframe'))fallback()},3500);
   }catch{fallback()}
 }
 let youtubeApiPromise=null,youtubePlayer=null;
