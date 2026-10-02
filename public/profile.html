@@ -88,6 +88,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
    Caruzo glass shell is only behind it and never overlays or blends the controls. */
 .spotify{--spotify-blur:26px;--spotify-glow:.24;--spotify-height:352px;position:relative;isolation:isolate;overflow:hidden;padding:8px;background:linear-gradient(135deg,color-mix(in srgb,var(--card) 82%,var(--accent) 18%),color-mix(in srgb,var(--card) 94%,#000 6%));border-color:rgba(255,255,255,.14);backdrop-filter:blur(var(--spotify-blur)) saturate(145%);-webkit-backdrop-filter:blur(var(--spotify-blur)) saturate(145%);box-shadow:0 22px 70px rgba(0,0,0,.34),0 0 calc(22px + 36px * var(--spotify-glow)) color-mix(in srgb,var(--accent) 24%,transparent)}
 .spotify:before{content:"";position:absolute;inset:-28%;z-index:0;background:radial-gradient(circle at 10% 20%,color-mix(in srgb,var(--accent) 28%,transparent),transparent 30%),radial-gradient(circle at 88% 78%,rgba(255,255,255,.07),transparent 28%);filter:blur(calc(var(--spotify-blur) + 18px));opacity:.46;pointer-events:none}
+.social-placeholder{cursor:default!important;opacity:.88}.social-placeholder:hover{transform:none!important}
 .spotify iframe{position:relative;z-index:1;display:block;width:100%;height:var(--spotify-height);border:0;border-radius:18px;background:#181818;box-shadow:0 16px 46px rgba(0,0,0,.26);opacity:1;filter:none;mix-blend-mode:normal}
 .spotify[data-kind="track"]{--spotify-height:152px}
 .spotify[data-kind="playlist"],.spotify[data-kind="album"]{--spotify-height:352px}
@@ -224,7 +225,7 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 
 
 /* V39 premium status card */
-.premium-status-card{--sc:#8b5cf6;position:relative;overflow:hidden;padding:18px 20px;border:1px solid color-mix(in srgb,var(--sc) 26%,rgba(255,255,255,.08));border-radius:var(--card-radius,22px);background:radial-gradient(circle at 0 0,color-mix(in srgb,var(--sc) 17%,transparent),transparent 48%),rgba(8,8,12,.64);backdrop-filter:blur(var(--card-blur,22px)) saturate(120%);box-shadow:0 20px 58px rgba(0,0,0,.26),0 0 28px color-mix(in srgb,var(--sc) 10%,transparent)}.premium-status-card.signal{border-left:3px solid var(--sc)}.premium-status-card.minimal{background:rgba(7,7,10,.3);box-shadow:none;border-color:rgba(255,255,255,.07)}.premium-status-card.gradient{background:linear-gradient(135deg,color-mix(in srgb,var(--sc) 22%,#09090d),rgba(8,8,12,.72) 56%,color-mix(in srgb,var(--sc) 8%,#09090d))}.psc-top{display:flex;align-items:center;gap:13px}.psc-icon{width:46px;height:46px;flex:none;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--sc) 34%,rgba(255,255,255,.08));border-radius:14px;background:color-mix(in srgb,var(--sc) 12%,rgba(255,255,255,.02));font-size:23px;box-shadow:0 0 28px color-mix(in srgb,var(--sc) 14%,transparent)}.psc-copy{min-width:0}.psc-eye{display:block;color:var(--sc);font:800 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}.psc-title{display:block;margin-top:6px;font-size:17px;letter-spacing:-.02em}.psc-text{margin:12px 0 0;color:#a0a1aa;font-size:12px;line-height:1.65}.psc-countdown{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 9px;border:1px solid color-mix(in srgb,var(--sc) 22%,rgba(255,255,255,.08));border-radius:999px;background:color-mix(in srgb,var(--sc) 7%,rgba(255,255,255,.018));color:#d9dae0;font:800 9px var(--mono);letter-spacing:.05em}.psc-countdown:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sc);box-shadow:0 0 10px var(--sc)}
+.premium-status-card{--sc:#8b5cf6;position:relative;overflow:hidden;padding:18px 20px;border:1px solid color-mix(in srgb,var(--sc) 26%,rgba(255,255,255,.08));border-radius:var(--card-radius,22px);background:radial-gradient(circle at 0 0,color-mix(in srgb,var(--sc) 17%,transparent),transparent 48%),rgba(8,8,12,.64);backdrop-filter:blur(var(--card-blur,22px)) saturate(120%);box-shadow:0 20px 58px rgba(0,0,0,.26),0 0 28px color-mix(in srgb,var(--sc) 10%,transparent)}.premium-status-card.signal{border-left:3px solid var(--sc)}.premium-status-card.minimal{background:rgba(7,7,10,.3);box-shadow:none;border-color:rgba(255,255,255,.07)}.premium-status-card.gradient{background:linear-gradient(135deg,color-mix(in srgb,var(--sc) 22%,#09090d),rgba(8,8,12,.72) 56%,color-mix(in srgb,var(--sc) 8%,#09090d))}.psc-top{display:flex;align-items:center;gap:13px}.psc-icon{width:46px;height:46px;flex:none;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--sc) 34%,rgba(255,255,255,.08));border-radius:14px;background:color-mix(in srgb,var(--sc) 12%,rgba(255,255,255,.02));font-size:23px;box-shadow:0 0 28px color-mix(in srgb,var(--sc) 14%,transparent)}.psc-icon img{width:29px;height:29px;object-fit:contain}.psc-copy{min-width:0}.psc-eye{display:block;color:var(--sc);font:800 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}.psc-title{display:block;margin-top:6px;font-size:17px;letter-spacing:-.02em}.psc-text{margin:12px 0 0;color:#a0a1aa;font-size:12px;line-height:1.65}.psc-countdown{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 9px;border:1px solid color-mix(in srgb,var(--sc) 22%,rgba(255,255,255,.08));border-radius:999px;background:color-mix(in srgb,var(--sc) 7%,rgba(255,255,255,.018));color:#d9dae0;font:800 9px var(--mono);letter-spacing:.05em}.psc-countdown:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sc);box-shadow:0 0 10px var(--sc)}
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -314,15 +315,41 @@ let audio;
 let spotifyPlaying = false;
 let spotifyApiPromise = null;
 let backgroundYouTubeFrame = null;
+let backgroundYouTubePlayer = null;
+let backgroundYouTubeLoopTimer = 0;
+let backgroundYouTubeStart = 0;
 let backgroundYouTubeSound = false;
 let backgroundYouTubeVolume = 30;
 let profileEntered = false;
 let premiumPlaylistActive=false, playlistYT=null, playlistSpotifyController=null, playlistIndex=0, playlistUser=null, playlistShell=null, profileLayoutEnabled=false, globalMute=false;
 function commandBackgroundYouTube(){
-  if(!backgroundYouTubeFrame?.contentWindow||!profileEntered)return;
+  if(!profileEntered)return;
+  if(backgroundYouTubePlayer){
+    try{backgroundYouTubePlayer.playVideo?.()}catch{}
+    try{if(backgroundYouTubeSound&&!globalMute){backgroundYouTubePlayer.unMute?.();backgroundYouTubePlayer.setVolume?.(backgroundYouTubeVolume)}else backgroundYouTubePlayer.mute?.()}catch{}
+    return;
+  }
+  if(!backgroundYouTubeFrame?.contentWindow)return;
   const send=(func,args=[])=>{try{backgroundYouTubeFrame.contentWindow.postMessage(JSON.stringify({event:'command',func,args}),'*')}catch{}};
   send('playVideo');
   if(backgroundYouTubeSound&&!globalMute){send('unMute');send('setVolume',[backgroundYouTubeVolume])}else send('mute');
+}
+function startBackgroundYouTubeSeamlessLoop(){
+  clearInterval(backgroundYouTubeLoopTimer);
+  backgroundYouTubeLoopTimer=setInterval(()=>{
+    if(!profileEntered||!backgroundYouTubePlayer)return;
+    try{
+      const state=backgroundYouTubePlayer.getPlayerState?.();
+      if(state!==window.YT?.PlayerState?.PLAYING)return;
+      const dur=Number(backgroundYouTubePlayer.getDuration?.()||0),cur=Number(backgroundYouTubePlayer.getCurrentTime?.()||0);
+      // Jump shortly before YouTube reaches ENDED and let the already-playing
+      // player continue by itself. Calling playVideo() here was what could flash
+      // the large pause/play overlay between loops.
+      if(dur>1&&cur>=Math.max(backgroundYouTubeStart+.25,dur-.65)){
+        backgroundYouTubePlayer.seekTo?.(backgroundYouTubeStart,true);
+      }
+    }catch{}
+  },140);
 }
 
 const externalRef=(()=>{try{return document.referrer?new URL(document.referrer).hostname:''}catch{return ''}})();
@@ -460,12 +487,23 @@ function render(u) {
       if (ytId) {
         const start = Math.max(0, Number(u.background.videoStart || 0));
         const sm=(u.soundMode||'auto'); const mute = (globalMute || premiumPlaylistActive || u.background.videoSound === false || sm === 'music' || sm === 'mute' || (sm==='auto' && !!u.music?.url)) ? 1 : 0;
-        bg = el('iframe', { class: 'bg-yt', src: `https://www.youtube-nocookie.com/embed/${ytId}?autoplay=0&controls=0&showinfo=0&modestbranding=1&playsinline=1&mute=${mute}&loop=1&playlist=${ytId}&start=${start}&enablejsapi=1`, allow: 'autoplay; encrypted-media; picture-in-picture', referrerpolicy: 'strict-origin-when-cross-origin', title: 'YouTube background' });
-        backgroundYouTubeFrame = bg;
+        bg = el('div', { class: 'bg-yt', 'aria-hidden':'true' });
+        backgroundYouTubeStart = start;
         backgroundYouTubeSound = !mute;
         backgroundYouTubeVolume = Math.max(0,Math.min(100,Number(u.background.videoVolume ?? 30)));
-        bg.addEventListener('load',()=>setTimeout(commandBackgroundYouTube,120));
         $('#bg').classList.add('youtube-bg');
+        queueMicrotask(async()=>{
+          try{
+            const YT=await getYouTubeApi();
+            backgroundYouTubePlayer=new YT.Player(bg,{
+              width:'100%',height:'100%',videoId:ytId,
+              playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,playsinline:1,rel:0,start,enablejsapi:1,loop:1,playlist:ytId},
+              events:{
+                onReady:e=>{backgroundYouTubeFrame=e.target.getIframe?.()||null;if(backgroundYouTubeFrame)backgroundYouTubeFrame.classList.add('bg-yt');try{if(backgroundYouTubeSound&&!globalMute){e.target.unMute();e.target.setVolume(backgroundYouTubeVolume)}else e.target.mute()}catch{};startBackgroundYouTubeSeamlessLoop();commandBackgroundYouTube()}
+              }
+            });
+          }catch{}
+        });
       }
     }
     if (!bg) {
@@ -570,19 +608,21 @@ function render(u) {
   const card = (ico, title, sub, href, onclick, statKey='') => {
     const inner = [ico, el('div', { class: 't' }, el('b', {}, title), el('small', {}, sub)), href ? svg(PATH.ext, 'ext') : ''];
     if(href){const a=el('a',{class:'link',href,target:'_blank',rel:'noopener noreferrer'},inner);a.addEventListener('click',()=>trackProfileEvent(u,'social',statKey||title));return a}
-    return el('button', { class: 'link', onclick }, inner);
+    if(typeof onclick==='function')return el('button', { class: 'link', onclick }, inner);
+    return el('div',{class:'link social-placeholder','aria-disabled':'true'},inner);
   };
+  const isPlaceholder=v=>String(v||'').trim()==='@';
   const copyAccount=(label,value)=>{navigator.clipboard?.writeText(value);toast(label+' kopiert')};
   socialOrder(u).forEach(key=>{
     if(key==='discord') return grid.append(card(icon('discord', '5865F2', 'rgba(88,101,242,.16)'), 'Discord', d.username, null, () => { trackProfileEvent(u,'social','discord');navigator.clipboard?.writeText(d.username); toast('Discord-Name kopiert'); }));
-    if(key==='steam') return u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', x.name || host(x.url) || `Steam ${i+1}`, x.url,null,'steam')));
-    if(key==='custom') return u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || host(x.url), host(x.url), x.url,null,'custom')));
-    if(key==='discordServer' && u.links.discordServer) return grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server','Discord Server · beitreten',u.links.discordServer,null,'discordServer'));
-    if(key==='spotifyProfile' && u.links.spotifyProfile) return grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify','Spotify Profil',u.links.spotifyProfile,null,'spotify'));
-    if(key==='epic' && u.links.epic) return grid.append(card(icon('epicgames','ffffff','rgba(255,255,255,.08)'),'Epic Games',u.links.epic,null,()=>{trackProfileEvent(u,'social','epic');copyAccount('Epic Benutzername',u.links.epic)}));
-    if(key==='valorant' && u.links.valorant) return grid.append(card(icon('valorant','ff4655','rgba(255,70,85,.14)'),'Valorant',u.links.valorant,null,()=>{trackProfileEvent(u,'social','valorant');copyAccount('Valorant / Riot ID',u.links.valorant)}));
+    if(key==='steam') return u.links.steam.forEach((x, i) => grid.append(card(icon('steam', '66c0f4', 'rgba(102,192,244,.14)'), 'Steam', isPlaceholder(x.url)?'@':(x.name || host(x.url) || `Steam ${i+1}`), isPlaceholder(x.url)?null:x.url,null,'steam')));
+    if(key==='custom') return u.links.custom.forEach(x => grid.append(card(el('div', { class: 'ico' }, svg(PATH.link, '')), x.label || 'Link', isPlaceholder(x.url)?'@':host(x.url), isPlaceholder(x.url)?null:x.url,null,'custom')));
+    if(key==='discordServer' && u.links.discordServer) return grid.append(card(icon('discord','5865F2','rgba(88,101,242,.16)'),u.links.discordServerName||'Discord Server',isPlaceholder(u.links.discordServer)?'@':'Discord Server · beitreten',isPlaceholder(u.links.discordServer)?null:u.links.discordServer,null,'discordServer'));
+    if(key==='spotifyProfile' && u.links.spotifyProfile) return grid.append(card(icon('spotify','1ED760','rgba(30,215,96,.14)'),'Spotify',isPlaceholder(u.links.spotifyProfile)?'@':'Spotify Profil',isPlaceholder(u.links.spotifyProfile)?null:u.links.spotifyProfile,null,'spotify'));
+    if(key==='epic' && u.links.epic) return grid.append(card(icon('epicgames','ffffff','rgba(255,255,255,.08)'),'Epic Games',u.links.epic,null,isPlaceholder(u.links.epic)?null:()=>{trackProfileEvent(u,'social','epic');copyAccount('Epic Benutzername',u.links.epic)}));
+    if(key==='valorant' && u.links.valorant) return grid.append(card(icon('valorant','ff4655','rgba(255,70,85,.14)'),'Valorant',u.links.valorant,null,isPlaceholder(u.links.valorant)?null:()=>{trackProfileEvent(u,'social','valorant');copyAccount('Valorant / Riot ID',u.links.valorant)}));
     const meta=SOCIAL_META[key], v=u.links[key];
-    if(meta&&v) grid.append(card(icon(meta.icon,meta.color,meta.tint),meta.title,v.split('/').filter(Boolean).pop(),v,null,key));
+    if(meta&&v) grid.append(card(icon(meta.icon,meta.color,meta.tint),meta.title,isPlaceholder(v)?'@':v.split('/').filter(Boolean).pop(),isPlaceholder(v)?null:v,null,key));
   });
   grid.querySelectorAll('.ico svg').forEach(s => { s.style.cssText = 'width:20px;height:20px;fill:#e9dde3'; });
   setupSocialHover(grid, des.socialEffect || 'lift');
@@ -921,7 +961,7 @@ function renderPremiumStatusCard(u){
   const host=$('#premiumStatusCard');if(!host)return;host.replaceChildren();host.hidden=true;const sc=u.platform?.premium?u.premiumStatusCard:null;if(!sc||sc.enabled!==true)return;
   if(sc.expiresAt){const end=new Date(sc.expiresAt).getTime();if(Number.isFinite(end)&&end<=Date.now())return;}
   const root=el('div',{class:'premium-status-card '+(sc.style||'glass')});root.style.setProperty('--sc',/^#[0-9a-f]{6}$/i.test(sc.accent||'')?sc.accent:'#8b5cf6');
-  const icon=el('span',{class:'psc-icon'},sc.icon||'✨'),copy=el('div',{class:'psc-copy'},el('span',{class:'psc-eye'},sc.eyebrow||'STATUS'),el('b',{class:'psc-title'},sc.title||'Status'));root.append(el('div',{class:'psc-top'},icon,copy));if(sc.text)root.append(el('p',{class:'psc-text'},sc.text));
+  const icon=el('span',{class:'psc-icon'});if(/^https:\/\/cdn\.discordapp\.com\/emojis\//i.test(sc.iconUrl||''))icon.append(el('img',{src:sc.iconUrl,alt:''}));else icon.textContent=sc.icon||'✨';const copy=el('div',{class:'psc-copy'},el('span',{class:'psc-eye'},sc.eyebrow||'STATUS'),el('b',{class:'psc-title'},sc.title||'Status'));root.append(el('div',{class:'psc-top'},icon,copy));if(sc.text)root.append(el('p',{class:'psc-text'},sc.text));
   if(sc.showCountdown&&sc.expiresAt){const out=el('span',{class:'psc-countdown'});root.append(out);const update=()=>{const ms=new Date(sc.expiresAt).getTime()-Date.now();if(ms<=0){host.hidden=true;return}const d=Math.floor(ms/86400000),h=Math.floor(ms%86400000/3600000),m=Math.floor(ms%3600000/60000);out.textContent=d>0?`${d}d ${h}h ${m}m`:`${h}h ${m}m`;};update();setInterval(update,60000);}
   host.append(root);host.hidden=false;
 }
