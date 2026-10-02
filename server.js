@@ -1444,6 +1444,86 @@ const sameOriginWrites = (req,res,next) => {
 };
 app.use(sameOriginWrites);
 app.use('/api/', rateLimit({windowMs:5*60*1000,max:700,prefix:'api'}));
+
+// Safe metadata proxy for Spotify / YouTube music links. The browser only talks
+// to Caruzo; the server fetches from fixed oEmbed endpoints so user input can
+// never choose an arbitrary upstream host (avoids SSRF while enabling automatic
+// provider name, title and artwork in the music players).
+const mediaMetaCache = new Map();
+function mediaSourceDescriptor(raw) {
+  try {
+    const input = String(raw || '').trim();
+    const u = new URL(input);
+    const host = u.hostname.toLowerCase().replace(/^www\./, '');
+    if (host === 'open.spotify.com') {
+      const parts = u.pathname.split('/').filter(Boolean);
+      const idx = parts[0]?.startsWith('intl-') ? 1 : 0;
+      const kind = String(parts[idx] || '').toLowerCase();
+      const id = String(parts[idx + 1] || '').replace(/[^A-Za-z0-9]/g, '');
+      if (!['track','playlist','album','artist','episode','show'].includes(kind) || !id) return null;
+      return { provider:'spotify', providerName:'Spotify', kind, id, canonical:`https://open.spotify.com/${kind}/${id}` };
+    }
+    if (host === 'youtu.be') {
+      const id = String(u.pathname.split('/').filter(Boolean)[0] || '').replace(/[^A-Za-z0-9_-]/g, '');
+      if (!id) return null;
+      return { provider:'youtube', providerName:'YouTube', kind:'video', id, canonical:`https://www.youtube.com/watch?v=${id}` };
+    }
+    if (host === 'youtube.com' || host.endsWith('.youtube.com')) {
+      const videoId = String(u.searchParams.get('v') || '').replace(/[^A-Za-z0-9_-]/g, '');
+      const listId = String(u.searchParams.get('list') || '').replace(/[^A-Za-z0-9_-]/g, '');
+      if (videoId) return { provider:'youtube', providerName:'YouTube', kind:'video', id:videoId, listId, canonical:`https://www.youtube.com/watch?v=${videoId}` };
+      if (listId) return { provider:'youtube', providerName:'YouTube', kind:'playlist', id:listId, canonical:`https://www.youtube.com/playlist?list=${listId}` };
+    }
+  } catch {}
+  return null;
+}
+async function fetchMediaMeta(raw) {
+  const desc = mediaSourceDescriptor(raw);
+  if (!desc) return null;
+  const cacheKey = `${desc.provider}:${desc.kind}:${desc.id}`;
+  const cached = mediaMetaCache.get(cacheKey);
+  if (cached && Date.now() - cached.at < 6 * 60 * 60 * 1000) return cached.value;
+  let value = {
+    provider: desc.provider,
+    providerName: desc.providerName,
+    kind: desc.kind,
+    title: desc.providerName + (desc.kind === 'playlist' ? ' Playlist' : ''),
+    author: '',
+    thumbnail: '',
+  };
+  try {
+    let endpoint = '';
+    if (desc.provider === 'spotify') endpoint = `https://open.spotify.com/oembed?url=${encodeURIComponent(desc.canonical)}`;
+    if (desc.provider === 'youtube' && desc.kind === 'video') endpoint = `https://www.youtube.com/oembed?url=${encodeURIComponent(desc.canonical)}&format=json`;
+    if (endpoint) {
+      const r = await fetch(endpoint, { headers:{ Accept:'application/json' }, signal:AbortSignal.timeout(4500) });
+      if (r.ok) {
+        const j = await r.json();
+        value = {
+          ...value,
+          title: str(j?.title, 160) || value.title,
+          author: str(j?.author_name, 120),
+          thumbnail: url(j?.thumbnail_url),
+        };
+      }
+    }
+  } catch {}
+  if (mediaMetaCache.size > 600) {
+    const oldest = [...mediaMetaCache.entries()].sort((a,b)=>a[1].at-b[1].at).slice(0,120);
+    for (const [k] of oldest) mediaMetaCache.delete(k);
+  }
+  mediaMetaCache.set(cacheKey, { at:Date.now(), value });
+  return value;
+}
+app.get('/api/media-meta', rateLimit({windowMs:60*1000,max:90,prefix:'media-meta'}), async (req,res) => {
+  const raw = String(req.query.url || '').slice(0, 1200);
+  const desc = mediaSourceDescriptor(raw);
+  if (!desc) return res.status(400).json({ error:'Nur Spotify- oder YouTube-Links werden unterstützt.' });
+  const meta = await fetchMediaMeta(raw);
+  res.setHeader('Cache-Control', 'public, max-age=1800, stale-while-revalidate=21600');
+  return res.json(meta || { provider:desc.provider, providerName:desc.providerName, kind:desc.kind, title:desc.providerName, author:'', thumbnail:'' });
+});
+
 function regenerateSession(req) { return new Promise((resolve,reject)=>req.session.regenerate(err=>err?reject(err):resolve())); }
 
 // Invite-Gate: neue Accounts benötigen einen einmaligen Invite Key.

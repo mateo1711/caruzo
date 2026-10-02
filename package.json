@@ -1,6 +1,6 @@
 {
   "name": "caruzo",
-  "version": "53.0.0",
+  "version": "54.0.0",
   "private": true,
   "main": "server.js",
   "scripts": {
