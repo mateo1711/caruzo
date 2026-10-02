@@ -8,6 +8,8 @@
 <link rel="preconnect" href="https://i.ytimg.com">
 <link rel="preconnect" href="https://open.spotify.com" crossorigin>
 <link rel="dns-prefetch" href="//open.spotify.com">
+<script>window.onSpotifyIframeApiReady=api=>{window.__caruzoSpotifyApi=api;window.dispatchEvent(new CustomEvent('caruzo:spotify-api-ready'))}</script>
+<script src="https://open.spotify.com/embed/iframe-api/v1" async data-caruzo-spotify-api></script>
 <title>…</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -231,6 +233,11 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
 
 /* V39 premium status card */
 .premium-status-card{--sc:#8b5cf6;position:relative;overflow:hidden;padding:18px 20px;border:1px solid color-mix(in srgb,var(--sc) 26%,rgba(255,255,255,.08));border-radius:var(--card-radius,22px);background:radial-gradient(circle at 0 0,color-mix(in srgb,var(--sc) 17%,transparent),transparent 48%),rgba(8,8,12,.64);backdrop-filter:blur(var(--card-blur,22px)) saturate(120%);box-shadow:0 20px 58px rgba(0,0,0,.26),0 0 28px color-mix(in srgb,var(--sc) 10%,transparent)}.premium-status-card.signal{border-left:3px solid var(--sc)}.premium-status-card.minimal{background:rgba(7,7,10,.3);box-shadow:none;border-color:rgba(255,255,255,.07)}.premium-status-card.gradient{background:linear-gradient(135deg,color-mix(in srgb,var(--sc) 22%,#09090d),rgba(8,8,12,.72) 56%,color-mix(in srgb,var(--sc) 8%,#09090d))}.psc-top{display:flex;align-items:center;gap:13px}.psc-icon{width:46px;height:46px;flex:none;display:grid;place-items:center;border:1px solid color-mix(in srgb,var(--sc) 34%,rgba(255,255,255,.08));border-radius:14px;background:color-mix(in srgb,var(--sc) 12%,rgba(255,255,255,.02));font-size:23px;box-shadow:0 0 28px color-mix(in srgb,var(--sc) 14%,transparent)}.psc-icon img{width:29px;height:29px;object-fit:contain}.psc-copy{min-width:0}.psc-eye{display:block;color:var(--sc);font:800 9px/1 var(--mono);letter-spacing:.14em;text-transform:uppercase}.psc-title{display:block;margin-top:6px;font-size:17px;letter-spacing:-.02em}.psc-text{margin:12px 0 0;color:#a0a1aa;font-size:12px;line-height:1.65}.psc-countdown{display:inline-flex;align-items:center;gap:7px;margin-top:12px;padding:6px 9px;border:1px solid color-mix(in srgb,var(--sc) 22%,rgba(255,255,255,.08));border-radius:999px;background:color-mix(in srgb,var(--sc) 7%,rgba(255,255,255,.018));color:#d9dae0;font:800 9px var(--mono);letter-spacing:.05em}.psc-countdown:before{content:"";width:6px;height:6px;border-radius:50%;background:var(--sc);box-shadow:0 0 10px var(--sc)}
+
+/* v54 · provider-aware music players */
+.player{min-height:52px;padding:7px 12px 7px 7px;gap:8px;border-radius:18px;background:linear-gradient(145deg,rgba(14,14,19,.92),rgba(9,9,13,.9));box-shadow:0 18px 48px rgba(0,0,0,.34);border-color:rgba(255,255,255,.11)}
+.player .player-provider{width:36px;height:36px;flex:0 0 36px;display:grid;place-items:center;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.04);overflow:hidden}.player .player-provider img{width:21px;height:21px;object-fit:contain;display:none}.player .player-provider-generic{font-size:16px;color:#b8b8c1}.player[data-provider="spotify"] .player-provider{background:rgba(30,215,96,.12);border-color:rgba(30,215,96,.22)}.player[data-provider="youtube"] .player-provider{background:rgba(255,0,0,.12);border-color:rgba(255,0,0,.22)}.player[data-provider="spotify"] .player-provider img,.player[data-provider="youtube"] .player-provider img{display:block}.player[data-provider="spotify"] .player-provider-generic,.player[data-provider="youtube"] .player-provider-generic{display:none}.player .player-copy{display:grid;gap:2px;min-width:110px;max-width:190px}.player .player-copy b{font-size:11px;line-height:1.2;color:#f4f4f7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.player .player-copy small{font:800 8px/1 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#777a84}.player>span{max-width:none}.player[data-provider="spotify"] .player-copy small{color:#1ed760}.player[data-provider="youtube"] .player-copy small{color:#ff5b5b}
+.premium-music-player .mp-cover{background:linear-gradient(135deg,rgba(255,255,255,.08),rgba(255,255,255,.025))}.premium-music-player .mp-cover.provider-fallback{object-fit:contain;padding:18px}.premium-music-player.provider-spotify .mp-cover.provider-fallback{background:radial-gradient(circle at 35% 30%,rgba(30,215,96,.22),transparent 60%),#0d1711}.premium-music-player.provider-youtube .mp-cover.provider-fallback{background:radial-gradient(circle at 35% 30%,rgba(255,0,0,.22),transparent 60%),#180d0d}.premium-music-player .mp-kicker{gap:7px;min-width:0}.premium-music-player .mp-kicker>i{display:none}.premium-music-player .mp-provider-icon{width:14px;height:14px;object-fit:contain;flex:none}.premium-music-player .mp-provider-name{font-weight:900;color:#d8d8df}.premium-music-player.provider-spotify .mp-provider-name{color:#57e889}.premium-music-player.provider-youtube .mp-provider-name{color:#ff6b6b}.premium-music-player .mp-playlist-name{font-style:normal;color:#6f717b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.premium-music-player .mp-playlist-name:before{content:"•";margin-right:7px;color:#45464e}.premium-music-player .mp-source img{width:12px;height:12px;object-fit:contain}.premium-music-player .mp-source b{display:flex;align-items:center;gap:5px}.premium-music-player .mp-source strong{font-weight:900;color:#c9cad1}.premium-music-player.provider-spotify{border-color:color-mix(in srgb,#1ed760 22%,rgba(255,255,255,.08));box-shadow:0 22px 60px rgba(0,0,0,.3),0 0 28px rgba(30,215,96,.08)}.premium-music-player.provider-youtube{border-color:color-mix(in srgb,#ff0000 20%,rgba(255,255,255,.08));box-shadow:0 22px 60px rgba(0,0,0,.3),0 0 28px rgba(255,0,0,.07)}.mp-spotify-target{min-height:152px}.mp-spotify-loading,.spotify-loading{height:100%;min-height:152px;display:flex;align-items:center;justify-content:center;gap:10px;border-radius:12px;background:rgba(10,10,14,.64);color:#92949d;font:800 9px var(--mono);letter-spacing:.08em;text-transform:uppercase}.mp-spotify-loading img,.spotify-loading img{width:22px;height:22px}.spotify .spotify-target{overflow:hidden;border-radius:18px}.spotify .spotify-target iframe{min-height:var(--spotify-height)}
 </style>
 <link rel="icon" type="image/png" href="/caruzo-logo.png"></head>
 <body>
@@ -264,9 +271,10 @@ h1{margin:0 0 8px;font:700 46px/1 var(--display);letter-spacing:-.03em}
   <div class="views" id="views"></div>
 </main>
 
-<div class="player" id="player">
+<div class="player" id="player" data-provider="audio">
+  <span class="player-provider" id="playerProvider" aria-hidden="true"><span class="player-provider-generic">♫</span><img id="playerProviderIcon" alt=""></span>
   <button id="pp" aria-label="Play/Pause"><svg viewBox="0 0 24 24"><path id="ppIcon" d="M8 5v14l11-7z"/></svg></button>
-  <span id="trackName"></span>
+  <span class="player-copy"><b id="trackName"></b><small id="trackProviderName">Audio</small></span>
   <input type="range" id="vol" min="0" max="100" aria-label="Lautstärke">
 </div>
 <div id="musicPlayerFloating"></div>
@@ -338,7 +346,7 @@ let backgroundYouTubeMaskedUntil = 0;
 let backgroundYouTubeSwapInProgress = false;
 const BACKGROUND_YOUTUBE_INITIAL_PROGRESS = .55;
 let profileEntered = false;
-let premiumPlaylistActive=false, playlistYT=null, playlistSpotifyController=null, playlistIndex=0, playlistUser=null, playlistShell=null, profileLayoutEnabled=false, globalMute=false;
+let premiumPlaylistActive=false, playlistYT=null, playlistSpotifyController=null, playlistIndex=0, playlistUser=null, playlistShell=null, playlistAutoplayWanted=true, standaloneSpotifyController=null, standaloneSpotifyAutoplayWanted=true, profileLayoutEnabled=false, globalMute=false;
 function activeBackgroundYouTubePlayer(){
   return backgroundYouTubePlayers[backgroundYouTubeActiveIndex] || backgroundYouTubePlayer;
 }
@@ -536,37 +544,119 @@ fetch('/api/profile/' + encodeURIComponent(path)+(externalRef?'?ref='+encodeURIC
 function trackProfileEvent(u,type,key=''){
   if(!u?.username)return;try{fetch('/api/profile/'+encodeURIComponent(u.username)+'/event',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({type,key:String(key||'').slice(0,48)}),keepalive:true}).catch(()=>{})}catch{}
 }
-function parseSpotifySource(raw){const m=String(raw||'').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/i);return m?{kind:m[1],id:m[2]}:null}
+function parseSpotifySource(raw){const m=String(raw||'').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track|artist|episode|show)\/([A-Za-z0-9]+)/i);return m?{kind:m[1],id:m[2]}:null}
 function parseYouTubePlaylist(raw){try{return new URL(String(raw||'')).searchParams.get('list')||''}catch{return ''}}
+function musicProviderInfo(raw){
+  if(parseSpotifySource(raw))return {key:'spotify',name:'Spotify',asset:'/social-icons/spotify.png'};
+  if(extractYouTubeId(raw)||parseYouTubePlaylist(raw))return {key:'youtube',name:'YouTube',asset:'/social-icons/youtube.png'};
+  return {key:'audio',name:'Audio',asset:''};
+}
+function genericSourceTitle(title){return /^(?:spotify(?: track \/ playlist)?|youtube(?: track \/ playlist)?|track|playlist|nothing playing yet|audio)$/i.test(String(title||'').trim())}
+const mediaMetaClientCache=new Map();
+async function resolveMediaMeta(raw){
+  const key=String(raw||'').trim();if(!key)return null;
+  if(mediaMetaClientCache.has(key))return mediaMetaClientCache.get(key);
+  const promise=fetch('/api/media-meta?url='+encodeURIComponent(key),{cache:'force-cache'}).then(r=>r.ok?r.json():null).catch(()=>null);
+  mediaMetaClientCache.set(key,promise);return promise;
+}
+function sourcePresentation(src,meta=null){
+  const provider=musicProviderInfo(src?.url),sp=parseSpotifySource(src?.url),ytList=parseYouTubePlaylist(src?.url);
+  const storedTitle=String(src?.title||'').trim(),storedArtist=String(src?.artist||'').trim(),storedCover=String(src?.cover||'').trim();
+  const title=(!storedTitle||genericSourceTitle(storedTitle))?(meta?.title||provider.name+(sp?.kind==='playlist'||ytList?' Playlist':'')):storedTitle;
+  const artist=storedArtist||(meta?.author||((sp?.kind||ytList)?`${provider.name} ${sp?.kind==='playlist'||ytList?'Playlist':sp?.kind||''}`.trim():provider.name));
+  const cover=storedCover||meta?.thumbnail||'';
+  return {provider,title,artist,cover};
+}
 function premiumMusicTarget(pos){if(pos==='floating-bottom')return $('#musicPlayerFloating');if(profileLayoutEnabled)return $('#musicLayoutSlot');if(pos==='before-highlights')return $('#musicPlayerBeforeHighlights');if(pos==='before-socials')return $('#musicPlayerBeforeSocials');if(pos==='after-socials')return $('#musicPlayerAfterSocials');return $('#musicPlayerBelowProfile')}
 function playlistCover(src){if(src?.cover)return src.cover;const id=extractYouTubeId(src?.url);return id?`https://i.ytimg.com/vi/${id}/hqdefault.jpg`:''}
 function timeLabel(sec){sec=Math.max(0,Number(sec||0));const m=Math.floor(sec/60),s=Math.floor(sec%60);return `${m}:${String(s).padStart(2,'0')}`}
 function setPlaylistPlaying(on){const root=playlistShell?.root;if(!root)return;root.classList.toggle('playing',!!on);if(playlistShell.play)playlistShell.play.textContent=on?'Ⅱ':'▶'}
 function updatePlaylistProgress(cur=0,dur=0){if(!playlistShell)return;playlistShell.cur.textContent=timeLabel(cur);playlistShell.dur.textContent=timeLabel(dur);playlistShell.bar.style.width=(dur?Math.max(0,Math.min(100,cur/dur*100)):0)+'%'}
+function applyPremiumMusicPresentation(src,meta=null){
+  if(!playlistShell)return;
+  const view=sourcePresentation(src,meta),p=view.provider,root=playlistShell.root;
+  root.classList.remove('provider-spotify','provider-youtube','provider-audio');root.classList.add('provider-'+p.key);
+  if(playlistShell.providerIcon){playlistShell.providerIcon.src=p.asset||'';playlistShell.providerIcon.hidden=!p.asset}
+  if(playlistShell.providerName)playlistShell.providerName.textContent=p.name;
+  if(playlistShell.sourceIcon){playlistShell.sourceIcon.src=p.asset||'';playlistShell.sourceIcon.hidden=!p.asset}
+  if(playlistShell.sourceName)playlistShell.sourceName.textContent=p.name;
+  playlistShell.title.textContent=view.title||p.name;
+  playlistShell.artist.textContent=view.artist||p.name;
+  if(playlistShell.cover){
+    const image=view.cover||p.asset||'';
+    playlistShell.cover.src=image;
+    playlistShell.cover.hidden=!image;
+    playlistShell.cover.classList.toggle('provider-fallback',!view.cover&&!!p.asset);
+  }
+  if(playlistShell.sourceCount)playlistShell.sourceCount.textContent=`${playlistIndex+1} / ${(playlistUser?.musicPlayer?.sources||[]).length}`;
+}
+function requestPremiumPlaylistAutoplay(fromGesture=false){
+  if(!premiumPlaylistActive||globalMute)return;
+  playlistAutoplayWanted=true;
+  try{
+    if(playlistSpotifyController){const r=playlistSpotifyController.play?.();if(r?.catch)r.catch(()=>{});return}
+    if(playlistYT){playlistYT.playVideo?.();return}
+  }catch{}
+}
 async function mountPremiumMusicSource(index=0){
-  const mp=playlistUser?.musicPlayer||{},sources=mp.sources||[];if(!sources.length||!playlistShell)return;playlistIndex=(index+sources.length)%sources.length;const src=sources[playlistIndex],sp=parseSpotifySource(src.url),ytId=extractYouTubeId(src.url),ytList=parseYouTubePlaylist(src.url);
-  try{playlistYT?.destroy?.()}catch{}playlistYT=null;try{playlistSpotifyController?.pause?.()}catch{}playlistSpotifyController=null;playlistShell.embed.replaceChildren();playlistShell.hiddenMount.replaceChildren();setPlaylistPlaying(false);updatePlaylistProgress(0,0);
-  const cover=playlistCover(src);if(playlistShell.cover){playlistShell.cover.src=cover||'/caruzo-logo.png';playlistShell.cover.style.display='block'}playlistShell.title.textContent=src.title|| (sp?'Spotify':ytId||ytList?'YouTube':'Track');playlistShell.artist.textContent=src.artist|| (sp?`Spotify ${sp.kind}`:ytList?'YouTube Playlist':ytId?'YouTube':'Audio');playlistShell.source.textContent=`${playlistIndex+1} / ${sources.length} · ${sp?'Spotify':ytId||ytList?'YouTube':'Audio'}`;
+  const mp=playlistUser?.musicPlayer||{},sources=mp.sources||[];if(!sources.length||!playlistShell)return;
+  playlistIndex=(index+sources.length)%sources.length;const src=sources[playlistIndex],sp=parseSpotifySource(src.url),ytId=extractYouTubeId(src.url),ytList=parseYouTubePlaylist(src.url);
+  try{playlistYT?.destroy?.()}catch{}playlistYT=null;try{playlistSpotifyController?.pause?.()}catch{}playlistSpotifyController=null;
+  playlistShell.embed.replaceChildren();playlistShell.hiddenMount.replaceChildren();setPlaylistPlaying(false);updatePlaylistProgress(0,0);applyPremiumMusicPresentation(src);
+  resolveMediaMeta(src.url).then(meta=>{if((playlistUser?.musicPlayer?.sources||[])[playlistIndex]?.url===src.url&&meta)applyPremiumMusicPresentation(src,meta)});
   if(sp){
-    const target=el('div',{class:'mp-spotify-target'});playlistShell.embed.append(target);playlistShell.embed.hidden=false;
-    try{const api=await getSpotifyIframeApi();api.createController(target,{uri:`spotify:${sp.kind}:${sp.id}`,width:'100%',height:152},controller=>{playlistSpotifyController=controller;controller.addListener('playback_update',e=>{const d=e?.data||{};const playing=d.isPaused===false;setPlaylistPlaying(playing);updatePlaylistProgress((d.position||0)/1000,(d.duration||0)/1000);if(playing){if(globalMute){try{controller.pause?.()}catch{};setPlaylistPlaying(false);return}silenceSiteSoundForSpotify();trackProfileEvent(playlistUser,'music_play',src.id)}});});}
-    catch{target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${sp.kind}/${sp.id}`,allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',loading:'lazy',title:'Spotify'}))}
+    const target=el('div',{class:'mp-spotify-target'});target.append(el('div',{class:'mp-spotify-loading'},el('img',{src:'/social-icons/spotify.png',alt:''}),'Spotify lädt…'));playlistShell.embed.append(target);playlistShell.embed.hidden=false;
+    try{
+      const api=await getSpotifyIframeApi();
+      api.createController(target,{uri:`spotify:${sp.kind}:${sp.id}`,width:'100%',height:152},controller=>{
+        playlistSpotifyController=controller;
+        controller.addListener('playback_update',e=>{
+          const d=e?.data||{},playing=d.isPaused===false;setPlaylistPlaying(playing);updatePlaylistProgress((d.position||0)/1000,(d.duration||0)/1000);
+          if(playing){if(globalMute){try{controller.pause?.()}catch{};setPlaylistPlaying(false);return}silenceSiteSoundForSpotify();trackProfileEvent(playlistUser,'music_play',src.id)}
+        });
+        if(playlistAutoplayWanted&&!globalMute){setTimeout(()=>{try{const r=controller.play?.();if(r?.catch)r.catch(()=>{})}catch{}},30)}
+      });
+    }catch{
+      target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${sp.kind}/${sp.id}?utm_source=generator`,allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',loading:'eager',fetchpriority:'high',title:'Spotify'}));
+    }
     return;
   }
   playlistShell.embed.hidden=true;
   if(ytId||ytList){
-    const mount=el('div',{id:'premiumPlaylistYT'+Date.now()});playlistShell.hiddenMount.append(mount);try{const YT=await getYouTubeApi();const vars={autoplay:0,controls:0,modestbranding:1,playsinline:1,rel:0};if(ytList){vars.listType='playlist';vars.list=ytList}playlistYT=new YT.Player(mount,{width:'1',height:'1',videoId:ytId||undefined,playerVars:vars,events:{onReady:e=>{try{e.target.setVolume(globalMute?0:Number(mp.volume??65))}catch{}},onStateChange:e=>{const on=e.data===YT.PlayerState.PLAYING;setPlaylistPlaying(on);if(on)trackProfileEvent(playlistUser,'music_play',src.id);if(e.data===YT.PlayerState.ENDED&&!ytList)mountPremiumMusicSource(playlistIndex+1)}}});}catch{}
+    const mount=el('div',{id:'premiumPlaylistYT'+Date.now()});playlistShell.hiddenMount.append(mount);
+    try{
+      const YT=await getYouTubeApi();const vars={autoplay:playlistAutoplayWanted?1:0,controls:0,modestbranding:1,playsinline:1,rel:0};if(ytList){vars.listType='playlist';vars.list=ytList}
+      playlistYT=new YT.Player(mount,{width:'1',height:'1',videoId:ytId||undefined,playerVars:vars,events:{onReady:e=>{try{e.target.setVolume(globalMute?0:Number(mp.volume??65));if(playlistAutoplayWanted&&!globalMute)e.target.playVideo?.()}catch{}},onStateChange:e=>{const on=e.data===YT.PlayerState.PLAYING;setPlaylistPlaying(on);if(on)trackProfileEvent(playlistUser,'music_play',src.id);if(e.data===YT.PlayerState.ENDED&&!ytList&&playlistAutoplayWanted)mountPremiumMusicSource(playlistIndex+1)}}});
+    }catch{}
   }
 }
-function playlistSkip(dir){if(!playlistUser||!playlistShell)return;trackProfileEvent(playlistUser,'music_skip',String(dir));const src=playlistUser.musicPlayer.sources?.[playlistIndex]||{},sp=parseSpotifySource(src.url),ytList=parseYouTubePlaylist(src.url);if(sp&&['playlist','album'].includes(sp.kind)&&playlistSpotifyController){try{dir>0?playlistSpotifyController.next?.():playlistSpotifyController.previous?.();return}catch{}}if(ytList&&playlistYT){try{dir>0?playlistYT.nextVideo():playlistYT.previousVideo();return}catch{}}mountPremiumMusicSource(playlistIndex+dir)}
+function playlistSkip(dir){
+  if(!playlistUser||!playlistShell)return;trackProfileEvent(playlistUser,'music_skip',String(dir));playlistAutoplayWanted=true;
+  const src=playlistUser.musicPlayer.sources?.[playlistIndex]||{},sp=parseSpotifySource(src.url),ytList=parseYouTubePlaylist(src.url);
+  if(sp&&['playlist','album'].includes(sp.kind)&&playlistSpotifyController){try{dir>0?playlistSpotifyController.next?.():playlistSpotifyController.previous?.();return}catch{}}
+  if(ytList&&playlistYT){try{dir>0?playlistYT.nextVideo():playlistYT.previousVideo();return}catch{}}
+  mountPremiumMusicSource(playlistIndex+dir)
+}
 function renderPremiumMusicPlayer(u){
-  const mp=u.musicPlayer||{},sources=Array.isArray(mp.sources)?mp.sources:[];if(!u.platform?.premium||mp.enabled===false||!sources.length)return;playlistUser=u;const host=premiumMusicTarget(mp.position);if(!host)return;host.className=mp.position==='floating-bottom'?'music-floating-bottom':'premium-music-host';host.replaceChildren();
+  const mp=u.musicPlayer||{},sources=Array.isArray(mp.sources)?mp.sources:[];if(!u.platform?.premium||mp.enabled===false||!sources.length)return;
+  playlistUser=u;playlistAutoplayWanted=true;const host=premiumMusicTarget(mp.position);if(!host)return;host.className=mp.position==='floating-bottom'?'music-floating-bottom':'premium-music-host';host.replaceChildren();
   const root=el('section',{class:`premium-music-player style-${mp.style||'glass-wave'}`});root.style.setProperty('--mp-a',mp.accent||'#8b5cf6');root.style.setProperty('--mp-b',mp.secondary||'#22d3ee');if(globalMute){root.classList.add('global-muted');root.dataset.muted='1'}
-  const src=sources[0]||{},cover=playlistCover(src);const coverEl=el('img',{class:'mp-cover',alt:'',src:cover||'/caruzo-logo.png'});if(mp.showCover===false)coverEl.style.display='none';
-  const kicker=el('span',{class:'mp-kicker'},el('i'),mp.title||'Playlist');const title=el('b',{class:'mp-title'},src.title||'Playlist');const artist=el('span',{class:'mp-artist'},src.artist||'Spotify / YouTube');const copy=el('div',{class:'mp-copy'},kicker,title,artist);
+  const src=sources[0]||{},initial=sourcePresentation(src),provider=initial.provider;
+  const coverEl=el('img',{class:'mp-cover'+(!initial.cover&&provider.asset?' provider-fallback':''),alt:'',src:initial.cover||provider.asset||''});if(mp.showCover===false)coverEl.style.display='none';
+  const providerIcon=el('img',{class:'mp-provider-icon',src:provider.asset||'',alt:'',hidden:provider.asset?null:''});const providerName=el('span',{class:'mp-provider-name'},provider.name);const playlistName=el('em',{class:'mp-playlist-name'},mp.title||'Playlist');
+  const kicker=el('span',{class:'mp-kicker'},providerIcon,providerName,playlistName);const title=el('b',{class:'mp-title'},initial.title||provider.name);const artist=el('span',{class:'mp-artist'},initial.artist||provider.name);const copy=el('div',{class:'mp-copy'},kicker,title,artist);
   const prev=el('button',{type:'button','aria-label':'Previous'},'‹'),play=el('button',{type:'button',class:'mp-play','aria-label':'Play'},'▶'),next=el('button',{type:'button','aria-label':'Next'},'›');const controls=el('div',{class:'mp-controls'},prev,play,next);const head=el('div',{class:'mp-head'},coverEl,copy,controls);
-  const cur=el('span',{},'0:00'),bar=el('i'),dur=el('span',{},'0:00'),progress=el('div',{class:'mp-progress'},cur,el('div',{class:'mp-track'},bar),dur);const source=el('span',{class:'mp-source'},el('b',{},'SOURCE'),`1 / ${sources.length}`);const vol=el('input',{type:'range',min:'0',max:'100',value:String(mp.volume??65),'aria-label':'Playlist volume'}),bottom=el('div',{class:'mp-bottom'},source,el('label',{class:'mp-volume'},el('span',{},'VOL'),vol));const embed=el('div',{class:'mp-embed'}),hiddenMount=el('div',{class:'mp-hidden'});if(globalMute){play.disabled=true;prev.disabled=true;next.disabled=true;vol.disabled=true;source.textContent='GLOBAL MUTE · '+source.textContent}root.append(head,progress,bottom,embed,hiddenMount);host.append(root);playlistShell={root,cover:coverEl,title,artist,play,source,cur,dur,bar,embed,hiddenMount};
-  prev.onclick=()=>playlistSkip(-1);next.onclick=()=>playlistSkip(1);play.onclick=()=>{const src=sources[playlistIndex]||{},sp=parseSpotifySource(src.url);if(sp&&playlistSpotifyController){try{playlistSpotifyController.togglePlay?.();return}catch{}}if(playlistYT){try{const st=playlistYT.getPlayerState?.();if(st===YT.PlayerState.PLAYING)playlistYT.pauseVideo();else playlistYT.playVideo();return}catch{}}};vol.oninput=e=>{try{playlistYT?.setVolume?.(Number(e.target.value)||0)}catch{}};
+  const cur=el('span',{},'0:00'),bar=el('i'),dur=el('span',{},'0:00'),progress=el('div',{class:'mp-progress'},cur,el('div',{class:'mp-track'},bar),dur);
+  const sourceIcon=el('img',{src:provider.asset||'',alt:'',hidden:provider.asset?null:''}),sourceName=el('strong',{},provider.name),sourceCount=el('span',{},`1 / ${sources.length}`);const source=el('span',{class:'mp-source'},el('b',{},sourceIcon,sourceName),sourceCount);
+  const vol=el('input',{type:'range',min:'0',max:'100',value:String(mp.volume??65),'aria-label':'Playlist volume'}),bottom=el('div',{class:'mp-bottom'},source,el('label',{class:'mp-volume'},el('span',{},'VOL'),vol));const embed=el('div',{class:'mp-embed'}),hiddenMount=el('div',{class:'mp-hidden'});
+  if(globalMute){play.disabled=true;prev.disabled=true;next.disabled=true;vol.disabled=true;source.prepend(el('span',{},'GLOBAL MUTE · '))}
+  root.append(head,progress,bottom,embed,hiddenMount);host.append(root);playlistShell={root,cover:coverEl,title,artist,play,source,sourceIcon,sourceName,sourceCount,providerIcon,providerName,cur,dur,bar,embed,hiddenMount};
+  prev.onclick=()=>playlistSkip(-1);next.onclick=()=>playlistSkip(1);play.onclick=()=>{
+    const src=sources[playlistIndex]||{},sp=parseSpotifySource(src.url);
+    if(sp&&playlistSpotifyController){try{const isOn=root.classList.contains('playing');playlistAutoplayWanted=!isOn;playlistSpotifyController.togglePlay?.();return}catch{}}
+    if(playlistYT){try{const st=playlistYT.getPlayerState?.();if(st===YT.PlayerState.PLAYING){playlistAutoplayWanted=false;playlistYT.pauseVideo()}else{playlistAutoplayWanted=true;playlistYT.playVideo()}return}catch{}}
+  };
+  vol.oninput=e=>{try{playlistYT?.setVolume?.(Number(e.target.value)||0)}catch{}};
   mountPremiumMusicSource(0);if(window.__premiumMusicProgressTimer)clearInterval(window.__premiumMusicProgressTimer);window.__premiumMusicProgressTimer=setInterval(()=>{if(playlistYT){try{updatePlaylistProgress(playlistYT.getCurrentTime?.()||0,playlistYT.getDuration?.()||0)}catch{}}},500);
 }
 
@@ -811,8 +901,8 @@ function render(u) {
     highlightSection.hidden=false;
   }
 
-  // Main Spotify profile card: render the official native embed immediately.
-  // Do not wait for Spotify's controller API before the playlist becomes visible.
+  // Main Spotify profile card: show a branded loading shell immediately, then
+  // attach Spotify's IFrame controller so Caruzo can request autoplay safely.
   const m = String(u.spotify || '').match(/open\.spotify\.com\/(?:intl-[a-z]+\/)?(playlist|album|track)\/([A-Za-z0-9]+)/);
   if (m) {
     const sp = $('#spotify'), ss = u.spotifyStyle || {}, layout = (ss.layout || 'compact');
@@ -894,6 +984,8 @@ function render(u) {
   const go = () => {
     enter.classList.add('gone');
     profileEntered = true;
+    requestPremiumPlaylistAutoplay(true);
+    requestStandaloneSpotifyAutoplay();
     audio?.play().catch(() => {});
     try{youtubePlayer?.playVideo?.()}catch{}
     document.querySelector('#bg video')?.play().catch(() => {});
@@ -1164,23 +1256,32 @@ function getSpotifyIframeApi(){
     if(!document.querySelector('script[data-caruzo-spotify-api]')){
       const sc=document.createElement('script');sc.src='https://open.spotify.com/embed/iframe-api/v1';sc.async=true;sc.dataset.caruzoSpotifyApi='1';sc.onerror=()=>reject(new Error('Spotify API konnte nicht geladen werden'));document.head.append(sc);
     }
-    setTimeout(()=>{if(!window.__caruzoSpotifyApi)reject(new Error('Spotify API Timeout'))},7000);
+    setTimeout(()=>{if(!window.__caruzoSpotifyApi)reject(new Error('Spotify API Timeout'))},2500);
   });
   return spotifyApiPromise;
 }
+function requestStandaloneSpotifyAutoplay(){
+  if(globalMute||premiumPlaylistActive||!standaloneSpotifyAutoplayWanted)return;
+  try{const r=standaloneSpotifyController?.play?.();if(r?.catch)r.catch(()=>{})}catch{}
+}
 function setupSpotifyEmbed(shell,kind,id,layout){
   const height=kind==='track'?(layout==='full'?352:152):(layout==='full'?420:352);
-  // The profile card uses Spotify's native embed directly. Waiting for the IFrame
-  // API delayed first paint by several seconds (and CSP/network failures made the
-  // fallback even slower). The iframe is inserted synchronously and loads eagerly.
-  const target=el('div',{class:'spotify-target'});
-  const frame=el('iframe',{
-    src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,
-    loading:'eager',fetchpriority:'high',
-    allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',
-    allowfullscreen:'',title:'Spotify',height:String(height)
+  const target=el('div',{class:'spotify-target'});target.style.minHeight=height+'px';target.append(el('div',{class:'spotify-loading'},el('img',{src:'/social-icons/spotify.png',alt:''}),'Spotify lädt…'));shell.append(target);
+  standaloneSpotifyController=null;standaloneSpotifyAutoplayWanted=true;
+  getSpotifyIframeApi().then(api=>{
+    api.createController(target,{uri:`spotify:${kind}:${id}`,width:'100%',height},controller=>{
+      standaloneSpotifyController=controller;
+      controller.addListener?.('playback_update',e=>{if(e?.data?.isPaused===false){silenceSiteSoundForSpotify();trackProfileEvent(playlistUser||{username:path},'music_play','spotify')}});
+      // Try immediately. Browsers that require interaction get the same play()
+      // again from Caruzo's click-to-enter gesture below.
+      setTimeout(requestStandaloneSpotifyAutoplay,20);
+    });
+  }).catch(()=>{
+    target.replaceChildren(el('iframe',{
+      src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,loading:'eager',fetchpriority:'high',
+      allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',allowfullscreen:'',title:'Spotify',height:String(height)
+    }));
   });
-  target.append(frame);shell.append(target);
 }
 let youtubeApiPromise=null,youtubePlayer=null;
 function getYouTubeApi(){
@@ -1228,9 +1329,13 @@ function renderPremiumSections(u){
 
 async function setupMusic(m) {
   const startVolume = Number.isFinite(Number(m.volume)) ? Number(m.volume) : 30;
-  const icon = $('#ppIcon');
+  const icon = $('#ppIcon'), player=$('#player'), providerIcon=$('#playerProviderIcon'), providerName=$('#trackProviderName'), track=$('#trackName');
   $('#player').style.display = 'flex';
-  $('#trackName').textContent = m.title || (extractYouTubeId(m.url) ? 'YouTube Audio' : 'Musik');
+  const provider=musicProviderInfo(m.url), storedTitle=String(m.title||'').trim();
+  player.dataset.provider=provider.key;providerName.textContent=provider.name;
+  if(providerIcon){providerIcon.src=provider.asset||'';providerIcon.hidden=!provider.asset}
+  track.textContent = storedTitle || (provider.key==='youtube'?'YouTube Audio':'Audio');
+  if(provider.key!=='audio') resolveMediaMeta(m.url).then(meta=>{if(meta&&(!storedTitle||genericSourceTitle(storedTitle)))track.textContent=meta.title||provider.name});
   $('#vol').value = startVolume;
   const ytId = extractYouTubeId(m.url);
   if(ytId){
