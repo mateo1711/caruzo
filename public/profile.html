@@ -605,7 +605,15 @@ async function mountPremiumMusicSource(index=0){
   playlistShell.embed.replaceChildren();playlistShell.hiddenMount.replaceChildren();setPlaylistPlaying(false);updatePlaylistProgress(0,0);applyPremiumMusicPresentation(src);
   resolveMediaMeta(src.url).then(meta=>{if((playlistUser?.musicPlayer?.sources||[])[playlistIndex]?.url===src.url&&meta)applyPremiumMusicPresentation(src,meta)});
   if(sp){
-    const target=el('div',{class:'mp-spotify-target'});target.append(el('div',{class:'mp-spotify-loading'},el('img',{src:'/social-icons/spotify.png',alt:''}),'Spotify lädt…'));playlistShell.embed.append(target);playlistShell.embed.hidden=false;
+    // Render Spotify's real embed immediately without a visible intermediate loading state.
+    // The IFrame API then replaces this mount with its controllable player as soon as it is ready.
+    const target=el('div',{class:'mp-spotify-target'});
+    target.append(el('iframe',{
+      src:`https://open.spotify.com/embed/${sp.kind}/${sp.id}?utm_source=generator`,
+      allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',
+      loading:'eager',fetchpriority:'high',title:'Spotify',height:'152'
+    }));
+    playlistShell.embed.append(target);playlistShell.embed.hidden=false;
     try{
       const api=await getSpotifyIframeApi();
       api.createController(target,{uri:`spotify:${sp.kind}:${sp.id}`,width:'100%',height:152},controller=>{
@@ -617,7 +625,7 @@ async function mountPremiumMusicSource(index=0){
         if(playlistAutoplayWanted&&!globalMute){setTimeout(()=>{try{const r=controller.play?.();if(r?.catch)r.catch(()=>{})}catch{}},30)}
       });
     }catch{
-      target.replaceChildren(el('iframe',{src:`https://open.spotify.com/embed/${sp.kind}/${sp.id}?utm_source=generator`,allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',loading:'eager',fetchpriority:'high',title:'Spotify'}));
+      // The already-rendered official embed remains usable if Spotify's API is unavailable.
     }
     return;
   }
@@ -1266,21 +1274,23 @@ function requestStandaloneSpotifyAutoplay(){
 }
 function setupSpotifyEmbed(shell,kind,id,layout){
   const height=kind==='track'?(layout==='full'?352:152):(layout==='full'?420:352);
-  const target=el('div',{class:'spotify-target'});target.style.minHeight=height+'px';target.append(el('div',{class:'spotify-loading'},el('img',{src:'/social-icons/spotify.png',alt:''}),'Spotify lädt…'));shell.append(target);
+  const target=el('div',{class:'spotify-target'});target.style.minHeight=height+'px';
+  // Show the real Spotify player immediately instead of a Caruzo loading message.
+  target.append(el('iframe',{
+    src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,loading:'eager',fetchpriority:'high',
+    allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',allowfullscreen:'',title:'Spotify',height:String(height)
+  }));
+  shell.append(target);
   standaloneSpotifyController=null;standaloneSpotifyAutoplayWanted=true;
   getSpotifyIframeApi().then(api=>{
     api.createController(target,{uri:`spotify:${kind}:${id}`,width:'100%',height},controller=>{
       standaloneSpotifyController=controller;
       controller.addListener?.('playback_update',e=>{if(e?.data?.isPaused===false){silenceSiteSoundForSpotify();trackProfileEvent(playlistUser||{username:path},'music_play','spotify')}});
-      // Try immediately. Browsers that require interaction get the same play()
-      // again from Caruzo's click-to-enter gesture below.
+      // Best-effort autoplay immediately; the click-to-enter gesture retries it synchronously.
       setTimeout(requestStandaloneSpotifyAutoplay,20);
     });
   }).catch(()=>{
-    target.replaceChildren(el('iframe',{
-      src:`https://open.spotify.com/embed/${kind}/${id}?utm_source=generator`,loading:'eager',fetchpriority:'high',
-      allow:'autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture',allowfullscreen:'',title:'Spotify',height:String(height)
-    }));
+    // Keep the official embed already on screen if Spotify's controller API fails or is slow.
   });
 }
 let youtubeApiPromise=null,youtubePlayer=null;
