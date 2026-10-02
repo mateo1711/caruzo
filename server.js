@@ -1303,7 +1303,7 @@ const CONTENT_SECURITY_POLICY = [
   // Profiles may intentionally use user-selected remote media URLs.
   `img-src 'self' data: blob: https: http:`,
   `media-src 'self' data: blob: https: http:`,
-  `connect-src 'self' https://api.lanyard.rest wss://api.lanyard.rest`,
+  `connect-src 'self' https://api.lanyard.rest wss://api.lanyard.rest https://open.spotify.com https://api.spotify.com https://api-partner.spotify.com https://*.spotify.com wss://*.spotify.com https://*.spotifycdn.com https://*.scdn.co`,
   `frame-src 'self' https://www.youtube.com https://www.youtube-nocookie.com https://open.spotify.com`,
   `object-src 'none'`,
   `base-uri 'self'`,
