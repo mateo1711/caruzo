@@ -922,10 +922,10 @@ async function getCaruzoGuildEmojiAccess(userId, force = false) {
     });
     if (r.ok) {
       const rows = await r.json();
-      emojis = (Array.isArray(rows) ? rows : []).filter(x => x?.id && x?.name && x.available !== false).slice(0, 120).map(x => ({
+      emojis = (Array.isArray(rows) ? rows : []).filter(x => x?.id && x?.name && x.available !== false).map(x => ({
         id: String(x.id), name: str(x.name, 64), animated: !!x.animated,
         url: `https://cdn.discordapp.com/emojis/${encodeURIComponent(String(x.id))}.${x.animated ? 'gif' : 'webp'}?size=64&quality=lossless`
-      }));
+      })).sort((a,b) => Number(b.animated) - Number(a.animated) || a.name.localeCompare(b.name)).slice(0, 200);
     }
   } catch {}
   const value = { configured:true, member:true, emojis, checkedAt:Date.now() };
