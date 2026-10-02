@@ -25,7 +25,7 @@ button{font:inherit;color:inherit;cursor:pointer}
 /* Hintergrund */
 .bg{position:fixed;inset:0;z-index:-1;overflow:hidden;
   background:radial-gradient(60% 40% at 30% 10%,rgba(255,46,147,.28),transparent 70%),radial-gradient(50% 40% at 80% 15%,rgba(255,46,147,.22),transparent 70%),#0e0a0c}
-.bg img,.bg video,.bg .bg-yt{position:absolute;inset:-3%;width:106%;height:106%;object-fit:cover;filter:blur(var(--blur))}.bg .bg-yt{z-index:0;border:0;pointer-events:none;opacity:0;transition:opacity .42s ease}.bg.youtube-bg .bg-yt{width:120vw;height:67.5vw;min-height:120vh;min-width:213.333vh;left:50%;top:50%;transform:translate(-50%,-50%)}.bg .bg-yt-poster{z-index:0;opacity:1;transition:opacity .45s ease}.bg.youtube-bg.yt-ready .bg-yt{opacity:1}.bg.youtube-bg.yt-ready .bg-yt-poster{opacity:0}
+.bg img,.bg video,.bg .bg-yt{position:absolute;inset:-3%;width:106%;height:106%;object-fit:cover;filter:blur(var(--blur))}.bg .bg-yt{z-index:0;border:0;pointer-events:none;opacity:0;overflow:hidden;transition:opacity .42s ease}.bg .bg-yt iframe{display:block;width:100%!important;height:100%!important;border:0;pointer-events:none}.bg.youtube-bg .bg-yt{width:120vw;height:67.5vw;min-height:120vh;min-width:213.333vh;left:50%;top:50%;transform:translate(-50%,-50%)}.bg .bg-yt-poster{z-index:0;opacity:1;transition:opacity .45s ease}.bg.youtube-bg.yt-ready .bg-yt{opacity:1}.bg.youtube-bg.yt-ready .bg-yt-poster{opacity:0}
 .bg::after{content:"";position:absolute;inset:0;z-index:1;background:linear-gradient(rgba(10,6,8,calc(var(--dim)*.7)),rgba(10,6,8,var(--dim)) 60%,rgba(10,6,8,.92))}
 
 /* Enter */
@@ -322,6 +322,7 @@ let backgroundYouTubeSound = false;
 let backgroundYouTubeVolume = 30;
 let backgroundYouTubeRevealTimer = 0;
 let backgroundYouTubeHasStarted = false;
+const BACKGROUND_YOUTUBE_REVEAL_DELAY = 3200;
 let profileEntered = false;
 let premiumPlaylistActive=false, playlistYT=null, playlistSpotifyController=null, playlistIndex=0, playlistUser=null, playlistShell=null, profileLayoutEnabled=false, globalMute=false;
 function commandBackgroundYouTube(){
@@ -493,7 +494,12 @@ function render(u) {
         const ytPoster=el('img',{class:'bg-yt-poster',src:`https://i.ytimg.com/vi/${ytId}/maxresdefault.jpg`,alt:'','aria-hidden':'true'});
         ytPoster.onerror=()=>{if(!/hqdefault/.test(ytPoster.src))ytPoster.src=`https://i.ytimg.com/vi/${ytId}/hqdefault.jpg`};
         $('#bg').prepend(ytPoster);
+        // Keep a permanent Caruzo wrapper around the cross-origin YouTube iframe.
+        // YT.Player replaces its mount node with an iframe; using the wrapper means
+        // that iframe can never flash visible before onReady applies any classes.
         bg = el('div', { class: 'bg-yt', 'aria-hidden':'true' });
+        const ytMount = el('div', { 'aria-hidden':'true' });
+        bg.append(ytMount);
         backgroundYouTubeHasStarted = false;
         clearTimeout(backgroundYouTubeRevealTimer);
         backgroundYouTubeStart = start;
@@ -503,12 +509,27 @@ function render(u) {
         queueMicrotask(async()=>{
           try{
             const YT=await getYouTubeApi();
-            backgroundYouTubePlayer=new YT.Player(bg,{
+            backgroundYouTubePlayer=new YT.Player(ytMount,{
               width:'100%',height:'100%',videoId:ytId,
-              playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,playsinline:1,rel:0,start,enablejsapi:1,loop:1,playlist:ytId},
+              playerVars:{autoplay:0,controls:0,disablekb:1,fs:0,iv_load_policy:3,modestbranding:1,playsinline:1,rel:0,start,enablejsapi:1},
               events:{
-                onReady:e=>{backgroundYouTubeFrame=e.target.getIframe?.()||null;if(backgroundYouTubeFrame)backgroundYouTubeFrame.classList.add('bg-yt');try{if(backgroundYouTubeSound&&!globalMute){e.target.unMute();e.target.setVolume(backgroundYouTubeVolume)}else e.target.mute()}catch{};startBackgroundYouTubeSeamlessLoop();commandBackgroundYouTube()},
-                onStateChange:e=>{if(e.data===YT.PlayerState.PLAYING&&profileEntered&&!backgroundYouTubeHasStarted){backgroundYouTubeHasStarted=true;clearTimeout(backgroundYouTubeRevealTimer);backgroundYouTubeRevealTimer=setTimeout(()=>$('#bg')?.classList.add('yt-ready'),750)}}
+                onReady:e=>{backgroundYouTubeFrame=e.target.getIframe?.()||null;try{if(backgroundYouTubeSound&&!globalMute){e.target.unMute();e.target.setVolume(backgroundYouTubeVolume)}else e.target.mute()}catch{};startBackgroundYouTubeSeamlessLoop();commandBackgroundYouTube()},
+                onStateChange:e=>{
+                  if(e.data===YT.PlayerState.PLAYING&&profileEntered&&!backgroundYouTubeHasStarted){
+                    backgroundYouTubeHasStarted=true;
+                    clearTimeout(backgroundYouTubeRevealTimer);
+                    // YouTube briefly paints its own pause/next overlay after playVideo().
+                    // Keep the iframe behind the clean poster until that native overlay has
+                    // fully disappeared, then reveal only the already-playing video.
+                    backgroundYouTubeRevealTimer=setTimeout(()=>{
+                      if(!profileEntered||!backgroundYouTubePlayer)return;
+                      try{
+                        if(backgroundYouTubePlayer.getPlayerState?.()!==YT.PlayerState.PLAYING)return;
+                      }catch{}
+                      $('#bg')?.classList.add('yt-ready');
+                    },BACKGROUND_YOUTUBE_REVEAL_DELAY);
+                  }
+                }
               }
             });
           }catch{}
