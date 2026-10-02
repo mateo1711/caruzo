@@ -14,7 +14,7 @@ const {
   SUPABASE_URL = '', SUPABASE_SERVICE_ROLE_KEY = '', SUPABASE_BUCKET = 'caruzo-uploads',
   DATA_ENCRYPTION_KEY = '',
   ADMIN_DISCORD_IDS = '',
-  DISCORD_BOOST_GUILD_ID = '',
+  DISCORD_BOOST_GUILD_ID = '', CARUZO_DISCORD_GUILD_ID = '',
   SPOTIFY_CLIENT_ID = '', SPOTIFY_CLIENT_SECRET = '',
 } = process.env;
 const BASE_URL = String(BASE_URL_RAW || 'http://localhost:3000').trim().replace(/\/+$/, '');
@@ -301,9 +301,14 @@ const url = v => {
   if (/^\/uploads\/[a-f0-9]+\.[a-z0-9]+$/.test(v)) return v;
   try { const u = new URL(v); return ['http:', 'https:'].includes(u.protocol) ? u.toString() : ''; } catch { return ''; }
 };
+const socialUrl = v => {
+  const raw = str(v, 500).trim();
+  return raw === '@' ? '@' : url(raw);
+};
 const discordInvite = v => {
   v = str(v, 180).trim();
   if (!v) return '';
+  if (v === '@') return '@';
   if (/^[A-Za-z0-9_-]{2,64}$/.test(v)) return `https://discord.gg/${v}`;
   if (/^(?:https?:\/\/)?(?:www\.)?(?:discord\.gg|discord(?:app)?\.com\/invite)\/[A-Za-z0-9_-]+\/?$/i.test(v)) {
     if (!/^https?:\/\//i.test(v)) v = 'https://' + v;
@@ -348,7 +353,7 @@ function defaults(dc) {
     background: { type: 'image', url: '', blur: 6, dim: 55, effect: 'none', videoSound: true, videoVolume: 30, videoStart: 0 },
     music: { url: '', title: '', volume: 40, globalMute: false },
     musicPlayer: { enabled:false, title:'My Playlist', style:'glass-wave', position:'below-profile', accent:'#8b5cf6', secondary:'#22d3ee', volume:65, showCover:true, sources:[] },
-    premiumStatusCard: { enabled:false, icon:'✨', eyebrow:'STATUS', title:'Open for collabs', text:'Available for projects, gaming and creative work.', accent:'#8b5cf6', style:'glass', expiresAt:'', showCountdown:false },
+    premiumStatusCard: { enabled:false, icon:'✨', iconUrl:'', eyebrow:'STATUS', title:'Open for collabs', text:'Available for projects, gaming and creative work.', accent:'#8b5cf6', style:'glass', expiresAt:'', showCountdown:false },
     analytics: { viewsDaily:{}, eventsDaily:{}, socialClicks:{}, highlightClicks:{}, musicPlays:0, musicSkips:0, referrers:{}, devices:{} },
     soundMode: 'auto',
     spotify: '',
@@ -488,9 +493,12 @@ function applyUpdate(user, b) {
     const sc = b.premiumStatusCard || user.premiumStatusCard || {};
     const expiresRaw = str(sc.expiresAt, 40).trim();
     const expiresAt = expiresRaw && !Number.isNaN(Date.parse(expiresRaw)) ? expiresRaw : '';
+    const rawIconUrl = str(sc.iconUrl, 320).trim();
+    const iconUrl = /^https:\/\/cdn\.discordapp\.com\/emojis\/[0-9]+\.(?:webp|gif)(?:\?.*)?$/i.test(rawIconUrl) ? rawIconUrl : '';
     user.premiumStatusCard = {
       enabled: !!sc.enabled,
       icon: str(sc.icon, 16) || '✨',
+      iconUrl,
       eyebrow: str(sc.eyebrow, 24) || 'STATUS',
       title: str(sc.title, 60),
       text: str(sc.text, 220),
@@ -520,22 +528,22 @@ function applyUpdate(user, b) {
     });
   } else {
     if (!Array.isArray(user.premiumSections)) user.premiumSections = [];
-    user.premiumStatusCard ||= { enabled:false, icon:'✨', eyebrow:'STATUS', title:'', text:'', accent:'#8b5cf6', style:'glass', expiresAt:'', showCountdown:false };
+    user.premiumStatusCard ||= { enabled:false, icon:'✨', iconUrl:'', eyebrow:'STATUS', title:'', text:'', accent:'#8b5cf6', style:'glass', expiresAt:'', showCountdown:false };
   }
   const l = b.links || {};
   const allowedOrder = new Set(['discord','steam','twitch','tiktok','x','instagram','youtube','github','bluesky','epic','valorant','discordServer','spotifyProfile','custom']);
   user.links = {
-    steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: url(x.url) })).filter(x => x.url),
-    twitch: url(l.twitch),
-    tiktok: url(l.tiktok),
-    x: url(l.x),
+    steam: (Array.isArray(l.steam) ? l.steam : []).slice(0, 10).map(x => ({ name: str(x.name, 40), url: socialUrl(x.url) })).filter(x => x.url),
+    twitch: socialUrl(l.twitch),
+    tiktok: socialUrl(l.tiktok),
+    x: socialUrl(l.x),
     epic: str(l.epic, 64).trim(),
     valorant: str(l.valorant, 64).trim(),
     discordServerName: str(l.discordServerName, 48).trim(),
     discordServer: discordInvite(l.discordServer),
-    instagram: url(l.instagram), youtube: url(l.youtube), github: url(l.github), bluesky: url(l.bluesky), spotifyProfile: url(l.spotifyProfile),
+    instagram: socialUrl(l.instagram), youtube: socialUrl(l.youtube), github: socialUrl(l.github), bluesky: socialUrl(l.bluesky), spotifyProfile: socialUrl(l.spotifyProfile),
     order: (Array.isArray(l.order) ? l.order : []).map(x => str(x, 32)).filter(x => allowedOrder.has(x)).slice(0, 24),
-    custom: (Array.isArray(l.custom) ? l.custom : []).slice(0, 12).map(x => ({ label: str(x.label, 30), url: url(x.url) })).filter(x => x.url),
+    custom: (Array.isArray(l.custom) ? l.custom : []).slice(0, 12).map(x => ({ label: str(x.label, 30), url: socialUrl(x.url) })).filter(x => x.url),
   };
   return null;
 }
@@ -580,24 +588,61 @@ function privatePresetSnapshot(user) {
   for (const k of keys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
   return out;
 }
-function publicPresetSnapshot(userOrSnapshot) {
-  const src = userOrSnapshot?.id ? publicView(userOrSnapshot) : (userOrSnapshot || {});
-  const bg = src.background || {};
-  const cur = src.cursor || {};
-  const music = src.music || {};
+function publicPresetSocialTemplate(links = {}) {
+  const has = v => !!str(v, 500).trim();
   return {
-    design: deepClone(src.design || {}),
-    viewsStyle: deepClone(src.viewsStyle || {}),
-    pageFx: deepClone(src.pageFx || {}),
-    cursor: { effect: str(cur.effect, 32), image: str(cur.image, 32), svg: '' },
-    background: {
-      type: ['image','video','youtube'].includes(bg.type) ? bg.type : 'image', url: url(bg.url), blur: num(bg.blur,0,30,6), dim: num(bg.dim,0,90,55),
-      effect: str(bg.effect, 32) || 'none', videoSound: bg.videoSound !== false, videoVolume: num(bg.videoVolume,0,100,30), videoStart: num(bg.videoStart,0,21600,0),
-    },
-    music: { url: url(music.url), title: str(music.title,80), volume: num(music.volume,0,100,40), globalMute: !!music.globalMute },
-    soundMode: ['auto','music','video','mute'].includes(src.soundMode) ? src.soundMode : 'auto',
-    spotifyStyle: deepClone(src.spotifyStyle || {}),
+    steam: (Array.isArray(links.steam) ? links.steam : []).slice(0,10).filter(x => has(x?.url) || has(x?.name)).map(() => ({ name:'@', url:'@' })),
+    twitch: has(links.twitch) ? '@' : '',
+    tiktok: has(links.tiktok) ? '@' : '',
+    x: has(links.x) ? '@' : '',
+    epic: has(links.epic) ? '@' : '',
+    valorant: has(links.valorant) ? '@' : '',
+    discordServerName: has(links.discordServer) ? '@' : '',
+    discordServer: has(links.discordServer) ? '@' : '',
+    instagram: has(links.instagram) ? '@' : '',
+    youtube: has(links.youtube) ? '@' : '',
+    github: has(links.github) ? '@' : '',
+    bluesky: has(links.bluesky) ? '@' : '',
+    spotifyProfile: has(links.spotifyProfile) ? '@' : '',
+    order: (Array.isArray(links.order) ? links.order : []).slice(0,24).map(x=>str(x,32)),
+    custom: (Array.isArray(links.custom) ? links.custom : []).slice(0,12).filter(x => has(x?.url) || has(x?.label)).map(x => ({ label: str(x?.label,30) || 'Link', url:'@' })),
   };
+}
+function publicPresetSnapshot(userOrSnapshot) {
+  // Marketplace templates copy the complete editable profile presentation while
+  // stripping account identity. Social platforms stay enabled, but every owner
+  // handle/link is replaced by "@" so the importing user can fill in their own.
+  const src = userOrSnapshot?.id ? publicView(userOrSnapshot) : deepClone(userOrSnapshot || {});
+  const settings = src.settings || {};
+  const out = {};
+  const copyKeys = [
+    'tagline','about','enterText','tags','highlights','profileLayout','design','viewsStyle',
+    'pageFx','cursor','browser','background','music','musicPlayer','premiumStatusCard',
+    'reactions','soundMode','spotify','spotifyStyle','floating','premiumSections'
+  ];
+  for (const k of copyKeys) if (src[k] !== undefined) out[k] = deepClone(src[k]);
+
+  // Display preferences are part of the template, but account-derived Nitro
+  // overrides/tier values must never travel through a Marketplace preset.
+  out.settings = {
+    showBanner: settings.showBanner !== false,
+    bannerHeight: num(settings.bannerHeight,72,260,120),
+    showDecoration: settings.showDecoration !== false,
+    showBadges: settings.showBadges !== false,
+    showTag: settings.showTag !== false,
+    showStatus: settings.showStatus !== false,
+    showActivity: !!settings.showActivity,
+    showSpotifyNowPlaying: settings.showSpotifyNowPlaying !== false,
+    showProfileBrand: settings.showProfileBrand !== false,
+    showPremiumBadge: settings.showPremiumBadge !== false,
+    showAdminBadge: settings.showAdminBadge !== false,
+    showModeratorBadge: settings.showModeratorBadge !== false,
+    showBoostBadge: settings.showBoostBadge !== false,
+    manualNitro: false,
+    nitroTier: '',
+  };
+  out.links = publicPresetSocialTemplate(src.links || {});
+  return out;
 }
 function marketplaceMeta(rec, viewerId = '') {
   const owner = db[String(rec.ownerId || '')];
@@ -608,7 +653,7 @@ function marketplaceMeta(rec, viewerId = '') {
     name: rec.name,
     description: rec.description || '',
     visibility: rec.visibility,
-    scope: rec.scope || (rec.visibility === 'public' ? 'style' : 'full'),
+    scope: rec.scope || (rec.visibility === 'public' ? 'template' : 'full'),
     createdAt: rec.createdAt,
     updatedAt: rec.updatedAt || rec.createdAt,
     savedCount: Number(rec.savedCount || 0),
@@ -642,6 +687,15 @@ function applyPresetSnapshot(user, snapshot, scope = 'full') {
   const styleKeys = ['design','viewsStyle','pageFx','cursor','background','music','soundMode','spotifyStyle'];
   if (scope === 'style') {
     for (const k of styleKeys) if (snapshot[k] !== undefined) user[k] = deepClone(snapshot[k]);
+    return;
+  }
+  if (scope === 'template') {
+    const templateKeys = ['tagline','about','enterText','tags','highlights','profileLayout','design','viewsStyle','pageFx','cursor','browser','settings','background','music','musicPlayer','premiumStatusCard','reactions','soundMode','spotify','spotifyStyle','floating','premiumSections','links'];
+    for (const k of templateKeys) {
+      if (snapshot[k] === undefined) continue;
+      if ((k === 'musicPlayer' || k === 'premiumStatusCard' || k === 'premiumSections') && !metaFor(user).premium) continue;
+      user[k] = deepClone(snapshot[k]);
+    }
     return;
   }
   if (snapshot.username !== undefined) {
@@ -848,6 +902,36 @@ async function discordGuildMember(guildId, userId) {
     return { ok:r.ok, status:r.status, data };
   } catch { return { ok:false, status:0, data:null }; }
 }
+const caruzoEmojiCache = new Map();
+async function getCaruzoGuildEmojiAccess(userId, force = false) {
+  const guildId = String(CARUZO_DISCORD_GUILD_ID || DISCORD_BOOST_GUILD_ID || '').trim();
+  const uid = String(userId || '').trim();
+  if (!guildId || !DISCORD_BOT_TOKEN || !uid) return { configured:false, member:false, emojis:[] };
+  const cacheKey = `${guildId}:${uid}`;
+  const cached = caruzoEmojiCache.get(cacheKey);
+  if (!force && cached && Date.now() - Number(cached.checkedAt || 0) < 120000) return cached;
+  const member = await discordGuildMember(guildId, uid);
+  if (!member.ok || !member.data) {
+    const value = { configured:true, member:false, emojis:[], checkedAt:Date.now() };
+    caruzoEmojiCache.set(cacheKey, value); return value;
+  }
+  let emojis = [];
+  try {
+    const r = await fetch(`https://discord.com/api/v10/guilds/${encodeURIComponent(guildId)}/emojis`, {
+      headers: { Authorization: `Bot ${DISCORD_BOT_TOKEN}`, 'User-Agent':'Caruzo/1.0' }
+    });
+    if (r.ok) {
+      const rows = await r.json();
+      emojis = (Array.isArray(rows) ? rows : []).filter(x => x?.id && x?.name && x.available !== false).slice(0, 120).map(x => ({
+        id: String(x.id), name: str(x.name, 64), animated: !!x.animated,
+        url: `https://cdn.discordapp.com/emojis/${encodeURIComponent(String(x.id))}.${x.animated ? 'gif' : 'webp'}?size=64&quality=lossless`
+      }));
+    }
+  } catch {}
+  const value = { configured:true, member:true, emojis, checkedAt:Date.now() };
+  caruzoEmojiCache.set(cacheKey, value); return value;
+}
+
 async function getBoostStatus(userId, force = false) {
   const id = String(userId || '');
   if (!id || !DISCORD_BOT_TOKEN) return { available:false, boosted:false, reason:'bot-unavailable', checkedAt:Date.now() };
@@ -1344,6 +1428,12 @@ app.get('/logout', (req, res) => req.session.destroy(() => res.redirect('/'))); 
 // --- Dashboard-API ---
 app.get('/api/me', auth, (req, res) => res.json(publicView(db[req.session.uid])));
 
+app.get('/api/discord/status-emojis', auth, rateLimit({windowMs:60*1000,max:20,prefix:'status-emojis'}), async (req, res) => {
+  const user = db[req.session.uid];
+  const access = await getCaruzoGuildEmojiAccess(user.id, req.query?.refresh === '1');
+  res.json({ configured:!!access.configured, member:!!access.member, emojis:access.member ? access.emojis : [] });
+});
+
 app.post('/api/me', auth, async (req, res) => {
   const user = db[req.session.uid];
   const err = applyUpdate(user, req.body);
@@ -1515,7 +1605,7 @@ app.post('/api/marketplace', auth, async (req, res) => {
   const snapshot = visibility === 'public' ? publicPresetSnapshot(user) : privatePresetSnapshot(user);
   const rec = {
     id: crypto.randomUUID(), ownerId: uid, name, description, visibility,
-    scope: visibility === 'public' ? 'style' : 'full', snapshot,
+    scope: visibility === 'public' ? 'template' : 'full', snapshot,
     authorUsername: user.username, authorDisplayName: user.displayName, authorAvatar: user.discord?.avatar || '',
     savedCount: 0, loadCount: 0, createdAt: Date.now(), updatedAt: Date.now(),
   };
@@ -1543,7 +1633,7 @@ app.patch('/api/marketplace/:id', auth, async (req, res) => {
     if (vis !== rec.visibility) {
       if (vis === 'public') {
         rec.snapshot = publicPresetSnapshot(rec.snapshot);
-        rec.scope = 'style';
+        rec.scope = 'template';
       }
       rec.visibility = vis;
     }
@@ -1562,7 +1652,7 @@ app.post('/api/marketplace/:id/update-from-profile', auth, async (req, res) => {
   if (!presetOwned(rec, uid)) return res.status(403).json({ error: 'Nur der Besitzer kann dieses Preset aktualisieren.' });
   const user = db[uid];
   rec.snapshot = rec.visibility === 'public' ? publicPresetSnapshot(user) : privatePresetSnapshot(user);
-  rec.scope = rec.visibility === 'public' ? 'style' : 'full';
+  rec.scope = rec.visibility === 'public' ? 'template' : 'full';
   rec.updatedAt = Date.now();
   audit('market_preset_resnapshotted', { presetId: rec.id, visibility: rec.visibility, by: uid });
   await saveAdminState();
@@ -1575,7 +1665,7 @@ app.post('/api/marketplace/:id/apply', auth, async (req, res) => {
   const rec = adminState.marketplace.find(x => x.id === req.params.id);
   if (!rec || (rec.visibility !== 'public' && !presetOwned(rec, uid))) return res.status(404).json({ error: 'Preset nicht gefunden.' });
   const user = db[uid];
-  applyPresetSnapshot(user, rec.snapshot, rec.scope || (rec.visibility === 'public' ? 'style' : 'full'));
+  applyPresetSnapshot(user, rec.snapshot, rec.scope || (rec.visibility === 'public' ? 'template' : 'full'));
   if (rec.visibility === 'public') rec.loadCount = Number(rec.loadCount || 0) + 1;
   rec.updatedAt ||= rec.createdAt;
   await Promise.all([saveUser(user), rec.visibility === 'public' ? saveAdminState() : Promise.resolve()]);
@@ -1592,7 +1682,7 @@ app.post('/api/marketplace/:id/save', auth, async (req, res) => {
   const user = db[uid];
   const rec = {
     id: crypto.randomUUID(), ownerId: uid, name: str(source.name,48) || 'Gespeichertes Preset',
-    description: str(source.description,180), visibility: 'private', scope: 'style', snapshot: deepClone(source.snapshot),
+    description: str(source.description,180), visibility: 'private', scope: 'template', snapshot: deepClone(source.snapshot),
     sourcePresetId: source.id, authorUsername: user.username, authorDisplayName: user.displayName, authorAvatar: user.discord?.avatar || '',
     savedCount: 0, loadCount: 0, createdAt: Date.now(), updatedAt: Date.now(),
   };
