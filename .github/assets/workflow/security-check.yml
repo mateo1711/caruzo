@@ -1,0 +1,22 @@
+name: Security checks
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: npm install --ignore-scripts
+      - name: Syntax check
+        run: npm run check
+      - name: Static security checks
+        run: npm run security-check
+      - name: Dependency audit
+        run: npm audit --audit-level=high
