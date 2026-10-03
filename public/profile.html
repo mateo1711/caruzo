@@ -729,9 +729,9 @@ function applyProfileLayout(u){
   const musicPos=u.musicPlayer?.position||'below-profile',reactionPos=u.reactions?.position||'profile-bottom';
   const reactionNode=document.querySelector('.reaction-wrap');
   const map={
-    'status-card':$('#premiumStatusCard'),activity:$('#activity'),'spotify-now':$('#spotifyNow'),spotify:$('#spotify'),'music-player':musicPos==='floating-bottom'?$('#musicPlayerFloating'):$('#musicLayoutSlot'),highlights:$('#highlights'),reactions:reactionPos.startsWith('floating')?reactionNode:$('#reactionLayoutSlot'),socials:$('#socials'),premium:$('#premiumCustom'),about:$('#about')
+    'status-card':$('#premiumStatusCard'),activity:$('#activity'),'spotify-now':$('#spotifyNow'),spotify:$('#spotify'),'music-player':musicPos==='floating-bottom'?$('#musicPlayerFloating'):$('#musicLayoutSlot'),highlights:$('#highlights'),reactions:reactionPos.startsWith('floating')?reactionNode:$('#reactionLayoutSlot'),socials:$('#socials'),premium:$('#premiumCustom'),about:$('#about'),'pc-specs':$('#pcSpecsSection')
   };
-  const order=[...layout.order,...['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about'].filter(x=>!layout.order.includes(x))];
+  const order=[...layout.order,...['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about','pc-specs'].filter(x=>!layout.order.includes(x))];
   order.forEach(id=>{const node=map[id];if(!node)return;node.classList.toggle('layout-hidden',hidden.has(id));if((id==='music-player'&&musicPos==='floating-bottom')||(id==='reactions'&&reactionPos.startsWith('floating')))return;flow.append(node)});
 }
 const PC_BRAND_LOGOS=[
@@ -1004,7 +1004,7 @@ function render(u) {
   // About
   if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; }
 
-  // PC Specs · always placed at the bottom of the regular profile content.
+  // PC Specs · rendered here, then positioned by the shared profile layout order.
   renderPcSpecs(u);
 
   // Musik / Video-Ton: Musik hat in 'auto' immer Vorrang.

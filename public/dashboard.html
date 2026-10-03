@@ -101,6 +101,10 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
 .pcSpecsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.pcBrandField{padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.025)}.pcBrandField>span{display:flex;align-items:center;gap:9px;margin-bottom:9px;color:#dfe4ee;font:800 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}.pcBrandField>span i{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.16);font-style:normal;color:rgb(var(--accent-rgb))}.pcBrandField input{width:100%;height:42px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.018);color:#fff;outline:0}.pcBrandField input:focus{border-color:rgba(var(--accent-rgb),.38);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.07)}
 @media(max-width:760px){.pcSpecsGrid{grid-template-columns:1fr}}
 
+
+.previewDirectHint{margin-top:9px;padding:9px 11px;border:1px solid var(--line2);border-radius:10px;background:linear-gradient(135deg,rgba(var(--accent-rgb),.045),rgba(255,255,255,.015));display:flex;align-items:center;justify-content:space-between;gap:10px;color:#aeb0b8}.previewDirectHint>span{display:flex;align-items:center;gap:7px;font-size:9px}.previewDirectHint b{font-size:9px;color:#d3d5dc}.previewDirectHint small{font:700 7.5px var(--mono);color:#666974;text-align:right}.pvModule{transition:opacity .15s,border-color .15s,transform .15s,box-shadow .15s}.pvModule[draggable="true"]{cursor:default}.pvModule.dragging{opacity:.35;transform:scale(.985);border-style:dashed}.pvModule.drag-over{border-color:rgba(var(--accent-rgb),.52);box-shadow:0 0 0 2px rgba(var(--accent-rgb),.10),0 14px 34px rgba(0,0,0,.25);transform:translateY(2px)}.pvModuleHidden{opacity:.48;border-style:dashed}.pvModuleHidden .pvModuleBody{filter:saturate(.35);opacity:.62}.pvModuleHeadEditable{margin-bottom:8px}.pvModuleTitle,.pvModuleActions{display:flex;align-items:center;gap:7px;min-width:0}.pvModuleActions{justify-content:flex-end}.pvModuleActions>span{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:150px}.pvModuleGrip,.pvModuleEye{border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.025);color:#777a84;display:grid;place-items:center;cursor:pointer;transition:.15s}.pvModuleGrip{width:24px;height:24px;border-radius:7px;cursor:grab}.pvModuleGrip:active{cursor:grabbing}.pvModuleEye{width:25px;height:25px;border-radius:8px}.pvModuleGrip:hover,.pvModuleEye:hover{color:#e6e8ee;border-color:rgba(var(--accent-rgb),.28);background:rgba(var(--accent-rgb),.06)}.pvModuleGrip svg,.pvModuleEye svg{width:12px;height:12px}.pvModuleEmpty{padding:16px 12px;text-align:center;border:1px dashed rgba(255,255,255,.09);border-radius:12px;color:#70737e;font-size:9px;background:rgba(255,255,255,.012)}
+@media(max-width:680px){.previewDirectHint{align-items:flex-start;flex-direction:column}.previewDirectHint small{text-align:left}.pvModuleActions>span{max-width:95px}}
+
 </style>
 <link rel="icon" href="/caruzo-logo.png" type="image/png">
 <script src="/site-bg.js"></script>
@@ -442,7 +446,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
     <aside class="previewArea">
       <section class="previewPanel">
         <div class="previewHead"><b>Live preview</b><div class="previewTools"><div class="zoom"><i data-lucide="zoom-out" style="width:14px"></i><input id="zoom" type="range" min="70" max="110" value="92"><i data-lucide="zoom-in" style="width:14px"></i></div></div></div>
-        <div class="previewLayoutBar"><button class="previewLayoutToggle" id="previewLayoutToggle" type="button" aria-expanded="false"><span><i data-lucide="panels-top-left" style="width:14px"></i>Module & Reihenfolge</span><small>DRAG & DROP</small></button><div class="previewModuleEditor" id="previewModuleEditor" hidden><div class="moduleFixed"><span><b>Discord Profil</b> · Basis</span><small>immer sichtbar</small></div><div id="profileModuleSort"></div></div></div>
+        <div class="previewDirectHint"><span><i data-lucide="grip-vertical" style="width:14px"></i><b>Layout direkt bearbeiten</b></span><small>Module unten greifen & verschieben · Auge = ein/aus</small></div>
         <div class="previewStage" id="previewStage"><div class="previewBg" id="previewBg"></div><div class="pvFlow"><div class="pvCard" id="pvCard"><div class="pvBanner" id="pvBanner" hidden></div><div class="pvView" id="pvView"><i data-lucide="eye" style="width:10px"></i><span id="pvViews">0</span></div><div class="pvTop"><div class="pvAvatarWrap" id="pvAvatarWrap"><img class="pvAvatar" id="pvAvatar" alt=""></div><div class="pvIdentity"><div class="pvName" id="pvName">Your name</div><div class="pvHandle" id="pvHandle">@username</div></div><div class="pvBadges" id="pvBadges"></div></div><div class="pvTagline" id="pvTagline"></div></div><div class="pvModules" id="pvModules"></div></div><div class="pvFooterView" id="pvFooterView"><i data-lucide="eye" style="width:10px"></i><span id="pvFooterViews">0</span></div></div>
       </section>
     </aside>
@@ -470,9 +474,8 @@ const SOCIAL_CATALOG=[
   ['discord','Discord','immer sichtbar'],['twitch','Twitch','Social'],['tiktok','TikTok','Social'],['x','X / Twitter','Social'],['instagram','Instagram','Social'],['youtube','YouTube','Social'],['spotifyProfile','Spotify','Social'],['github','GitHub','Social'],['bluesky','Bluesky','Social'],['epic','Epic Games','Account'],['valorant','Valorant','Account'],['discordServer','Discord Server','Invite'],['steam','Steam','Liste'],['custom','Custom Links','Liste']
 ];
 const SOCIAL_ICON_ASSETS={discord:'/social-icons/discord.gif',discordServer:'/social-icons/discord.gif',twitch:'/social-icons/twitch.png',tiktok:'/social-icons/tiktok.png',x:'/social-icons/x.png',instagram:'/social-icons/instagram.gif',youtube:'/social-icons/youtube.png',spotifyProfile:'/social-icons/spotify.png',github:'/social-icons/github.png',bluesky:'/social-icons/bluesky.png',epic:'/social-icons/epicgames.png',valorant:'/social-icons/valorant.png'};
-const PROFILE_MODULES=[['reactions','Reactions','smile-plus','Emoji Reactions'],['music-player','Music Player','list-music','Premium Playlist Player'],['status-card','Status Card','badge-info','Premium Status'],['activity','Discord Activity','gamepad-2','Status & aktuelle Aktivität'],['spotify-now','Spotify Now','radio-tower','Aktuell gehörter Song'],['spotify','Spotify Embed','audio-lines','Track, Album oder Playlist'],['highlights','Highlights','sparkles','Deine Highlight Cards'],['socials','Socials','share-2','Links & Accounts'],['premium','Premium Sections','gem','Text & Gallery Sections'],['about','About','user-round','Über mich Text']];
+const PROFILE_MODULES=[['reactions','Reactions','smile-plus','Emoji Reactions'],['music-player','Music Player','list-music','Premium Playlist Player'],['status-card','Status Card','badge-info','Premium Status'],['activity','Discord Activity','gamepad-2','Status & aktuelle Aktivität'],['spotify-now','Spotify Now','radio-tower','Aktuell gehörter Song'],['spotify','Spotify Embed','audio-lines','Track, Album oder Playlist'],['highlights','Highlights','sparkles','Deine Highlight Cards'],['socials','Socials','share-2','Links & Accounts'],['premium','Premium Sections','gem','Text & Gallery Sections'],['about','About','user-round','Über mich Text'],['pc-specs','PC Specs','cpu','Mainboard · CPU · GPU · RAM']];
 const PROFILE_MODULE_IDS=PROFILE_MODULES.map(x=>x[0]);
-let profileModuleActiveSignature='';
 function hasRenderablePremiumSections(){
   if(!isPremium||!Array.isArray(me?.premiumSections))return false;
   return me.premiumSections.some(sec=>{
@@ -493,6 +496,7 @@ function isPreviewModuleActive(id){
   if(id==='socials')return ensureSocialOrder().some(socialEnabled);
   if(id==='premium')return hasRenderablePremiumSections();
   if(id==='about')return !!String(me.about||'').trim();
+  if(id==='pc-specs')return !!me.platform?.admin&&Object.values(me.pcSpecs||{}).some(v=>String(v||'').trim());
   return false;
 }
 function activePreviewModuleIds(){
@@ -814,20 +818,10 @@ function bind(){
   $$('[data-segment] button').forEach(b=>b.onclick=()=>{set(me,b.parentElement.dataset.segment,b.dataset.value);markDirty();updateOutputs();renderPreview();if(b.parentElement.dataset.segment==='privacy.visibility')updatePrivacyStatus()});
   $('#hAvatar').src=me.discord.avatar;$('#accountName').textContent=me.discord.globalName||me.discord.username;$('#accountProfile').href='/'+encodeURIComponent(me.username);
   $('#discordState').textContent=`${me.discord.globalName||me.discord.username} · ${me.discord.id}`;
-  updateUrl();renderNitroGrid();renderBadges();repeaters();renderHighlightsEditor();renderReactionsEditor();renderReactionMiniPreview();renderMusicStyleGrid();renderMusicSourceList();renderMusicPlayerPreview();renderStatusEmojiPicker();renderStatusCardPreview();renderPremiumSections();renderProfileModuleSort();applyPremiumAccess();applyBoostAccess();updateOutputs();renderPreview();updatePrivacyStatus();renderSharePreview();refreshPresenceDiagnostic();refreshSpotifyAccount();refreshBoostStatus();window.lucide?.createIcons?.();
+  updateUrl();renderNitroGrid();renderBadges();repeaters();renderHighlightsEditor();renderReactionsEditor();renderReactionMiniPreview();renderMusicStyleGrid();renderMusicSourceList();renderMusicPlayerPreview();renderStatusEmojiPicker();renderStatusCardPreview();renderPremiumSections();applyPremiumAccess();applyBoostAccess();updateOutputs();renderPreview();updatePrivacyStatus();renderSharePreview();refreshPresenceDiagnostic();refreshSpotifyAccount();refreshBoostStatus();window.lucide?.createIcons?.();
 }
 function updateUrl(){const h=location.host+'/';$('#hostPrefix').textContent=h;$('#view').href='/'+encodeURIComponent(me.username);updatePrivacyStatus();renderSharePreview()}
 
-function renderProfileModuleSort(){
-  const box=$('#profileModuleSort');if(!box||!me)return;box.replaceChildren();
-  me.profileLayout??={order:[...PROFILE_MODULE_IDS],hidden:[]};const hidden=new Set(me.profileLayout.hidden||[]);let dragging='';
-  const activeIds=activePreviewModuleIds();profileModuleActiveSignature=activeIds.join('|');
-  if(!activeIds.length){const empty=document.createElement('div');empty.className='moduleEmptyState';empty.textContent='Aktiviere zuerst ein Profil-Modul. Nur aktive Inhalte erscheinen hier und in der Live Preview.';box.append(empty);return}
-  activeIds.forEach(id=>{const meta=PROFILE_MODULES.find(x=>x[0]===id);if(!meta)return;const row=document.createElement('div');row.className='moduleSortItem'+(hidden.has(id)?' off':'');row.draggable=true;row.dataset.id=id;
-    const drag=document.createElement('span');drag.className='moduleDrag';drag.textContent='↕';const ico=document.createElement('span');ico.className='moduleIcon';ico.innerHTML=`<i data-lucide="${meta[2]}"></i>`;const copy=document.createElement('div');copy.innerHTML=`<b>${escapeHtml(meta[1])}</b><small>${escapeHtml(meta[3])}</small>`;const eye=document.createElement('button');eye.type='button';eye.className='moduleEye';eye.title=hidden.has(id)?'Modul einblenden':'Modul ausblenden';eye.innerHTML=`<i data-lucide="${hidden.has(id)?'eye-off':'eye'}" style="width:13px"></i>`;
-    eye.onclick=e=>{e.stopPropagation();const h=new Set(me.profileLayout.hidden||[]);h.has(id)?h.delete(id):h.add(id);me.profileLayout.hidden=[...h];markDirty();renderProfileModuleSort();renderPreview()};
-    row.addEventListener('dragstart',()=>{dragging=id;row.classList.add('dragging')});row.addEventListener('dragend',()=>{dragging='';row.classList.remove('dragging')});row.addEventListener('dragover',e=>e.preventDefault());row.addEventListener('drop',e=>{e.preventDefault();if(!dragging||dragging===id)return;const a=me.profileLayout.order;const from=a.indexOf(dragging),to=a.indexOf(id);if(from<0||to<0)return;const [m]=a.splice(from,1);a.splice(to,0,m);markDirty();renderProfileModuleSort();renderPreview()});row.append(drag,ico,copy,eye);box.append(row)});window.lucide?.createIcons?.();
-}
 function previewModuleContent(id){
   const muted=!!me.music?.globalMute, firstMusic=me.musicPlayer?.sources?.[0]||{};
   if(id==='activity')return `<span class="pvMiniPulse"></span><div><b>${escapeHtml(me.settings?.showActivity===false?'Activity ausgeblendet':'Discord Activity')}</b><div style="color:#72747d;margin-top:2px">${escapeHtml(me.settings?.showStatus===false?'Status verborgen':'Online / Game / Stream')}</div></div>`;
@@ -840,13 +834,53 @@ function previewModuleContent(id){
   if(id==='socials'){const active=ensureSocialOrder().filter(socialEnabled).slice(0,6);return `<div class="pvMiniChips">${active.map(x=>`<span>${escapeHtml(SOCIAL_CATALOG.find(m=>m[0]===x)?.[1]||x)}</span>`).join('')||'<span>Discord</span>'}</div>`}
   if(id==='premium'){const secs=Array.isArray(me.premiumSections)?me.premiumSections:[];const gallery=secs.find(x=>x.type==='gallery');if(gallery?.images?.length)return `<div class="pvMiniGallery">${gallery.images.slice(0,4).map(()=>'<i></i>').join('')}</div>`;return `<span style="color:#747680">${isPremium?`${secs.length} Premium Section${secs.length===1?'':'s'}`:'Premium nicht aktiv'}</span>`}
   if(id==='about')return `<span>${escapeHtml((me.about||'Noch kein About-Text').slice(0,180))}</span>`;
+  if(id==='pc-specs'){const pcs=me.pcSpecs||{},items=[['MB',pcs.mainboard],['CPU',pcs.cpu],['GPU',pcs.gpu],['RAM',pcs.ram]].filter(x=>String(x[1]||'').trim());return `<div class="pvMiniChips">${items.map(([k,v])=>`<span><b>${escapeHtml(k)}</b> ${escapeHtml(v)}</span>`).join('')||'<span>Noch keine PC Specs</span>'}</div>`}
   return '';
+}
+function reorderPreviewModule(fromId,toId){
+  if(!me?.profileLayout||!fromId||!toId||fromId===toId)return;
+  const order=me.profileLayout.order||[];
+  const from=order.indexOf(fromId),to=order.indexOf(toId);
+  if(from<0||to<0)return;
+  const [moved]=order.splice(from,1);order.splice(to,0,moved);
+  markDirty();renderPreviewModules();
+}
+function togglePreviewModuleVisibility(id){
+  if(!me?.profileLayout||!id)return;
+  const hidden=new Set(me.profileLayout.hidden||[]);
+  hidden.has(id)?hidden.delete(id):hidden.add(id);
+  me.profileLayout.hidden=[...hidden];markDirty();renderPreviewModules();
 }
 function renderPreviewModules(){
   const box=$('#pvModules');if(!box||!me)return;box.replaceChildren();
-  const hidden=new Set(me.profileLayout?.hidden||[]),activeIds=activePreviewModuleIds(),sig=activeIds.join('|');
-  if(sig!==profileModuleActiveSignature)renderProfileModuleSort();
-  activeIds.forEach(id=>{if(hidden.has(id))return;const meta=PROFILE_MODULES.find(x=>x[0]===id);if(!meta)return;const m=document.createElement('div');m.className='pvModule '+id;const muted=id==='music-player'&&me.music?.globalMute;const badge=muted?'<span class="pvMutedPill">Muted</span>':`<span>${escapeHtml(meta[3])}</span>`;m.innerHTML=`<div class="pvModuleHead"><b>${escapeHtml(meta[1])}</b>${badge}</div><div class="pvModuleBody">${previewModuleContent(id)}</div>`;box.append(m)});
+  me.profileLayout??={order:[...PROFILE_MODULE_IDS],hidden:[]};
+  me.profileLayout.order=[...(Array.isArray(me.profileLayout.order)?me.profileLayout.order:[]).filter((x,i,a)=>PROFILE_MODULE_IDS.includes(x)&&a.indexOf(x)===i),...PROFILE_MODULE_IDS.filter(x=>!(me.profileLayout.order||[]).includes(x))];
+  const hidden=new Set(me.profileLayout.hidden||[]),activeIds=activePreviewModuleIds();
+  if(!activeIds.length){const empty=document.createElement('div');empty.className='pvModuleEmpty';empty.textContent='Aktiviere ein Modul – danach kannst du es hier direkt verschieben.';box.append(empty);return}
+  let dragging='';
+  activeIds.forEach(id=>{
+    const meta=PROFILE_MODULES.find(x=>x[0]===id);if(!meta)return;
+    const m=document.createElement('div');m.className='pvModule '+id+(hidden.has(id)?' pvModuleHidden':'');m.draggable=false;m.dataset.id=id;
+    const head=document.createElement('div');head.className='pvModuleHead pvModuleHeadEditable';
+    const left=document.createElement('div');left.className='pvModuleTitle';
+    const grip=document.createElement('button');grip.type='button';grip.className='pvModuleGrip';grip.title='Ziehen zum Verschieben';grip.setAttribute('aria-label',meta[1]+' verschieben');grip.innerHTML='<i data-lucide="grip-vertical"></i>';
+    const title=document.createElement('b');title.textContent=meta[1];
+    grip.addEventListener('pointerdown',()=>{m.draggable=true});grip.addEventListener('pointerup',()=>{if(!m.classList.contains('dragging'))m.draggable=false});left.append(grip,title);
+    const right=document.createElement('div');right.className='pvModuleActions';
+    const desc=document.createElement('span');desc.textContent=hidden.has(id)?'Ausgeblendet':meta[3];
+    const eye=document.createElement('button');eye.type='button';eye.className='pvModuleEye';eye.title=hidden.has(id)?'Modul einblenden':'Modul ausblenden';eye.setAttribute('aria-label',eye.title);eye.innerHTML=`<i data-lucide="${hidden.has(id)?'eye-off':'eye'}"></i>`;eye.onclick=e=>{e.stopPropagation();togglePreviewModuleVisibility(id)};
+    right.append(desc,eye);head.append(left,right);
+    const body=document.createElement('div');body.className='pvModuleBody';body.innerHTML=previewModuleContent(id);
+    m.append(head,body);
+    m.addEventListener('dragstart',e=>{dragging=id;m.classList.add('dragging');e.dataTransfer?.setData('text/plain',id);if(e.dataTransfer)e.dataTransfer.effectAllowed='move'});
+    m.addEventListener('dragend',()=>{dragging='';m.draggable=false;m.classList.remove('dragging');box.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'))});
+    m.addEventListener('dragenter',e=>{if(dragging&&dragging!==id){e.preventDefault();m.classList.add('drag-over')}});
+    m.addEventListener('dragleave',e=>{if(!m.contains(e.relatedTarget))m.classList.remove('drag-over')});
+    m.addEventListener('dragover',e=>{if(dragging&&dragging!==id){e.preventDefault();if(e.dataTransfer)e.dataTransfer.dropEffect='move'}});
+    m.addEventListener('drop',e=>{e.preventDefault();m.classList.remove('drag-over');const source=dragging||e.dataTransfer?.getData('text/plain');reorderPreviewModule(source,id);dragging=''});
+    box.append(m)
+  });
+  window.lucide?.createIcons?.();
 }
 function renderPreview(){
   if(!me)return;
@@ -1422,7 +1456,6 @@ document.addEventListener('keydown',e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 window.addEventListener('beforeunload',e=>{if(dirty){e.preventDefault();e.returnValue=''}});
 $('#copy').onclick=async()=>{try{await navigator.clipboard.writeText(`${location.origin}/${me.username}`);toast('Profil-Link kopiert')}catch{toast('Kopieren nicht möglich')}};
 $('#publicView').onclick=()=>window.open('/'+encodeURIComponent(me.username),'_blank');
-$('#previewLayoutToggle').onclick=()=>{const box=$('#previewModuleEditor'),btn=$('#previewLayoutToggle'),open=box.hidden;box.hidden=!open;btn.setAttribute('aria-expanded',String(open))};
 $('#zoom').oninput=e=>$('#pvCard').style.setProperty('--pv-scale',e.target.value/100);
 
 
