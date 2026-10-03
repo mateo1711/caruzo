@@ -330,7 +330,7 @@ function defaults(dc) {
     enterText: 'click to enter...',
     tags: { label: '', location: '', age: '' },
     highlights: [],
-    profileLayout: { order: ['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about'], hidden: [] },
+    profileLayout: { order: ['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about','pc-specs'], hidden: [] },
     privacy: { visibility: 'public', noIndex: false },
     share: { title: '', description: '', imageMode: 'avatar', image: '' },
     reactions: { enabled: true, title: 'React', position: 'profile-bottom', animation: 'pop', showCounts: true, items: [
@@ -392,7 +392,7 @@ function applyUpdate(user, b) {
     value: str(x?.value, 80),
     url: url(x?.url),
   })).filter(x => x.label || x.value);
-  const PROFILE_MODULE_IDS = ['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about'];
+  const PROFILE_MODULE_IDS = ['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about','pc-specs'];
   const pl = b.profileLayout || user.profileLayout || {};
   const rawOrder = Array.isArray(pl.order) ? pl.order.map(x => str(x, 24)) : [];
   const order = [...rawOrder.filter((x, i, a) => PROFILE_MODULE_IDS.includes(x) && a.indexOf(x) === i), ...PROFILE_MODULE_IDS.filter(x => !rawOrder.includes(x))];
