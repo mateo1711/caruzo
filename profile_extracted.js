@@ -1,5 +1,6 @@
 window.onSpotifyIframeApiReady=api=>{window.__caruzoSpotifyApi=api;window.dispatchEvent(new CustomEvent('caruzo:spotify-api-ready'))}
 
+
 const $ = s => document.querySelector(s);
 const el = (tag, attrs = {}, ...kids) => {
   const e = document.createElement(tag);
@@ -367,7 +368,7 @@ function playlistSkip(dir){
 }
 function renderPremiumMusicPlayer(u){
   const mp=u.musicPlayer||{},sources=Array.isArray(mp.sources)?mp.sources:[];if(!u.platform?.premium||mp.enabled===false||!sources.length)return;
-  playlistUser=u;playlistAutoplayWanted=true;const host=premiumMusicTarget(mp.position);if(!host)return;host.className=mp.position==='floating-bottom'?'music-floating-bottom':'premium-music-host';host.replaceChildren();
+  playlistUser=u;const firstSource=sources[0]||{};playlistAutoplayWanted=profileEntered||!parseYouTubePlaylist(firstSource.url);const host=premiumMusicTarget(mp.position);if(!host)return;host.className=mp.position==='floating-bottom'?'music-floating-bottom':'premium-music-host';host.replaceChildren();
   const root=el('section',{class:`premium-music-player style-${mp.style||'glass-wave'}`});root.style.setProperty('--mp-a',mp.accent||'#8b5cf6');root.style.setProperty('--mp-b',mp.secondary||'#22d3ee');if(globalMute){root.classList.add('global-muted');root.dataset.muted='1'}
   const src=sources[0]||{},initial=sourcePresentation(src),provider=initial.provider;
   const coverEl=el('img',{class:'mp-cover'+(!initial.cover&&provider.asset?' provider-fallback':''),alt:'',src:initial.cover||provider.asset||''});if(mp.showCover===false)coverEl.style.display='none';
@@ -441,11 +442,26 @@ function applyProfileLayout(u){
   const musicPos=u.musicPlayer?.position||'below-profile',reactionPos=u.reactions?.position||'profile-bottom';
   const reactionNode=document.querySelector('.reaction-wrap');
   const map={
-    'status-card':$('#premiumStatusCard'),activity:$('#activity'),'spotify-now':$('#spotifyNow'),spotify:$('#spotify'),'music-player':musicPos==='floating-bottom'?$('#musicPlayerFloating'):$('#musicLayoutSlot'),highlights:$('#highlights'),reactions:reactionPos.startsWith('floating')?reactionNode:$('#reactionLayoutSlot'),socials:$('#socials'),premium:$('#premiumCustom'),about:$('#about')
+    'status-card':$('#premiumStatusCard'),activity:$('#activity'),'spotify-now':$('#spotifyNow'),spotify:$('#spotify'),'music-player':musicPos==='floating-bottom'?$('#musicPlayerFloating'):$('#musicLayoutSlot'),highlights:$('#highlights'),reactions:reactionPos.startsWith('floating')?reactionNode:$('#reactionLayoutSlot'),socials:$('#socials'),premium:$('#premiumCustom'),about:$('#about'),'pc-specs':$('#pcSpecsSection')
   };
-  const order=[...layout.order,...['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about'].filter(x=>!layout.order.includes(x))];
+  const order=[...layout.order,...['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about','pc-specs'].filter(x=>!layout.order.includes(x))];
   order.forEach(id=>{const node=map[id];if(!node)return;node.classList.toggle('layout-hidden',hidden.has(id));if((id==='music-player'&&musicPos==='floating-bottom')||(id==='reactions'&&reactionPos.startsWith('floating')))return;flow.append(node)});
 }
+function pcSpecMark(){return el('span',{class:'pc-brand-mark pc-fixed-mark'},el('span',{},'PC'))}
+function renderPcSpecs(u){
+  const host=$('#pcSpecsSection');if(!host)return;host.replaceChildren();host.hidden=true;
+  if(!u?.platform?.admin)return;
+  const specs=u?.pcSpecs||{};
+  const items=[['mainboard','Mainboard'],['cpu','CPU'],['gpu','GPU'],['ram','RAM']].map(([key,label])=>({key,label,value:String(specs[key]||'').trim()})).filter(x=>x.value);
+  if(!items.length)return;
+  const head=el('div',{class:'pc-specs-head'},el('div',{class:'pc-specs-title'},el('i',{},'PC'),el('span',{},el('b',{},'PC Specs'),el('small',{},'Hardware'))),el('span',{class:'pc-specs-beta'},'Beta'));
+  const grid=el('div',{class:'pc-specs-grid'});
+  items.forEach(item=>{
+    grid.append(el('article',{class:'pc-spec-item'},pcSpecMark(),el('span',{class:'pc-spec-copy'},el('small',{},item.label),el('b',{},item.value))));
+  });
+  host.append(el('div',{class:'pc-specs-card'},head,grid));host.hidden=false;
+}
+
 function render(u) {
   const d = u.discord, s = u.settings, des = u.design || {}, vs = u.viewsStyle || {}, pf = u.pageFx || {};
   profileLayoutEnabled=!!u.profileLayout;globalMute=!!u.music?.globalMute;
@@ -694,6 +710,9 @@ function render(u) {
 
   // About
   if (u.about) { $('#about').hidden = false; $('#aboutText').textContent = u.about; }
+
+  // PC Specs · rendered here, then positioned by the shared profile layout order.
+  renderPcSpecs(u);
 
   // Musik / Video-Ton: Musik hat in 'auto' immer Vorrang.
   const video = document.querySelector('#bg video');
