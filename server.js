@@ -126,10 +126,84 @@ function ensureAdminContent(){
     published: x?.published !== false, createdAt: Number(x?.createdAt || Date.now() + i), updatedAt: Number(x?.updatedAt || x?.createdAt || Date.now() + i)
   })).filter(x => x.question && x.answer);
 }
+const PC_SPEC_KEYS = ['case','cpu','gpu','mb','ram','ssd','psu','cooler','fans'];
+function cleanHex(v, fallback = '#2bd9ff') {
+  const x = String(v || '').trim();
+  return /^#[0-9a-fA-F]{6}$/.test(x) ? x : fallback;
+}
+function pcSlug(value) {
+  return String(value || '').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').replace(/-{2,}/g, '-').slice(0, 60);
+}
+function sanitizePcSpec(raw) {
+  const spec = raw && typeof raw === 'object' ? raw : {};
+  return {
+    brand: str(spec.brand, 40).trim(),
+    model: str(spec.model, 120).trim(),
+    details: str(spec.details, 180).trim(),
+  };
+}
+function sanitizePcBuild(raw, existing = {}) {
+  const src = raw && typeof raw === 'object' ? raw : {};
+  const name = str(src.name, 80).trim() || existing.name || 'Untitled PC Build';
+  const subtitle = str(src.subtitle, 160).trim();
+  const mode = ['logos', 'showcase3d'].includes(String(src.mode || '')) ? String(src.mode) : (existing.mode || 'logos');
+  const createdAt = Number(existing.createdAt || Date.now());
+  const updatedAt = Date.now();
+  const out = {
+    id: String(existing.id || crypto.randomUUID()),
+    slug: pcSlug(src.slug || name) || (existing.slug || crypto.randomUUID().slice(0, 8)),
+    name,
+    subtitle,
+    mode,
+    accent: cleanHex(src.accent, existing.accent || '#2bd9ff'),
+    secondary: cleanHex(src.secondary, existing.secondary || '#8b5cf6'),
+    price: str(src.price, 60).trim(),
+    notes: str(src.notes, 500).trim(),
+    published: src.published !== false,
+    beta: true,
+    createdAt,
+    updatedAt,
+    specs: {}
+  };
+  for (const key of PC_SPEC_KEYS) out.specs[key] = sanitizePcSpec(src.specs?.[key] || existing.specs?.[key]);
+  return out;
+}
+function ensureUniquePcBuildSlug(slug, excludeId = '') {
+  const base = pcSlug(slug) || crypto.randomUUID().slice(0, 8);
+  let out = base, n = 2;
+  while ((adminState.pcBetaBuilds || []).some(x => String(x?.id || '') !== String(excludeId || '') && String(x?.slug || '') === out)) out = `${base}-${n++}`;
+  return out;
+}
+function ensurePcBetaBuilds() {
+  if (!Array.isArray(adminState.pcBetaBuilds)) adminState.pcBetaBuilds = [];
+  adminState.pcBetaBuilds = adminState.pcBetaBuilds.slice(0, 120).map(x => {
+    const clean = sanitizePcBuild(x, x || {});
+    clean.slug = ensureUniquePcBuildSlug(clean.slug, clean.id);
+    return clean;
+  });
+}
+function pcBuildPublicView(rec) {
+  if (!rec) return null;
+  return {
+    id: String(rec.id || ''),
+    slug: String(rec.slug || ''),
+    name: str(rec.name, 80),
+    subtitle: str(rec.subtitle, 160),
+    mode: ['logos','showcase3d'].includes(String(rec.mode || '')) ? String(rec.mode) : 'logos',
+    accent: cleanHex(rec.accent, '#2bd9ff'),
+    secondary: cleanHex(rec.secondary, '#8b5cf6'),
+    price: str(rec.price, 60),
+    notes: str(rec.notes, 500),
+    published: rec.published !== false,
+    beta: true,
+    updatedAt: Number(rec.updatedAt || rec.createdAt || Date.now()),
+    specs: Object.fromEntries(PC_SPEC_KEYS.map(key => [key, sanitizePcSpec(rec.specs?.[key])]))
+  };
+}
 let db = fs.existsSync(DB_FILE) ? JSON.parse(fs.readFileSync(DB_FILE, 'utf8')) : {};
 for (const id of Object.keys(db)) db[id] = hydrateStoredUser(db[id]);
 let adminState = fs.existsSync(ADMIN_FILE) ? hydrateStoredAdminState(JSON.parse(fs.readFileSync(ADMIN_FILE, 'utf8'))) : { keys: [], audit: [], changelog: [] };
-adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent();
+adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; adminState.pcBetaBuilds ||= []; ensureAdminContent(); ensurePcBetaBuilds();
 function ensureAdminSettings() {
   adminState.settings ||= {};
   adminState.settings.backgrounds ||= {};
@@ -171,7 +245,7 @@ async function hydrateFromSupabase() {
     let profileCount = 0;
     for (const row of rows) {
       if (!row || !row.id || !row.data) continue;
-      if (String(row.id) === ADMIN_STATE_ROW_ID) { migrateAdmin = (row.data?.keys || []).some(k => typeof k?.key === 'string'); adminState = hydrateStoredAdminState(row.data); adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; ensureAdminContent(); ensureAdminSettings(); continue; }
+      if (String(row.id) === ADMIN_STATE_ROW_ID) { migrateAdmin = (row.data?.keys || []).some(k => typeof k?.key === 'string'); adminState = hydrateStoredAdminState(row.data); adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; adminState.marketplace ||= []; adminState.pcBetaBuilds ||= []; ensureAdminContent(); ensurePcBetaBuilds(); ensureAdminSettings(); continue; }
       const needsEnc = (!!row.data?.auth && row.data.auth.__caruzoEnc !== 1) || (!!row.data?.spotifyAuth && row.data.spotifyAuth.__caruzoEnc !== 1);
       db[String(row.id)] = hydrateStoredUser(row.data); if (needsEnc) migrateUsers.push(db[String(row.id)]); profileCount++;
     }
@@ -2659,6 +2733,54 @@ app.get('/api/profile/:name', async (req, res) => {
   res.json(view);
 });
 
+
+// --- PC Beta Builds (Admin-only editor, public showcase page) ---
+app.get('/api/pc-beta/builds', adminOnly, (req, res) => {
+  ensurePcBetaBuilds();
+  const items = [...(adminState.pcBetaBuilds || [])].sort((a,b)=>Number(b.updatedAt||0)-Number(a.updatedAt||0)).map(rec => ({
+    ...pcBuildPublicView(rec),
+    adminEdit: true,
+    publicUrl: `/pc/${encodeURIComponent(rec.slug)}`,
+  }));
+  res.json({ items });
+});
+app.post('/api/pc-beta/builds', adminOnly, async (req, res) => {
+  ensurePcBetaBuilds();
+  const rec = sanitizePcBuild(req.body || {});
+  rec.slug = ensureUniquePcBuildSlug(rec.slug, rec.id);
+  adminState.pcBetaBuilds.unshift(rec);
+  queueAdminWrite();
+  res.json({ ok: true, item: { ...pcBuildPublicView(rec), adminEdit: true, publicUrl: `/pc/${encodeURIComponent(rec.slug)}` } });
+});
+app.patch('/api/pc-beta/builds/:id', adminOnly, async (req, res) => {
+  ensurePcBetaBuilds();
+  const idx = (adminState.pcBetaBuilds || []).findIndex(x => String(x.id) === String(req.params.id || ''));
+  if (idx < 0) return res.status(404).json({ error: 'PC-Build nicht gefunden.' });
+  const current = adminState.pcBetaBuilds[idx];
+  const rec = sanitizePcBuild({ ...current, ...(req.body || {}) }, current);
+  rec.id = current.id;
+  rec.createdAt = current.createdAt || rec.createdAt;
+  rec.slug = ensureUniquePcBuildSlug(str(req.body?.slug ?? current.slug, 60), rec.id);
+  adminState.pcBetaBuilds[idx] = rec;
+  queueAdminWrite();
+  res.json({ ok: true, item: { ...pcBuildPublicView(rec), adminEdit: true, publicUrl: `/pc/${encodeURIComponent(rec.slug)}` } });
+});
+app.delete('/api/pc-beta/builds/:id', adminOnly, async (req, res) => {
+  ensurePcBetaBuilds();
+  const idx = (adminState.pcBetaBuilds || []).findIndex(x => String(x.id) === String(req.params.id || ''));
+  if (idx < 0) return res.status(404).json({ error: 'PC-Build nicht gefunden.' });
+  adminState.pcBetaBuilds.splice(idx, 1);
+  queueAdminWrite();
+  res.json({ ok: true });
+});
+app.get('/api/pc-beta/public/:slug', (req, res) => {
+  ensurePcBetaBuilds();
+  const slug = pcSlug(req.params.slug || '');
+  const rec = (adminState.pcBetaBuilds || []).find(x => String(x.slug || '') === slug && x.published !== false);
+  if (!rec) return res.status(404).json({ error: 'PC-Build nicht gefunden.' });
+  res.json({ item: pcBuildPublicView(rec) });
+});
+
 // --- Seiten ---
 const page = f => (req, res) => res.sendFile(path.join(__dirname, 'public', f));
 app.get('/banned', (req,res)=>res.status(403).sendFile(path.join(__dirname,'public','banned.html')));
@@ -2674,6 +2796,7 @@ app.get('/dashboard', siteUnlocked, (req, res) => {
   if(user&&isBanned(user))return res.redirect('/banned');
   return user?page('dashboard.html')(req,res):res.redirect('/auth/discord');
 });
+app.get('/pc/:slug', (req, res) => page('pc-beta.html')(req, res));
 // Profil unter /name – muss ganz am Ende stehen, damit alle anderen Routen Vorrang haben
 app.get('/:name', (req, res, next) => {
   const n = req.params.name.toLowerCase();
