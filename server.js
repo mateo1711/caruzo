@@ -133,11 +133,11 @@ adminState.keys ||= []; adminState.audit ||= []; adminState.changelog ||= []; ad
 function ensureAdminSettings() {
   adminState.settings ||= {};
   adminState.settings.backgrounds ||= {};
-  for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|1[0-7])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none';
-  if (!/^(none|[1-8])$/.test(String(adminState.settings.backgrounds.login ?? ''))) adminState.settings.backgrounds.login = 'none';
+  for (const pg of ['landing', 'dashboard']) if (!/^(none|[1-9]|1[0-9]|2[0-6])$/.test(String(adminState.settings.backgrounds[pg] ?? ''))) adminState.settings.backgrounds[pg] = 'none';
+  if (!/^(none|[1-9]|1[0-7])$/.test(String(adminState.settings.backgrounds.login ?? ''))) adminState.settings.backgrounds.login = 'none';
   if (!/^[1-8]$/.test(String(adminState.settings.page404Design || ''))) adminState.settings.page404Design = '1';
   adminState.settings.scrollAnimations ||= {};
-  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
+  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew','cinematic-lift','prism-split','elastic-depth','spotlight-wipe','card-deck','rotate-in','glass-unfold','velocity-blur','magnetic-pop'].includes(String(adminState.settings.scrollAnimations.landing || ''))) adminState.settings.scrollAnimations.landing = 'fade-rise';
   if (!['none','neon-dot','halo-ring','precision','diamond','spark','pixel','orbit','minimal-arrow'].includes(String(adminState.settings.landingCursor || ''))) adminState.settings.landingCursor = 'none';
   adminState.settings.landingModules ||= {};
   // V41: "Recently Viewed" wurde durch globale zuletzt erstellte Profile ersetzt.
@@ -358,7 +358,7 @@ function defaults(dc) {
     soundMode: 'auto',
     spotify: '',
     spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
-    pcSpecs: { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'' },
+    pcSpecs: { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'', monitor1:'', monitor1Model:'', monitor2:'', monitor2Model:'', monitor3:'', monitor3Model:'', mouse:'', mouseModel:'', keyboard:'', keyboardModel:'', headset:'', headsetModel:'' },
     spotifyAccount: null,
     spotifyAuth: null,
     floating: [],
@@ -500,9 +500,21 @@ function applyUpdate(user, b) {
       gpuModel: str(pcs.gpuModel, 96).trim(),
       ram: str(pcs.ram, 48).trim(),
       ramModel: str(pcs.ramModel, 96).trim(),
+      monitor1: str(pcs.monitor1, 48).trim(),
+      monitor1Model: str(pcs.monitor1Model, 96).trim(),
+      monitor2: str(pcs.monitor2, 48).trim(),
+      monitor2Model: str(pcs.monitor2Model, 96).trim(),
+      monitor3: str(pcs.monitor3, 48).trim(),
+      monitor3Model: str(pcs.monitor3Model, 96).trim(),
+      mouse: str(pcs.mouse, 48).trim(),
+      mouseModel: str(pcs.mouseModel, 96).trim(),
+      keyboard: str(pcs.keyboard, 48).trim(),
+      keyboardModel: str(pcs.keyboardModel, 96).trim(),
+      headset: str(pcs.headset, 48).trim(),
+      headsetModel: str(pcs.headsetModel, 96).trim(),
     };
   } else if (!user.pcSpecs) {
-    user.pcSpecs = { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'' };
+    user.pcSpecs = { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'', monitor1:'', monitor1Model:'', monitor2:'', monitor2Model:'', monitor3:'', monitor3Model:'', mouse:'', mouseModel:'', keyboard:'', keyboardModel:'', headset:'', headsetModel:'' };
   }
   user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
   if (metaFor(user).premium) {
@@ -535,6 +547,7 @@ function applyUpdate(user, b) {
       if (type === 'text' && !tabs.length) tabs = [{ id: `tab-${index + 1}-1`, label: 'About Me', text: legacyText, fields: [] }];
       return {
         id: str(x?.id, 48) || `section-${index + 1}`,
+        enabled: x?.enabled !== false,
         title: str(x?.title, 60) || (type === 'gallery' ? 'Gallery' : 'Section'),
         type,
         text: legacyText,
@@ -2359,7 +2372,7 @@ app.get('/api/site-settings', (req, res) => {
 app.post('/api/admin/backgrounds', adminOnly, async (req, res) => {
   const page = String(req.body?.page || ''), preset = String(req.body?.preset ?? '');
   if (!['landing', 'dashboard', 'login'].includes(page)) return res.status(400).json({ error: 'Ungültige Seite' });
-  const valid = page === 'login' ? /^(none|[1-8])$/.test(preset) : /^(none|[1-9]|1[0-7])$/.test(preset);
+  const valid = page === 'login' ? /^(none|[1-9]|1[0-7])$/.test(preset) : /^(none|[1-9]|1[0-9]|2[0-6])$/.test(preset);
   if (!valid) return res.status(400).json({ error: 'Ungültiges Preset' });
   ensureAdminSettings();
   adminState.settings.backgrounds[page] = preset;
@@ -2380,7 +2393,7 @@ app.post('/api/admin/scroll-animation', adminOnly, async (req, res) => {
   const page = String(req.body?.page || 'landing');
   const animation = String(req.body?.animation || 'none');
   if (page !== 'landing') return res.status(400).json({ error: 'Scroll Animation ist nur für die Hauptseite verfügbar' });
-  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew'].includes(animation)) return res.status(400).json({ error: 'Ungültige Scroll Animation' });
+  if (!['none','fade-rise','slide-sides','scale-soft','blur-focus','stagger-cards','depth-flip','clip-reveal','glide-skew','cinematic-lift','prism-split','elastic-depth','spotlight-wipe','card-deck','rotate-in','glass-unfold','velocity-blur','magnetic-pop'].includes(animation)) return res.status(400).json({ error: 'Ungültige Scroll Animation' });
   ensureAdminSettings();
   adminState.settings.scrollAnimations[page] = animation;
   audit('scroll_animation_changed', { page, animation, by: req.session.uid });
