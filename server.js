@@ -358,7 +358,7 @@ function defaults(dc) {
     soundMode: 'auto',
     spotify: '',
     spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
-    pcSpecs: { mainboard:'', cpu:'', gpu:'', ram:'' },
+    pcSpecs: { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'' },
     spotifyAccount: null,
     spotifyAuth: null,
     floating: [],
@@ -493,12 +493,16 @@ function applyUpdate(user, b) {
     const pcs = b.pcSpecs || {};
     user.pcSpecs = {
       mainboard: str(pcs.mainboard, 48).trim(),
+      mainboardModel: str(pcs.mainboardModel, 96).trim(),
       cpu: str(pcs.cpu, 48).trim(),
+      cpuModel: str(pcs.cpuModel, 96).trim(),
       gpu: str(pcs.gpu, 48).trim(),
+      gpuModel: str(pcs.gpuModel, 96).trim(),
       ram: str(pcs.ram, 48).trim(),
+      ramModel: str(pcs.ramModel, 96).trim(),
     };
   } else if (!user.pcSpecs) {
-    user.pcSpecs = { mainboard:'', cpu:'', gpu:'', ram:'' };
+    user.pcSpecs = { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'' };
   }
   user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
   if (metaFor(user).premium) {
