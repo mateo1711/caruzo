@@ -358,7 +358,7 @@ function defaults(dc) {
     soundMode: 'auto',
     spotify: '',
     spotifyStyle: { blur: 26, glow: 24, layout: 'compact' },
-    pcSpecs: { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'', monitor1:'', monitor1Model:'', monitor2:'', monitor2Model:'', monitor3:'', monitor3Model:'', mouse:'', mouseModel:'', keyboard:'', keyboardModel:'', headset:'', headsetModel:'' },
+    pcSpecs: { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'', monitor1:'', monitor1Model:'', monitor2:'', monitor2Model:'', monitor3:'', monitor3Model:'', mouse:'', mouseModel:'', keyboard:'', keyboardModel:'', headset:'', headsetModel:'', customTitle:'', custom1:'', custom1Model:'', custom2:'', custom2Model:'', custom3:'', custom3Model:'', custom4:'', custom4Model:'' },
     spotifyAccount: null,
     spotifyAuth: null,
     floating: [],
@@ -489,7 +489,7 @@ function applyUpdate(user, b) {
   user.spotify = url(b.spotify);
   const sp = b.spotifyStyle || {};
   user.spotifyStyle = { blur: num(sp.blur, 0, 50, 26), glow: num(sp.glow, 0, 100, 24), layout: ['compact','full'].includes(sp.layout) ? sp.layout : 'compact' };
-  if (isAdminId(user.id) && b.pcSpecs !== undefined) {
+  if ((metaFor(user).premium || isAdminId(user.id)) && b.pcSpecs !== undefined) {
     const pcs = b.pcSpecs || {};
     user.pcSpecs = {
       mainboard: str(pcs.mainboard, 48).trim(),
@@ -512,9 +512,18 @@ function applyUpdate(user, b) {
       keyboardModel: str(pcs.keyboardModel, 96).trim(),
       headset: str(pcs.headset, 48).trim(),
       headsetModel: str(pcs.headsetModel, 96).trim(),
+      customTitle: str(pcs.customTitle, 40).trim(),
+      custom1: str(pcs.custom1, 48).trim(),
+      custom1Model: str(pcs.custom1Model, 96).trim(),
+      custom2: str(pcs.custom2, 48).trim(),
+      custom2Model: str(pcs.custom2Model, 96).trim(),
+      custom3: str(pcs.custom3, 48).trim(),
+      custom3Model: str(pcs.custom3Model, 96).trim(),
+      custom4: str(pcs.custom4, 48).trim(),
+      custom4Model: str(pcs.custom4Model, 96).trim(),
     };
   } else if (!user.pcSpecs) {
-    user.pcSpecs = { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'', monitor1:'', monitor1Model:'', monitor2:'', monitor2Model:'', monitor3:'', monitor3Model:'', mouse:'', mouseModel:'', keyboard:'', keyboardModel:'', headset:'', headsetModel:'' };
+    user.pcSpecs = { mainboard:'', mainboardModel:'', cpu:'', cpuModel:'', gpu:'', gpuModel:'', ram:'', ramModel:'', monitor1:'', monitor1Model:'', monitor2:'', monitor2Model:'', monitor3:'', monitor3Model:'', mouse:'', mouseModel:'', keyboard:'', keyboardModel:'', headset:'', headsetModel:'', customTitle:'', custom1:'', custom1Model:'', custom2:'', custom2Model:'', custom3:'', custom3Model:'', custom4:'', custom4Model:'' };
   }
   user.floating = (Array.isArray(b.floating) ? b.floating : []).slice(0, 8).map(x => str(x, 32)).filter(Boolean);
   if (metaFor(user).premium) {
