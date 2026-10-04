@@ -98,7 +98,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
 
 .pcSpecsBeta{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;padding:15px 16px;border:1px solid rgba(255,255,255,.09);border-radius:18px;background:linear-gradient(135deg,rgba(43,217,255,.075),rgba(var(--accent-rgb),.06)),rgba(8,10,14,.5)}
 .pcSpecsBeta b{display:block;font-size:13px}.pcSpecsBeta p{margin:6px 0 0;color:var(--muted);max-width:720px}.pcSpecsBeta .betaBadge{display:inline-flex;align-items:center;gap:7px;padding:8px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.11);background:rgba(255,255,255,.04);font:800 9px/1 var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#8de2ff}.pcSpecsBeta .betaBadge i{width:7px;height:7px;border-radius:50%;background:#22d3ee;box-shadow:0 0 12px #22d3ee}
-.pcSpecsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.pcSpecsGridThree{grid-template-columns:repeat(3,minmax(0,1fr))}.pcBrandField{padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.025)}.pcBrandField>span{display:flex;align-items:center;gap:9px;margin-bottom:10px;color:#dfe4ee;font:800 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}.pcBrandField>span i{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.16);font-style:normal;color:rgb(var(--accent-rgb))}.pcSpecInputs{display:grid;gap:8px}.pcSpecInputs input{width:100%;height:42px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.018);color:#fff;outline:0}.pcSpecInputs input:focus{border-color:rgba(var(--accent-rgb),.38);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.07)}.pcSpecInputs input:first-child{font-weight:800}.pcSpecInputs input:last-child{color:#d8dce6}
+.pcSpecsGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.pcSpecsGridThree{grid-template-columns:repeat(3,minmax(0,1fr))}.pcBrandField{padding:14px;border:1px solid rgba(255,255,255,.08);border-radius:15px;background:rgba(255,255,255,.025)}.pcBrandField>span{display:flex;align-items:center;gap:9px;margin-bottom:10px;color:#dfe4ee;font:800 10px var(--mono);letter-spacing:.08em;text-transform:uppercase}.pcBrandField>span i{width:30px;height:30px;display:grid;place-items:center;border-radius:10px;background:rgba(var(--accent-rgb),.08);border:1px solid rgba(var(--accent-rgb),.16);font-style:normal;color:rgb(var(--accent-rgb))}.pcSpecInputs{display:grid;gap:8px}.pcSpecInputs input{width:100%;height:42px;padding:0 12px;border:1px solid var(--line2);border-radius:10px;background:rgba(255,255,255,.018);color:#fff;outline:0}.pcSpecInputs input:focus{border-color:rgba(var(--accent-rgb),.38);box-shadow:0 0 0 3px rgba(var(--accent-rgb),.07)}.pcSpecInputs input:first-child{font-weight:800}.pcSpecInputs input:last-child{color:#d8dce6}.pcCustomTitle{max-width:520px;margin-bottom:12px}.pcCustomTitle input{font-weight:800}
 .pvMiniChips span{display:inline-flex!important;align-items:center;gap:5px}.pvPcSpecsWrap{display:grid;gap:8px;width:100%}.pvPcSpecsGroup{display:grid;gap:5px}.pvPcSpecsGroup>small{font:800 8px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:#6f7480}.pvPcSpecsGroup .pvMiniChips{margin:0}.pvPcBrandLogo{width:13px;height:13px;object-fit:contain;flex:none}.pvPcBrandFallback{width:16px;height:16px;display:inline-grid;place-items:center;border-radius:5px;background:rgba(var(--accent-rgb),.12);font:900 7px/1 var(--mono);font-style:normal;color:#fff;flex:none}@media(max-width:900px){.pcSpecsGridThree{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:760px){.pcSpecsGrid,.pcSpecsGridThree{grid-template-columns:1fr}}
 
 
@@ -119,6 +119,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
 </style>
 <link rel="icon" href="/caruzo-logo.png" type="image/png">
 <script src="/site-bg.js"></script>
+<script src="/pc-brands.js"></script>
 </head>
 <body>
 <div class="ambient" aria-hidden="true"><i></i><i></i><i></i></div>
@@ -158,7 +159,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
         <button class="tile" data-tab="background"><span class="ico"><i data-lucide="sparkles"></i></span>Background<span class="dot"></span></button>
         <button class="tile" data-tab="placement"><span class="ico"><i data-lucide="mouse-pointer-2"></i></span>Placement<span class="dot"></span></button>
         <button class="tile" data-tab="effects"><span class="ico"><i data-lucide="sliders-horizontal"></i></span>Effects<span class="dot"></span></button>
-        <button class="tile" data-tab="pcbeta" id="pcSpecsTile" hidden><span class="ico"><i data-lucide="monitor"></i></span>PC Specs<span class="dot"></span></button>
+        <button class="tile" data-tab="pcbeta" id="pcSpecsTile" hidden><span class="ico"><i data-lucide="monitor"></i></span>PC Specs <small style="opacity:.55;font-size:8px">BETA</small><span class="dot"></span></button>
       </div></div>
     </div>
   </section>
@@ -390,7 +391,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
 
       <section class="panel" data-panel="pcbeta" hidden>
         <div class="panelHead"><div><span class="panelKicker">PC Specs · Beta</span><h2>PC Specs</h2><p>Hardware, Monitore und Peripherie mit Marke, Modell und automatischem Markenlogo für dein öffentliches Profil.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save PC Specs</button></div></div>
-        <div class="pcSpecsBeta"><div><b>Admin-only Beta</b><p>Marke und Modell werden getrennt gespeichert. Bekannte Marken bekommen automatisch ihr Logo. Leere Monitor- oder Peripherie-Felder werden auf dem Profil vollständig ausgeblendet.</p></div><span class="betaBadge"><i></i>Beta</span></div>
+        <div class="pcSpecsBeta"><div><b>Premium Beta</b><p>PC Specs ist für Premium-Profile freigeschaltet. Marke und Modell werden getrennt gespeichert, bekannte Gaming-Marken werden automatisch erkannt und leere Geräte-Slots auf dem Profil vollständig ausgeblendet.</p></div><span class="betaBadge"><i></i>Beta · Premium</span></div>
         <div class="section">
           <div class="sectionTitle"><h3>Hardware</h3><span class="miniHint">Mainboard · CPU · GPU · RAM</span></div>
           <div class="pcSpecsGrid">
@@ -414,6 +415,17 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
             <label class="pcBrandField"><span><i>M</i>Maus</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.mouse" placeholder="Marke · z. B. Logitech"><input type="text" maxlength="96" data-p="pcSpecs.mouseModel" placeholder="Modell · z. B. G Pro X Superlight 2"></div></label>
             <label class="pcBrandField"><span><i>K</i>Keyboard</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.keyboard" placeholder="Marke · z. B. Razer"><input type="text" maxlength="96" data-p="pcSpecs.keyboardModel" placeholder="Modell · z. B. Huntsman V3 Pro"></div></label>
             <label class="pcBrandField"><span><i>H</i>Headset</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.headset" placeholder="Marke · z. B. SteelSeries"><input type="text" maxlength="96" data-p="pcSpecs.headsetModel" placeholder="Modell · z. B. Arctis Nova Pro"></div></label>
+          </div>
+        </div>
+        <div class="section">
+          <div class="sectionTitle"><h3>Custom Kategorie</h3><span class="miniHint">eigener Titel · bis zu 4 Geräte</span></div>
+          <p class="desc">Zum Beispiel „Streaming Setup“, „Sim Racing“, „Audio“ oder „Desk Gear“. Nur ausgefüllte Geräte werden später angezeigt.</p>
+          <label class="field pcCustomTitle"><span>Kategorie-Titel</span><input type="text" maxlength="40" data-p="pcSpecs.customTitle" placeholder="z. B. Streaming Setup"></label>
+          <div class="pcSpecsGrid">
+            <label class="pcBrandField"><span><i>1</i>Gerät 1</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.custom1" placeholder="Marke"><input type="text" maxlength="96" data-p="pcSpecs.custom1Model" placeholder="Modell / Gerät"></div></label>
+            <label class="pcBrandField"><span><i>2</i>Gerät 2</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.custom2" placeholder="Marke"><input type="text" maxlength="96" data-p="pcSpecs.custom2Model" placeholder="Modell / Gerät"></div></label>
+            <label class="pcBrandField"><span><i>3</i>Gerät 3</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.custom3" placeholder="Marke"><input type="text" maxlength="96" data-p="pcSpecs.custom3Model" placeholder="Modell / Gerät"></div></label>
+            <label class="pcBrandField"><span><i>4</i>Gerät 4</span><div class="pcSpecInputs"><input type="text" maxlength="48" data-p="pcSpecs.custom4" placeholder="Marke"><input type="text" maxlength="96" data-p="pcSpecs.custom4Model" placeholder="Modell / Gerät"></div></label>
           </div>
         </div>
       </section>
@@ -501,8 +513,12 @@ const SOCIAL_CATALOG=[
   ['discord','Discord','immer sichtbar'],['twitch','Twitch','Social'],['tiktok','TikTok','Social'],['x','X / Twitter','Social'],['instagram','Instagram','Social'],['youtube','YouTube','Social'],['spotifyProfile','Spotify','Social'],['github','GitHub','Social'],['bluesky','Bluesky','Social'],['epic','Epic Games','Account'],['valorant','Valorant','Account'],['discordServer','Discord Server','Invite'],['steam','Steam','Liste'],['custom','Custom Links','Liste']
 ];
 const SOCIAL_ICON_ASSETS={discord:'/social-icons/discord.gif',discordServer:'/social-icons/discord.gif',twitch:'/social-icons/twitch.png',tiktok:'/social-icons/tiktok.png',x:'/social-icons/x.png',instagram:'/social-icons/instagram.gif',youtube:'/social-icons/youtube.png',spotifyProfile:'/social-icons/spotify.png',github:'/social-icons/github.png',bluesky:'/social-icons/bluesky.png',epic:'/social-icons/epicgames.png',valorant:'/social-icons/valorant.png'};
-const PC_PREVIEW_BRANDS=[['amd',['amd','ryzen','radeon']],['nvidia',['nvidia','geforce','rtx','gtx']],['intel',['intel','core i','arc']],['asus',['asus','rog','tuf']],['msi',['msi','micro-star']],['gigabyte',['gigabyte','aorus']],['asrock',['asrock']],['corsair',['corsair']],['gskill',['g.skill','gskill','trident']],['kingstontechnology',['kingston','fury']],['crucial',['crucial','micron']],['teamgroup',['teamgroup','team group','t-force','tforce']],['adata',['adata','xpg']],['samsung',['samsung']],['westerndigital',['western digital','wd black','wd ']],['zotac',['zotac']],['sapphire',['sapphire']],['powercolor',['powercolor']],['pny',['pny']],['xfx',['xfx']],['evga',['evga']],['logitech',['logitech','logitech g']],['razer',['razer']],['steelseries',['steelseries']],['hyperx',['hyperx','hyper x']],['benq',['benq','zowie']],['dell',['dell','alienware']],['lg',['lg','ultragear']],['acer',['acer','predator']],['aoc',['aoc']],['philips',['philips']],['viewsonic',['viewsonic']],['sennheiser',['sennheiser']],['bose',['bose']],['sony',['sony']],['jbl',['jbl']],['keychron',['keychron']],['glorious',['glorious']],['roccat',['roccat']],['turtlebeach',['turtle beach','turtlebeach']]];
-function pcPreviewBrand(value){const raw=String(value||'').trim(),q=' '+raw.toLowerCase().replace(/[^a-z0-9.+-]+/g,' ')+' ';const hit=PC_PREVIEW_BRANDS.find(([,keys])=>keys.some(k=>q.includes(k)));const initials=(raw.match(/[A-Za-z0-9]+/g)||[]).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'PC';return {slug:hit?.[0]||'',initials}}
+function pcPreviewBrand(value){
+  const api=window.CaruzoPCBrands;
+  if(api?.previewLogo){const hit=api.previewLogo(value);return {slug:hit.info?.slugs?.[0]||'',src:hit.src||'',initials:hit.info?.initials||'PC',label:hit.info?.label||String(value||'PC')}}
+  const raw=String(value||'').trim(),initials=(raw.match(/[A-Za-z0-9]+/g)||[]).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'PC';
+  return {slug:'',src:'',initials,label:raw||'PC'};
+}
 const PROFILE_MODULES=[['reactions','Reactions','smile-plus','Emoji Reactions'],['music-player','Music Player','list-music','Premium Playlist Player'],['status-card','Status Card','badge-info','Premium Status'],['activity','Discord Activity','gamepad-2','Status & aktuelle Aktivität'],['spotify-now','Spotify Now','radio-tower','Aktuell gehörter Song'],['spotify','Spotify Embed','audio-lines','Track, Album oder Playlist'],['highlights','Highlights','sparkles','Deine Highlight Cards'],['socials','Socials','share-2','Links & Accounts'],['premium','Premium Sections','gem','Text & Gallery Sections'],['about','About','user-round','Über mich Text'],['pc-specs','PC Specs','monitor','Hardware · Monitore · Peripherie']];
 const PROFILE_MODULE_IDS=PROFILE_MODULES.map(x=>x[0]);
 function hasRenderablePremiumSections(){
@@ -525,7 +541,7 @@ function isPreviewModuleActive(id){
   if(id==='socials')return ensureSocialOrder().some(socialEnabled);
   if(id==='premium')return hasRenderablePremiumSections();
   if(id==='about')return !!String(me.about||'').trim();
-  if(id==='pc-specs')return !!me.platform?.admin&&Object.values(me.pcSpecs||{}).some(v=>String(v||'').trim());
+  if(id==='pc-specs')return !!(me.platform?.premium||me.platform?.admin)&&Object.entries(me.pcSpecs||{}).some(([k,v])=>k!=='customTitle'&&String(v||'').trim());
   return false;
 }
 function activePreviewModuleIds(){
@@ -581,7 +597,7 @@ function defaults(){
   me.premiumStatusCard??={enabled:false,icon:'✨',iconUrl:'',eyebrow:'STATUS',title:'Open for collabs',text:'Available for projects, gaming and creative work.',accent:'#8b5cf6',style:'glass',expiresAt:'',showCountdown:false};ensure(me.premiumStatusCard,'enabled',false);ensure(me.premiumStatusCard,'icon','✨');ensure(me.premiumStatusCard,'iconUrl','');ensure(me.premiumStatusCard,'eyebrow','STATUS');ensure(me.premiumStatusCard,'title','Open for collabs');ensure(me.premiumStatusCard,'text','');ensure(me.premiumStatusCard,'accent','#8b5cf6');ensure(me.premiumStatusCard,'style','glass');ensure(me.premiumStatusCard,'expiresAt','');ensure(me.premiumStatusCard,'showCountdown',false);
   me.background??={type:'image',url:'',blur:6,dim:55,effect:'none',videoSound:true,videoVolume:30,videoStart:0};ensure(me.background,'videoVolume',30);ensure(me.background,'videoStart',0);
   me.spotifyStyle??={blur:26,glow:24,layout:'compact'};ensure(me.spotifyStyle,'blur',26);ensure(me.spotifyStyle,'glow',24);ensure(me.spotifyStyle,'layout','compact');
-  me.pcSpecs??={mainboard:'',mainboardModel:'',cpu:'',cpuModel:'',gpu:'',gpuModel:'',ram:'',ramModel:'',monitor1:'',monitor1Model:'',monitor2:'',monitor2Model:'',monitor3:'',monitor3Model:'',mouse:'',mouseModel:'',keyboard:'',keyboardModel:'',headset:'',headsetModel:''};['mainboard','mainboardModel','cpu','cpuModel','gpu','gpuModel','ram','ramModel','monitor1','monitor1Model','monitor2','monitor2Model','monitor3','monitor3Model','mouse','mouseModel','keyboard','keyboardModel','headset','headsetModel'].forEach(k=>ensure(me.pcSpecs,k,''));
+  me.pcSpecs??={mainboard:'',mainboardModel:'',cpu:'',cpuModel:'',gpu:'',gpuModel:'',ram:'',ramModel:'',monitor1:'',monitor1Model:'',monitor2:'',monitor2Model:'',monitor3:'',monitor3Model:'',mouse:'',mouseModel:'',keyboard:'',keyboardModel:'',headset:'',headsetModel:'',customTitle:'',custom1:'',custom1Model:'',custom2:'',custom2Model:'',custom3:'',custom3Model:'',custom4:'',custom4Model:''};['mainboard','mainboardModel','cpu','cpuModel','gpu','gpuModel','ram','ramModel','monitor1','monitor1Model','monitor2','monitor2Model','monitor3','monitor3Model','mouse','mouseModel','keyboard','keyboardModel','headset','headsetModel','customTitle','custom1','custom1Model','custom2','custom2Model','custom3','custom3Model','custom4','custom4Model'].forEach(k=>ensure(me.pcSpecs,k,''));
   me.settings??={};ensure(me.settings,'showSpotifyNowPlaying',true);ensure(me.settings,'bannerHeight',120);
   me.links??={};me.links.steam??=[];me.links.custom??=[];ensure(me.links,'epic','');ensure(me.links,'valorant','');ensure(me.links,'discordServerName','');ensure(me.links,'discordServer','');ensure(me.links,'spotifyProfile','');ensureSocialOrder();
   me.highlights??=[];
@@ -592,7 +608,7 @@ function defaults(){
 }
 function openTab(name){
   if(name==='admin'&&!canAdmin&&!canModerator)name='profil';
-  if(name==='pcbeta'&&!canAdmin)name='profil';
+  if(name==='pcbeta'&&!canAdmin&&!isPremium)name='profil';
   if(!$(`[data-panel="${name}"]`))name='profil';current=name;
   document.body.classList.toggle('admin-mode',name==='admin');
   $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
@@ -868,10 +884,11 @@ function previewModuleContent(id){
     const groups=[
       ['Hardware',[['MB',pcs.mainboard,pcs.mainboardModel],['CPU',pcs.cpu,pcs.cpuModel],['GPU',pcs.gpu,pcs.gpuModel],['RAM',pcs.ram,pcs.ramModel]]],
       ['Monitore',[['MON 1',pcs.monitor1,pcs.monitor1Model],['MON 2',pcs.monitor2,pcs.monitor2Model],['MON 3',pcs.monitor3,pcs.monitor3Model]]],
-      ['Peripherie',[['MAUS',pcs.mouse,pcs.mouseModel],['KEY',pcs.keyboard,pcs.keyboardModel],['HEADSET',pcs.headset,pcs.headsetModel]]]
+      ['Peripherie',[['MAUS',pcs.mouse,pcs.mouseModel],['KEY',pcs.keyboard,pcs.keyboardModel],['HEADSET',pcs.headset,pcs.headsetModel]]],
+      [String(pcs.customTitle||'Custom').trim()||'Custom',[['GERÄT 1',pcs.custom1,pcs.custom1Model],['GERÄT 2',pcs.custom2,pcs.custom2Model],['GERÄT 3',pcs.custom3,pcs.custom3Model],['GERÄT 4',pcs.custom4,pcs.custom4Model]]]
     ].map(([label,items])=>[label,items.filter(x=>String(x[1]||x[2]||'').trim())]).filter(([,items])=>items.length);
     if(!groups.length)return '<span>Noch keine PC Specs</span>';
-    const card=([k,brandName,model])=>{const brand=pcPreviewBrand(brandName||model);return `<span style="align-items:flex-start">${brand.slug?`<img class="pvPcBrandLogo" src="https://cdn.simpleicons.org/${brand.slug}/ffffff" alt="">`:`<i class="pvPcBrandFallback">${escapeHtml(brand.initials)}</i>`}<span style="display:grid!important;gap:2px"><b style="font-size:11px;color:#f3f5fa">${escapeHtml(brandName||k)}</b><small style="font-size:9px;color:#9da2ad;white-space:normal">${escapeHtml(model||k+' Modell')}</small></span></span>`};
+    const card=([k,brandName,model])=>{const brand=pcPreviewBrand(brandName||model);return `<span style="align-items:flex-start">${brand.src?`<img class="pvPcBrandLogo" src="${escapeHtml(brand.src)}" data-fallback="${escapeHtml(brand.initials)}" alt="">`:`<i class="pvPcBrandFallback">${escapeHtml(brand.initials)}</i>`}<span style="display:grid!important;gap:2px"><b style="font-size:11px;color:#f3f5fa">${escapeHtml(brandName||k)}</b><small style="font-size:9px;color:#9da2ad;white-space:normal">${escapeHtml(model||k+' Modell')}</small></span></span>`};
     return `<div class="pvPcSpecsWrap">${groups.map(([label,items])=>`<div class="pvPcSpecsGroup"><small>${escapeHtml(label)}</small><div class="pvMiniChips">${items.map(card).join('')}</div></div>`).join('')}</div>`;
   }
   return '';
@@ -960,7 +977,7 @@ function renderPreviewModules(){
     const eye=document.createElement('button');eye.type='button';eye.className='pvModuleEye';eye.title=hidden.has(id)?'Modul einblenden':'Modul ausblenden';eye.setAttribute('aria-label',eye.title);eye.innerHTML=`<i data-lucide="${hidden.has(id)?'eye-off':'eye'}"></i>`;eye.onclick=e=>{e.stopPropagation();togglePreviewModuleVisibility(id)};
     right.append(desc,eye);head.append(left,right);
     const body=document.createElement('div');body.className='pvModuleBody';
-    if(id==='socials')renderPreviewSocialEditor(body);else if(id==='premium')renderPreviewPremiumEditor(body);else body.innerHTML=previewModuleContent(id);
+    if(id==='socials')renderPreviewSocialEditor(body);else if(id==='premium')renderPreviewPremiumEditor(body);else {body.innerHTML=previewModuleContent(id);if(id==='pc-specs')body.querySelectorAll('.pvPcBrandLogo').forEach(img=>img.addEventListener('error',()=>{const f=document.createElement('i');f.className='pvPcBrandFallback';f.textContent=img.dataset.fallback||'PC';img.replaceWith(f)},{once:true}))}
     m.append(head,body);
     m.addEventListener('dragstart',e=>{dragging=id;m.classList.add('dragging');e.dataTransfer?.setData('text/plain',id);if(e.dataTransfer)e.dataTransfer.effectAllowed='move'});
     m.addEventListener('dragend',()=>{dragging='';m.draggable=false;m.classList.remove('dragging');box.querySelectorAll('.drag-over').forEach(x=>x.classList.remove('drag-over'))});
@@ -1657,7 +1674,7 @@ setInterval(()=>{if(me?.discord?.id)refreshPresenceDiagnostic()},6000);
 setInterval(()=>refreshSpotifyAccount(),15000);
 function handleSpotifyCallbackNotice(){}
 
-Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;const accountAdmin=$('#accountAdmin'),accountAdminLabel=$('#accountAdminLabel');if(accountAdmin)accountAdmin.hidden=!(canAdmin||canModerator);if(accountAdminLabel)accountAdminLabel.textContent=canAdmin?'Admin Menu':'Moderator Menu';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);const pcSpecsTile=$('#pcSpecsTile');if(pcSpecsTile)pcSpecsTile.hidden=!canAdmin;$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();loadStatusDiscordEmojis();applyStatisticsAccess();initBgAdmin();openTab(location.hash.slice(1)||'profil');handleSpotifyCallbackNotice();if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
+Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;const accountAdmin=$('#accountAdmin'),accountAdminLabel=$('#accountAdminLabel');if(accountAdmin)accountAdmin.hidden=!(canAdmin||canModerator);if(accountAdminLabel)accountAdminLabel.textContent=canAdmin?'Admin Menu':'Moderator Menu';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);const pcSpecsTile=$('#pcSpecsTile');if(pcSpecsTile)pcSpecsTile.hidden=!(canAdmin||isPremium);$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();loadStatusDiscordEmojis();applyStatisticsAccess();initBgAdmin();openTab(location.hash.slice(1)||'profil');handleSpotifyCallbackNotice();if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
 window.CaruzoBG&&CaruzoBG.mount('dashboard');
 window.lucide?.createIcons?.();
 </script>
