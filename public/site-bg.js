@@ -1,10 +1,10 @@
 /* Caruzo animierte Hintergründe – gemeinsame Engine für Hauptseite und Dashboard.
    Nutzung: CaruzoBG.mount('landing') bzw. CaruzoBG.mount('dashboard').
    Die Auswahl kommt von /api/site-settings und wird im Admin Panel geändert.
-   17 Presets je Seite auf 10 GPU-Effektmodi, jeweils mit eigener Farbwelt, Helligkeit und Tempo. */
+   26 Presets auf Hauptseite/Dashboard und 17 Login-Presets auf 19 GPU-Effektmodi, jeweils mit eigener Farbwelt, Helligkeit und Tempo. */
 (function () {
   'use strict';
-  var MODE_LABEL = ['Nebula', 'Topografie', 'Caustics', 'Halftone', 'Lichtstrahlen', 'Data Rain', 'Sonar', 'Mesh Gradient', 'Hex Grid', 'Bokeh'];
+  var MODE_LABEL = ['Nebula', 'Topografie', 'Caustics', 'Halftone', 'Lichtstrahlen', 'Data Rain', 'Sonar', 'Mesh Gradient', 'Hex Grid', 'Bokeh', 'Silk Ribbons', 'Prism Lens', 'Orbital Halo', 'Glass Shards', 'Aurora Vortex', 'Chroma Lattice', 'Eclipse Bloom', 'Plasma Veins', 'Warp Stars'];
   // P(name, mode, [hell, akzent, dunkel], helligkeit, tempo, mitten-abdunklung)
   function P(n, m, c, i, sp, z) { return { name: n, mode: m, c: c, i: i, sp: sp, z: z }; }
   var PRESETS = {
@@ -25,7 +25,16 @@
       14: P('Prism Rays',       4, ['#fff1d5', '#ff89c9', '#30184d'], .94, .74, .14),
       15: P('Soft Radar',       6, ['#bfe8ff', '#7d8cff', '#151b48'], .90, .64, .18),
       16: P('Contour Bloom',    1, ['#ffe0ef', '#ff65a8', '#45152e'], .93, .66, .20),
-      17: P('Glass Bokeh',      9, ['#d8fff5', '#c7a1ff', '#1f214d'], .94, .58, .14)
+      17: P('Glass Bokeh',      9, ['#d8fff5', '#c7a1ff', '#1f214d'], .94, .58, .14),
+      18: P('Silk Nocturne',    10, ['#f8d8ff', '#8b5cf6', '#160d2c'], 1.02, .56, .14),
+      19: P('Prism Cathedral',  11, ['#fff4d6', '#ff78c8', '#22113f'], 1.00, .50, .12),
+      20: P('Orbital Pearl',    12, ['#d8f7ff', '#7c8cff', '#101936'], .98, .48, .14),
+      21: P('Glass Monolith',   13, ['#eaf6ff', '#68d7ff', '#0b1727'], .94, .44, .16),
+      22: P('Aurora Vortex',    14, ['#7fffd4', '#b76cff', '#160d35'], 1.02, .54, .12),
+      23: P('Chroma Lattice',   15, ['#ff9ee9', '#57e6ff', '#171029'], .94, .50, .16),
+      24: P('Eclipse Rose',     16, ['#ffd5eb', '#ff5c99', '#190a18'], .98, .46, .12),
+      25: P('Plasma Veins',     17, ['#a4ffe5', '#6f7cff', '#0d1726'], .96, .52, .14),
+      26: P('Warp Luxe',        18, ['#fff0c9', '#ba8cff', '#090b17'], 1.02, .58, .10)
     },
     dashboard: {
       1: P('Nebula Indigo',    0, ['#8b5cf6', '#4f7bff', '#1a1050'], .85, .7, 1),
@@ -44,7 +53,16 @@
       14: P('Prism Graphite',  4, ['#e4ebff', '#7f8dff', '#14192c'], .60, .48, .96),
       15: P('Soft Sonar',      6, ['#b9a8ff', '#6d7cff', '#171537'], .56, .50, .98),
       16: P('Contour Smoke',   1, ['#d9d8ef', '#8b5cf6', '#1b1831'], .66, .48, .98),
-      17: P('Bokeh Steel',     9, ['#cdd9ff', '#7c8cff', '#151b34'], .58, .46, .98)
+      17: P('Bokeh Steel',     9, ['#cdd9ff', '#7c8cff', '#151b34'], .58, .46, .98),
+      18: P('Silk Console',    10, ['#bfcaff', '#705dff', '#0d1124'], .68, .44, .96),
+      19: P('Prism Slate',     11, ['#dfe8ff', '#8d71ff', '#101426'], .64, .42, .98),
+      20: P('Orbital Graphite',12, ['#b9eaff', '#557cff', '#0d1826'], .62, .42, .98),
+      21: P('Glass Vector',    13, ['#d7efff', '#4fb6d8', '#0b1922'], .58, .40, .99),
+      22: P('Vortex Indigo',   14, ['#bcb1ff', '#6f5cff', '#100d29'], .64, .44, .98),
+      23: P('Lattice Violet',  15, ['#d2c7ff', '#8b5cf6', '#131126'], .60, .40, .99),
+      24: P('Eclipse Carbon',  16, ['#dfe7ff', '#596dff', '#090d18'], .58, .38, .99),
+      25: P('Plasma Slate',    17, ['#b7f6ff', '#5e7cff', '#0c1720'], .58, .42, .99),
+      26: P('Warp Terminal',   18, ['#cbe1ff', '#7a6cff', '#080b14'], .62, .46, .99)
     },
     login: {
       1: P('Invite Violet', 0, ['#c4b5fd','#8b5cf6','#180f35'], .72, .54, .82),
@@ -54,7 +72,16 @@
       5: P('Amber Signal', 4, ['#fde68a','#f59e0b','#2f1c05'], .62, .44, .86),
       6: P('Graphite Mesh', 7, ['#d4d4d8','#71717a','#111116'], .46, .42, .92),
       7: P('Cyan Terminal', 5, ['#a5f3fc','#06b6d4','#07232b'], .58, .48, .88),
-      8: P('Aurora Glass', 2, ['#bae6fd','#a78bfa','#1d173c'], .64, .44, .82)
+      8: P('Aurora Glass', 2, ['#bae6fd','#a78bfa','#1d173c'], .64, .44, .82),
+      9: P('Silk Invite', 10, ['#f5d0fe','#8b5cf6','#190f31'], .70, .44, .82),
+      10: P('Prism Key', 11, ['#fde7c5','#ec4899','#25112f'], .68, .42, .84),
+      11: P('Orbital Login', 12, ['#c9efff','#6366f1','#0d1830'], .64, .40, .86),
+      12: P('Glass Cipher', 13, ['#d9f5ff','#22d3ee','#091b25'], .60, .40, .88),
+      13: P('Vortex Gate', 14, ['#c4b5fd','#7c3aed','#150b30'], .68, .44, .84),
+      14: P('Lattice Access', 15, ['#f0abfc','#38bdf8','#171027'], .62, .42, .87),
+      15: P('Eclipse Access', 16, ['#ffe4f1','#fb7185','#1d0c18'], .64, .40, .86),
+      16: P('Plasma Auth', 17, ['#b8fff0','#3b82f6','#0b1727'], .62, .44, .88),
+      17: P('Warp Portal', 18, ['#fff1c7','#a78bfa','#0a0c18'], .66, .48, .84)
     }
   };
 
@@ -221,12 +248,100 @@ vec3 bokeh(vec2 p,vec2 uv,vec2 m){
  acc+=C*.65*exp(-uv.y*2.2)+B*.05;
  return acc;}
 
+
+// 10 Silk Ribbons: layered satin ribbons with soft interference highlights
+vec3 silk(vec2 p,vec2 uv,vec2 m){
+ float t=T*.12;vec2 dm=p-m;float pull=E*exp(-dot(dm,dm)*5.5);
+ float y1=.5+.18*sin(p.x*2.4+t+sin(p.x*1.1-t*.6)*1.2)+.06*sin(p.x*7.-t*1.6);
+ float y2=.5+.22*sin(p.x*1.7-t*.72+2.1)+.05*cos(p.x*5.2+t);
+ y1+=dm.y*pull*.14;y2-=dm.y*pull*.10;
+ float a=exp(-pow((uv.y-y1)*8.5,2.));float b=exp(-pow((uv.y-y2)*7.2,2.));
+ float sheen=pow(.5+.5*sin((p.x+uv.y)*18.-T*.55),7.);
+ vec3 col=C*.28+mix(A,B,.5+.5*sin(p.x*1.4+T*.08))*(a*.75+b*.6);
+ col+=A*sheen*(a+b)*.28+B*pow(a*b,.5)*.4;
+ return col;
+}
+// 11 Prism Lens: concentric spectral lensing and refracted arcs
+vec3 prismLens(vec2 p,vec2 uv,vec2 m){
+ float ar=R.x/R.y;vec2 c=vec2(ar*.5,.5)+vec2((m.x-ar*.5)*E*.08,(m.y-.5)*E*.08);vec2 d=p-c;float r=length(d);
+ float rings=pow(.5+.5*cos(r*25.-T*.55),10.)*exp(-r*.75);
+ float arcs=pow(.5+.5*cos(atan(d.y,d.x)*6.+r*12.+T*.18),8.)*exp(-r*.55);
+ float lens=exp(-pow(r-.38-.05*sin(T*.15),2.)*65.);
+ vec3 col=C*.16+A*rings*.65+B*arcs*.38+mix(A,B,.5+.5*sin(r*18.))*lens*.6;
+ col+=A*exp(-r*r*2.5)*.18;
+ return col;
+}
+// 12 Orbital Halo: elegant orbital paths with moving pearls
+vec3 orbital(vec2 p,vec2 uv,vec2 m){
+ float ar=R.x/R.y;vec2 c=vec2(ar*.5,.5);vec2 q=p-c;q.x*=.92;float r=length(q);float a=atan(q.y,q.x);
+ float o1=exp(-pow(r-(.28+.025*sin(a*3.+T*.1)),2.)*420.);
+ float o2=exp(-pow(r-(.52+.035*cos(a*2.-T*.12)),2.)*260.);
+ float o3=exp(-pow(r-(.74+.02*sin(a*5.+T*.08)),2.)*220.);
+ float pearl=0.;for(int i=0;i<5;i++){float fi=float(i);vec2 po=vec2(cos(T*.12*(1.+fi*.13)+fi*1.25),sin(T*.12*(1.+fi*.13)+fi*1.25))*mix(.28,.72,fract(fi*.37+.2));pearl+=exp(-dot(q-po,q-po)*180.);}
+ vec2 dm=p-m;float hover=E*exp(-dot(dm,dm)*8.);
+ return C*.14+A*(o1*.7+o3*.28)+B*o2*.48+mix(A,B,.55)*pearl*.7+A*hover*.18;
+}
+// 13 Glass Shards: translucent faceted planes with moving light seams
+vec3 shards(vec2 p,vec2 uv,vec2 m){
+ vec2 q=p*4.2+vec2(T*.025,-S*.7);vec2 id=floor(q),f=fract(q);float rnd=h(id);
+ float d1=abs(f.y-f.x*(.35+.5*rnd));float d2=abs((1.-f.y)-f.x*(.55+.3*h(id+4.)));
+ float seam=exp(-min(d1,d2)*45.);float cell=.25+.75*fbm(id*.37+T*.01);
+ vec3 base=mix(C,mix(A,B,rnd),cell*.65);
+ float glint=pow(.5+.5*sin((f.x+f.y)*8.+T*.45+rnd*8.),12.);
+ vec2 dm=p-m;float hover=E*exp(-dot(dm,dm)*10.);
+ return base*(.10+.16*cell)+A*seam*.42+B*glint*.16+A*hover*.12;
+}
+// 14 Aurora Vortex: spiral aurora ribbons around a dark center
+vec3 vortex(vec2 p,vec2 uv,vec2 m){
+ float ar=R.x/R.y;vec2 c=vec2(ar*.5,.5);vec2 d=p-c;float r=length(d);float a=atan(d.y,d.x);
+ float twist=a+r*5.-T*.16;float band=pow(.5+.5*sin(twist*3.+sin(r*9.-T*.13)*1.8),4.);
+ float band2=pow(.5+.5*sin(twist*5.-T*.11+2.2),7.);
+ float fall=exp(-r*.95)*(1.-exp(-r*5.));
+ vec2 dm=p-m;float hover=E*exp(-dot(dm,dm)*6.);
+ return C*.10+mix(A,B,.5+.5*sin(twist))*band*fall*.66+A*band2*fall*.3+B*hover*.16;
+}
+// 15 Chroma Lattice: premium moire lattice with depth pulses
+vec3 lattice(vec2 p,vec2 uv,vec2 m){
+ vec2 q=p*7.;q+=vec2(sin(q.y*.45+T*.12),cos(q.x*.4-T*.1))*.35;
+ float gx=pow(.5+.5*cos(q.x*3.14159),18.);float gy=pow(.5+.5*cos(q.y*3.14159),18.);
+ float cross=max(gx,gy);float pulse=.45+.55*sin((q.x+q.y)*.35-T*.35);
+ vec2 dm=p-m;float hover=E*exp(-dot(dm,dm)*12.);
+ vec3 col=C*.10+mix(A,B,.5+.5*sin(p.x*2.+p.y*1.6+T*.07))*cross*(.22+.38*pulse);
+ col+=A*hover*.18+B*cross*cross*.14;
+ return col;
+}
+// 16 Eclipse Bloom: cinematic halo and corona around a moving eclipse
+vec3 eclipseFx(vec2 p,vec2 uv,vec2 m){
+ float ar=R.x/R.y;vec2 c=vec2(ar*.58+.08*sin(T*.03),.54+.05*cos(T*.04));vec2 d=p-c;float r=length(d);
+ float halo=exp(-pow(r-.24,2.)*95.)+exp(-pow(r-.36,2.)*38.)*.34;
+ float corona=pow(.5+.5*sin(atan(d.y,d.x)*17.+T*.22+sin(r*15.)*1.6),7.)*exp(-pow(r-.28,2.)*45.);
+ float core=1.-smoothstep(.16,.25,r);vec2 dm=p-m;float hover=E*exp(-dot(dm,dm)*8.);
+ vec3 col=C*.08+A*halo*.62+B*corona*.48;col*=1.-core*.82;col+=A*hover*.14;
+ return col;
+}
+// 17 Plasma Veins: electric flowing veins with soft bloom
+vec3 veins(vec2 p,vec2 uv,vec2 m){
+ vec2 q=p*2.4+vec2(T*.035,-T*.02-S*.5);float inner=fbm(q*1.7+T*.02);float f=fbm(q+vec2(inner));
+ float v1=exp(-abs(f-.48)*38.);float v2=exp(-abs(f-.60)*45.)*.55;
+ float pulse=.7+.3*sin(T*.55+f*14.);vec2 dm=p-m;float hover=1.+E*1.2*exp(-dot(dm,dm)*8.);
+ return C*.08+mix(A,B,f)*v1*pulse*.68*hover+A*v2*.34+B*pow(v1,3.)*.25;
+}
+// 18 Warp Stars: cinematic forward starfield / hyperspace streaks
+vec3 warpStars(vec2 p,vec2 uv,vec2 m){
+ float ar=R.x/R.y;vec2 c=vec2(ar*.5,.5);vec2 d=p-c;float r=length(d);float ang=atan(d.y,d.x);
+ vec3 col=C*.08;for(int i=0;i<4;i++){float fi=float(i);float lane=floor((ang+3.14159)*11.+fi*7.);float rnd=h(vec2(lane,fi));float rr=fract(r*3.-T*(.12+.05*fi)+rnd+S*.2);float star=pow(clamp(1.-rr/.32,0.,1.),4.)*step(.72,rnd);float streak=exp(-abs(fract((ang+3.14159)*18.+rnd)-.5)*24.);col+=mix(A,B,rnd)*star*streak*exp(-r*.38)*.72;}
+ float tunnel=pow(.5+.5*cos(r*18.-T*.42),12.)*exp(-r*.45)*.12;vec2 dm=p-m;float hover=E*exp(-dot(dm,dm)*7.);col+=A*tunnel+B*hover*.12;return col;
+}
+
 void main(){
  vec2 uv=gl_FragCoord.xy/R;float ar=R.x/R.y;vec2 p=vec2(uv.x*ar,uv.y);vec2 m=vec2(M.x*ar,M.y);
  vec3 col=vec3(.020,.020,.026);
  if(K<.5)col+=nebula(p,uv,m);else if(K<1.5)col+=topo(p,uv,m);else if(K<2.5)col+=caust(p,uv,m);
  else if(K<3.5)col+=halftone(p,uv,m);else if(K<4.5)col+=rays(p,uv,m);else if(K<5.5)col+=rain(p,uv,m);
- else if(K<6.5)col+=sonar(p,uv,m);else if(K<7.5)col+=mesh(p,uv,m);else if(K<8.5)col+=hexg(p,uv,m);else col+=bokeh(p,uv,m);
+ else if(K<6.5)col+=sonar(p,uv,m);else if(K<7.5)col+=mesh(p,uv,m);else if(K<8.5)col+=hexg(p,uv,m);
+ else if(K<9.5)col+=bokeh(p,uv,m);else if(K<10.5)col+=silk(p,uv,m);else if(K<11.5)col+=prismLens(p,uv,m);
+ else if(K<12.5)col+=orbital(p,uv,m);else if(K<13.5)col+=shards(p,uv,m);else if(K<14.5)col+=vortex(p,uv,m);
+ else if(K<15.5)col+=lattice(p,uv,m);else if(K<16.5)col+=eclipseFx(p,uv,m);else if(K<17.5)col+=veins(p,uv,m);else col+=warpStars(p,uv,m);
  col*=I;
  float mid=1.-smoothstep(0.,.45,abs(uv.x-.5));col*=1.-Z*mid*.5;
  col*=1.-.55*smoothstep(.45,1.15,length((uv-.5)*vec2(1.,1.15)));
