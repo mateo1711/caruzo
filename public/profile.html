@@ -734,7 +734,50 @@ function applyProfileLayout(u){
   const order=[...layout.order,...['reactions','music-player','status-card','activity','spotify-now','spotify','highlights','socials','premium','about','pc-specs'].filter(x=>!layout.order.includes(x))];
   order.forEach(id=>{const node=map[id];if(!node)return;node.classList.toggle('layout-hidden',hidden.has(id));if((id==='music-player'&&musicPos==='floating-bottom')||(id==='reactions'&&reactionPos.startsWith('floating')))return;flow.append(node)});
 }
-function pcSpecMark(){return el('span',{class:'pc-brand-mark pc-fixed-mark'},el('span',{},'PC'))}
+const PC_BRAND_LOGOS=[
+  {keys:['amd','ryzen','radeon'],slug:'amd',label:'AMD'},
+  {keys:['nvidia','geforce','rtx','gtx'],slug:'nvidia',label:'NVIDIA'},
+  {keys:['intel','core i','arc'],slug:'intel',label:'Intel'},
+  {keys:['asus','rog','tuf'],slug:'asus',label:'ASUS'},
+  {keys:['msi','micro-star'],slug:'msi',label:'MSI'},
+  {keys:['gigabyte','aorus'],slug:'gigabyte',label:'Gigabyte'},
+  {keys:['asrock'],slug:'asrock',label:'ASRock'},
+  {keys:['corsair'],slug:'corsair',label:'Corsair'},
+  {keys:['g.skill','gskill','trident'],slug:'gskill',label:'G.SKILL'},
+  {keys:['kingston','fury'],slug:'kingstontechnology',label:'Kingston'},
+  {keys:['crucial','micron'],slug:'crucial',label:'Crucial'},
+  {keys:['teamgroup','team group','t-force','tforce'],slug:'teamgroup',label:'TeamGroup'},
+  {keys:['adata','xpg'],slug:'adata',label:'ADATA'},
+  {keys:['patriot','viper'],slug:'patriot',label:'Patriot'},
+  {keys:['samsung'],slug:'samsung',label:'Samsung'},
+  {keys:['western digital','wd black','wd '],slug:'westerndigital',label:'Western Digital'},
+  {keys:['seagate'],slug:'seagate',label:'Seagate'},
+  {keys:['zotac'],slug:'zotac',label:'ZOTAC'},
+  {keys:['sapphire'],slug:'sapphire',label:'Sapphire'},
+  {keys:['powercolor'],slug:'powercolor',label:'PowerColor'},
+  {keys:['pny'],slug:'pny',label:'PNY'},
+  {keys:['xfx'],slug:'xfx',label:'XFX'},
+  {keys:['evga'],slug:'evga',label:'EVGA'},
+  {keys:['palit'],slug:'palit',label:'Palit'},
+  {keys:['gainward'],slug:'gainward',label:'Gainward'},
+  {keys:['biostar'],slug:'biostar',label:'Biostar'}
+];
+function pcBrandInfo(value){
+  const raw=String(value||'').trim(),q=' '+raw.toLowerCase().replace(/[^a-z0-9.+-]+/g,' ')+' ';
+  const hit=PC_BRAND_LOGOS.find(x=>x.keys.some(k=>q.includes(k.toLowerCase())));
+  if(hit)return {...hit,raw};
+  const initials=(raw.match(/[A-Za-z0-9]+/g)||[]).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'PC';
+  return {slug:'',label:raw||'PC',raw,initials};
+}
+function pcSpecMark(value){
+  const info=pcBrandInfo(value),wrap=el('span',{class:'pc-brand-mark',title:info.label||value});
+  if(info.slug){
+    const img=el('img',{src:`https://cdn.simpleicons.org/${info.slug}/ffffff`,alt:info.label||''});
+    img.onerror=()=>wrap.replaceChildren(el('span',{},(info.label||value||'PC').replace(/[^A-Za-z0-9]/g,'').slice(0,2).toUpperCase()||'PC'));
+    wrap.append(img);
+  }else wrap.append(el('span',{},info.initials||'PC'));
+  return wrap;
+}
 function renderPcSpecs(u){
   const host=$('#pcSpecsSection');if(!host)return;host.replaceChildren();host.hidden=true;
   if(!u?.platform?.admin)return;
@@ -744,7 +787,7 @@ function renderPcSpecs(u){
   const head=el('div',{class:'pc-specs-head'},el('div',{class:'pc-specs-title'},el('i',{},'PC'),el('span',{},el('b',{},'PC Specs'),el('small',{},'Hardware'))),el('span',{class:'pc-specs-beta'},'Beta'));
   const grid=el('div',{class:'pc-specs-grid'});
   items.forEach(item=>{
-    grid.append(el('article',{class:'pc-spec-item'},pcSpecMark(),el('span',{class:'pc-spec-copy'},el('small',{},item.label),el('b',{},item.value))));
+    grid.append(el('article',{class:'pc-spec-item'},pcSpecMark(item.value),el('span',{class:'pc-spec-copy'},el('small',{},item.label),el('b',{},item.value))));
   });
   host.append(el('div',{class:'pc-specs-card'},head,grid));host.hidden=false;
 }
