@@ -489,7 +489,7 @@ function applyUpdate(user, b) {
   user.spotify = url(b.spotify);
   const sp = b.spotifyStyle || {};
   user.spotifyStyle = { blur: num(sp.blur, 0, 50, 26), glow: num(sp.glow, 0, 100, 24), layout: ['compact','full'].includes(sp.layout) ? sp.layout : 'compact' };
-  if ((metaFor(user).premium || isAdminId(user.id)) && b.pcSpecs !== undefined) {
+  if (b.pcSpecs !== undefined) {
     const pcs = b.pcSpecs || {};
     user.pcSpecs = {
       mainboard: str(pcs.mainboard, 48).trim(),
