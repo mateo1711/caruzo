@@ -391,7 +391,7 @@ body.moderator-mode [data-admin-tab="changelog"],body.moderator-mode [data-admin
 
       <section class="panel" data-panel="pcbeta" hidden>
         <div class="panelHead"><div><span class="panelKicker">PC Specs · Beta</span><h2>PC Specs</h2><p>Hardware, Monitore und Peripherie mit Marke, Modell und automatischem Markenlogo für dein öffentliches Profil.</p></div><div class="panelActions"><button class="btn primary saveBtn"><i data-lucide="save"></i>Save PC Specs</button></div></div>
-        <div class="pcSpecsBeta"><div><b>Premium Beta</b><p>PC Specs ist für Premium-Profile freigeschaltet. Marke und Modell werden getrennt gespeichert, bekannte Gaming-Marken werden automatisch erkannt und leere Geräte-Slots auf dem Profil vollständig ausgeblendet.</p></div><span class="betaBadge"><i></i>Beta · Premium</span></div>
+        <div class="pcSpecsBeta"><div><b>Public Beta</b><p>PC Specs ist für alle Profile freigeschaltet. Marke und Modell werden getrennt gespeichert, bekannte Gaming-Marken werden automatisch erkannt und leere Geräte-Slots auf dem Profil vollständig ausgeblendet.</p></div><span class="betaBadge"><i></i>Beta · Public</span></div>
         <div class="section">
           <div class="sectionTitle"><h3>Hardware</h3><span class="miniHint">Mainboard · CPU · GPU · RAM</span></div>
           <div class="pcSpecsGrid">
@@ -541,7 +541,7 @@ function isPreviewModuleActive(id){
   if(id==='socials')return ensureSocialOrder().some(socialEnabled);
   if(id==='premium')return hasRenderablePremiumSections();
   if(id==='about')return !!String(me.about||'').trim();
-  if(id==='pc-specs')return !!(me.platform?.premium||me.platform?.admin)&&Object.entries(me.pcSpecs||{}).some(([k,v])=>k!=='customTitle'&&String(v||'').trim());
+  if(id==='pc-specs')return Object.entries(me.pcSpecs||{}).some(([k,v])=>k!=='customTitle'&&String(v||'').trim());
   return false;
 }
 function activePreviewModuleIds(){
@@ -608,7 +608,7 @@ function defaults(){
 }
 function openTab(name){
   if(name==='admin'&&!canAdmin&&!canModerator)name='profil';
-  if(name==='pcbeta'&&!canAdmin&&!isPremium)name='profil';
+  // PC Specs ist für alle Accounts verfügbar.
   if(!$(`[data-panel="${name}"]`))name='profil';current=name;
   document.body.classList.toggle('admin-mode',name==='admin');
   $$('[data-panel]').forEach(p=>p.hidden=p.dataset.panel!==name);
@@ -888,7 +888,7 @@ function previewModuleContent(id){
       [String(pcs.customTitle||'Custom').trim()||'Custom',[['GERÄT 1',pcs.custom1,pcs.custom1Model],['GERÄT 2',pcs.custom2,pcs.custom2Model],['GERÄT 3',pcs.custom3,pcs.custom3Model],['GERÄT 4',pcs.custom4,pcs.custom4Model]]]
     ].map(([label,items])=>[label,items.filter(x=>String(x[1]||x[2]||'').trim())]).filter(([,items])=>items.length);
     if(!groups.length)return '<span>Noch keine PC Specs</span>';
-    const card=([k,brandName,model])=>{const brand=pcPreviewBrand(brandName||model);return `<span style="align-items:flex-start">${brand.src?`<img class="pvPcBrandLogo" src="${escapeHtml(brand.src)}" data-fallback="${escapeHtml(brand.initials)}" alt="">`:`<i class="pvPcBrandFallback">${escapeHtml(brand.initials)}</i>`}<span style="display:grid!important;gap:2px"><b style="font-size:11px;color:#f3f5fa">${escapeHtml(brandName||k)}</b><small style="font-size:9px;color:#9da2ad;white-space:normal">${escapeHtml(model||k+' Modell')}</small></span></span>`};
+    const card=([k,brandName,model])=>{const brand=pcPreviewBrand([brandName,model].join(" "));return `<span style="align-items:flex-start">${brand.src?`<img class="pvPcBrandLogo" src="${escapeHtml(brand.src)}" data-fallback="${escapeHtml(brand.initials)}" alt="">`:`<i class="pvPcBrandFallback">${escapeHtml(brand.initials)}</i>`}<span style="display:grid!important;gap:2px"><b style="font-size:11px;color:#f3f5fa">${escapeHtml(brandName||k)}</b><small style="font-size:9px;color:#9da2ad;white-space:normal">${escapeHtml(model||k+' Modell')}</small></span></span>`};
     return `<div class="pvPcSpecsWrap">${groups.map(([label,items])=>`<div class="pvPcSpecsGroup"><small>${escapeHtml(label)}</small><div class="pvMiniChips">${items.map(card).join('')}</div></div>`).join('')}</div>`;
   }
   return '';
@@ -1674,7 +1674,7 @@ setInterval(()=>{if(me?.discord?.id)refreshPresenceDiagnostic()},6000);
 setInterval(()=>refreshSpotifyAccount(),15000);
 function handleSpotifyCallbackNotice(){}
 
-Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;const accountAdmin=$('#accountAdmin'),accountAdminLabel=$('#accountAdminLabel');if(accountAdmin)accountAdmin.hidden=!(canAdmin||canModerator);if(accountAdminLabel)accountAdminLabel.textContent=canAdmin?'Admin Menu':'Moderator Menu';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);const pcSpecsTile=$('#pcSpecsTile');if(pcSpecsTile)pcSpecsTile.hidden=!(canAdmin||isPremium);$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();loadStatusDiscordEmojis();applyStatisticsAccess();initBgAdmin();openTab(location.hash.slice(1)||'profil');handleSpotifyCallbackNotice();if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
+Promise.all([api('/api/me'),api('/api/session-info')]).then(([u,s])=>{me=u;canAdmin=!!s.isAdmin;canModerator=!canAdmin&&(!!s.isModerator||!!u.platform?.moderator);isPremium=!!s.premium||!!u.platform?.premium;const accountAdmin=$('#accountAdmin'),accountAdminLabel=$('#accountAdminLabel');if(accountAdmin)accountAdmin.hidden=!(canAdmin||canModerator);if(accountAdminLabel)accountAdminLabel.textContent=canAdmin?'Admin Menu':'Moderator Menu';document.body.classList.toggle('moderator-mode',canModerator&&!canAdmin);const pcSpecsTile=$('#pcSpecsTile');if(pcSpecsTile)pcSpecsTile.hidden=false;$('#adminRoleText').textContent=canAdmin?'Admin online':'Moderator online';$('#adminHeroKicker').textContent=canAdmin?'Owner console':'Moderator console';$('#adminHeroTitle').textContent=canAdmin?'Platform overview':'Platform overview';$('#adminHeroText').textContent=canAdmin?'Live-Zahlen, Moderation, Rollen und Changelog aus deiner bestehenden Caruzo-Datenbank.':'Live-Übersicht, Recent User, User-Suche und Invite Keys. Moderations-Aktionen bleiben sichtbar, sind aber gesperrt.';const changeTab=$('[data-admin-tab="changelog"]');if(changeTab)changeTab.hidden=!canAdmin;const changePane=$('[data-admin-pane="changelog"]');if(changePane&&!canAdmin)changePane.hidden=true;const modNote=$('#moderatorUsersNote');if(modNote)modNote.hidden=!canModerator;defaults();bind();loadStatusDiscordEmojis();applyStatisticsAccess();initBgAdmin();openTab(location.hash.slice(1)||'profil');handleSpotifyCallbackNotice();if(canAdmin){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq();loadAdminChangelog()}else if(canModerator){loadAdminOverview();loadAdminKeys();loadAdminUsers();loadAdminFaq()}}).catch(e=>{if(e.message==='Account gesperrt')location.href='/banned';else location.href='/auth/discord'});
 window.CaruzoBG&&CaruzoBG.mount('dashboard');
 window.lucide?.createIcons?.();
 </script>

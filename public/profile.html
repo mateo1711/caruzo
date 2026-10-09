@@ -753,7 +753,6 @@ function pcSpecMark(value){
 }
 function renderPcSpecs(u){
   const host=$('#pcSpecsSection');if(!host)return;host.replaceChildren();host.hidden=true;
-  if(!u?.platform?.premium&&!u?.platform?.admin)return;
   const specs=u?.pcSpecs||{};
   const hardware=[['mainboard','Mainboard','mainboardModel'],['cpu','CPU','cpuModel'],['gpu','GPU','gpuModel'],['ram','RAM','ramModel']].map(([key,label,modelKey])=>({label,brand:String(specs[key]||'').trim(),model:String(specs[modelKey]||'').trim()})).filter(x=>x.brand||x.model);
   const monitors=[1,2,3].map((n)=>({label:`Monitor ${n}`,brand:String(specs[`monitor${n}`]||'').trim(),model:String(specs[`monitor${n}Model`]||'').trim()})).filter(x=>x.brand||x.model);
@@ -766,7 +765,7 @@ function renderPcSpecs(u){
   const renderGroup=(title,items,countClass='')=>{
     if(!items.length)return;
     const grid=el('div',{class:`pc-specs-grid ${countClass}${items.length}`.trim()});
-    items.forEach(item=>grid.append(el('article',{class:'pc-spec-item'},pcSpecMark(item.brand||item.model),el('span',{class:'pc-spec-copy'},el('small',{},item.label),el('b',{},item.brand||item.label),el('em',{},item.model||item.label+' Modell')))));
+    items.forEach(item=>grid.append(el('article',{class:'pc-spec-item'},pcSpecMark([item.brand,item.model].join(" ")),el('span',{class:'pc-spec-copy'},el('small',{},item.label),el('b',{},item.brand||item.label),el('em',{},item.model||item.label+' Modell')))));
     groups.append(el('div',{class:'pc-specs-group'},el('div',{class:'pc-specs-group-title'},title),grid));
   };
   renderGroup('Hardware',hardware,'hardware-count-');

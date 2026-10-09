@@ -1,6 +1,10 @@
 (()=>{
 'use strict';
 const CATALOG=[
+{label:'CaptainDMA 75T',keys:['captain dma 75t','captaindma 75t','captain dma','captaindma','75t'],localLogo:'/pc-brand-logos/captain-dma.png'},
+{label:'Firmware',keys:['firmware','dma firmware'],localLogo:'/pc-brand-logos/firmware.png'},
+{label:'Dichen',keys:['dichen','dichen fuser','dc1a686'],localLogo:'/pc-brand-logos/dichen.png'},
+{label:'DMA Board',keys:['dma board','dma card','dma hardware','dma device','75t board'],localLogo:'/pc-brand-logos/dma-board.png'},
 // Core PC / GPU / mainboards
 {label:'AMD',keys:['amd','ryzen','radeon'],slugs:['amd'],domain:'amd.com'},
 {label:'NVIDIA',keys:['nvidia','geforce','rtx','gtx'],slugs:['nvidia'],domain:'nvidia.com'},
@@ -163,7 +167,7 @@ function match(value){
   const initials=(raw.match(/[A-Za-z0-9]+/g)||[]).slice(0,2).map(x=>x[0]).join('').toUpperCase()||'PC';
   return hit?{...hit,raw,initials}:{label:raw||'PC',keys:[],slugs:[],domain:'',raw,initials};
 }
-function logoSources(value){const info=typeof value==='object'&&value?value:match(value),out=[];for(const slug of info.slugs||[])if(slug)out.push(`https://cdn.simpleicons.org/${encodeURIComponent(slug)}/ffffff`);if(info.domain)out.push(`https://icons.duckduckgo.com/ip3/${info.domain}.ico`);return [...new Set(out)]}
-function previewLogo(value){const info=match(value);return {info,src:info.domain?`https://icons.duckduckgo.com/ip3/${info.domain}.ico`:(info.slugs?.[0]?`https://cdn.simpleicons.org/${encodeURIComponent(info.slugs[0])}/ffffff`:'')}}
+function logoSources(value){const info=typeof value==='object'&&value?value:match(value),out=[];if(info.localLogo)out.push(info.localLogo);for(const slug of info.slugs||[])if(slug)out.push(`https://cdn.simpleicons.org/${encodeURIComponent(slug)}/ffffff`);if(info.domain)out.push(`https://icons.duckduckgo.com/ip3/${info.domain}.ico`);return [...new Set(out)]}
+function previewLogo(value){const info=match(value);return {info,src:info.localLogo|| (info.domain?`https://icons.duckduckgo.com/ip3/${info.domain}.ico`:(info.slugs?.[0]?`https://cdn.simpleicons.org/${encodeURIComponent(info.slugs[0])}/ffffff`:''))}}
 window.CaruzoPCBrands={catalog:CATALOG,match,logoSources,previewLogo};
 })();
